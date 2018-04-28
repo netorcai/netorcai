@@ -40,22 +40,24 @@ List of messages between **clients** and **netorcai**:
 - [KICK](#kick)
 
 List of messages between **netorcai** and **game logic**:
+- [LOGIN](#login)
+- [LOGIN_ACK](#login_ack)
 - [DO_FIRST_TURN](#do_first_turn)
 - [DO_TURN](#do_turn)
 - [DO_TURN_ACK](#do_turn_ack)
 
 ### LOGIN
-This message type is sent from **clients** to **netorcai**.
+This message type is sent from **clients** or **game logic** to **netorcai**.
 
-This is the first message sent by a client.
-It allows the client to indicate it wants to participate in the game.
+This is the first message sent by clients and game logic.
+It allows them to indicate they want to participate in the game.
 **netorcai** answers this message with a [LOGIN_ACK](#login_ack) message
 if the logging in is accepted, or by a [KICK](#kick) message otherwise.
 
 Fields:
 - `nickname` (string): The name the clients wants to have.
   Must respect the `\A\S{1,10}\z` regular expression (go syntax).
-- `role` (string). Must be `player` or `visualization`.
+- `role` (string). Must be `player`, `visualization` or `game logic`.
 
 Example:
 ```json
@@ -67,9 +69,9 @@ Example:
 ```
 
 ### LOGIN_ACK
-This message type is sent from **netorcai** to **clients**.
+This message type is sent from **netorcai** to **clients** or **game logic**.
 
-It tells a client that his [LOGIN](#login) is accepted.
+It tells a client or the game logic that its [LOGIN](#login) is accepted.
 
 Fields: None.
 
