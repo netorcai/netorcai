@@ -5,7 +5,7 @@ composed by two parts:
 1. CONTENT_SIZE, a 16-bit little-endian unsigned integer corresponding to
    the size of the message content (therefore excluding the 2 octets used
    to store CONTENT_SIZE).
-2. CONTENT, an UTF-8 string of MESSAGE_SIZE octets,
+2. CONTENT, an UTF-8 string of CONTENT_SIZE octets,
    terminated by an UTF-8 *Line Feed* character (U+000A).
 
 The content of each message must be a valid
