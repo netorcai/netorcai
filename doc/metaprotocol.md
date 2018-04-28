@@ -40,6 +40,7 @@ List of messages between **clients** and **netorcai**:
 - [KICK](#kick)
 
 List of messages between **netorcai** and **game logic**:
+- [DO_FIRST_TURN](#do_first_turn)
 - [DO_TURN](#do_turn)
 - [DO_TURN_ACK](#do_turn_ack)
 
@@ -189,6 +190,23 @@ Example:
 {
   "message_type": "KICK",
   "kick_reason": "Invalid message: Content is not valid JSON"
+}
+```
+
+### DO_FIRST_TURN
+This message type is sent from **netorcai** to **game logic**.
+
+This is a specialization of the [DO_TURN](#do_turn) message: The first message
+does not contain any action, but some information about the players.
+
+Fields:
+- `nb_players` (positive integral number): The number of players in the game.
+
+Example:
+```json
+{
+  "message_type": "DO_FIRST_TURN",
+  "nb_players": 4
 }
 ```
 
