@@ -232,7 +232,12 @@ Example:
 ## Expected client behavior
 **netorcai** manages the clients by associating them with a state.
 In a given state, a client can only receive and send certain types of messages.
+If a client is kicked if it does not send an expected type of message.
 
 The following figure summarizes the expected behavior of a client:
-- ?MSG_TYPE means that a client receives a message of type MSG_TYPE.
-- !MSG_TYPE means that a client sends a message of type MSG_TYPE.
+- Each node is a client state.
+- Edges are transitions between states:
+	- ?MSG_TYPE means that the client receives a message of type MSG_TYPE.
+	- !MSG_TYPE means that the client sends a message of type MSG_TYPE.
+
+![client expected behavior figure](./fig/expected_behavior.svg "client expected behavior figure")
