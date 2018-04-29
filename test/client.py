@@ -6,15 +6,25 @@ import struct
 
 class Client:
     """Handles a netorcai metaprotocol client."""
-    def __init__(self, hostname=None, port=None):
+    def __init__(self):
+        self.sock = None
+
+    def __del__(self):
+        self.close()
+
+    def connect(self, hostname=None, port=None):
+        """Create a socket and connect it to the given endpoint."""
         hostname = "localhost" if hostname is None else hostname
         port = 4242 if port is None else hostname
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((hostname, port))
 
-    def __del__(self):
-        self.sock.close()
+    def close(self):
+        """Close the socket."""
+        if self.sock is not None:
+            self.sock.close()
+            self.sock = None
 
     def _send_string(self, string):
         buf = string.encode("utf-8")
