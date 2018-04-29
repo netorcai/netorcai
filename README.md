@@ -37,9 +37,11 @@ Netorcai proposes to separate a classical game server into two components:
   - Manage the state of each client
 
 These two components (and the player and visualization clients) are
-instantiated as processes and communicate thanks to a metaprotocol.
+instantiated as processes and communicate thanks to a
+[metaprotocol][metaprotocol].
 
 [//]: =========================================================================
-[challenge lionel martin]: https://www.univ-orleans.fr/iut-orleans/informatique/intra/concours/2018/
+[challenge lionel martin]: https://www.univ-orleans.fr/iut-orleans/informatique/intra/concours/
 [aquar.iom]: https://github.com/mpoquet/aquar.iom
 [spaceships]: https://github.com/mpoquet/concoursiuto2015
+[metaprotocol]: ./doc/metaprotocol.md
