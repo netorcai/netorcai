@@ -5,12 +5,9 @@ Why?
 In the context of [Lionel Martin's challenge][challenge lionel martin],
 I have been involved in the implementation of multiagent network
 games meant to be played by bots.
-
-This was very interesting, as such projects gather multiple tasks:
-- Game design
-- Network protocol design
-- Game server implementation
-- Visualization implementation
+This was very interesting, as such projects gather multiple tasks
+such as game design, network protocol design, game server and visualization
+implementation.
 
 I however came to the following conclusions after implementing multiple games
 ([2014][spaceships], [2016][aquar.iom]).  
