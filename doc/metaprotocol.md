@@ -92,7 +92,8 @@ Fields:
   The unique identifier of the client if its role is `player`,
   `null` otherwise.
 - `nb_players` (integral positive number): The number of players of the game.
-- `nb_turns_max` (integral number): The maximum number of turns of the game.
+- `nb_turns_max` (integral positive number):
+  The maximum number of turns of the game.
 - `milliseconds_before_first_turn` (number): The number of milliseconds before
   the first game [TURN](#turn).
 - `data` (object): Game-dependent content.
@@ -202,13 +203,16 @@ This is a specialization of the [DO_TURN](#do_turn) message: The first message
 does not contain any action, but some information about the players.
 
 Fields:
-- `nb_players` (positive integral number): The number of players in the game.
+- `nb_players` (integral positive number): The number of players in the game.
+- `nb_turns_max` (integral positive number):
+  The maximum number of turns of the game.
 
 Example:
 ```json
 {
   "message_type": "DO_FIRST_TURN",
-  "nb_players": 4
+  "nb_players": 4,
+  "nb_turns_max": 100
 }
 ```
 
@@ -260,4 +264,12 @@ The following figure summarizes the expected behavior of a client:
 	- ?MSG_TYPE means that the client receives a message of type MSG_TYPE.
 	- !MSG_TYPE means that the client sends a message of type MSG_TYPE.
 
-![client expected behavior figure](./fig/expected_behavior.svg "client expected behavior figure")
+![client expected behavior figure](./fig/expected_behavior_client.svg "client expected behavior figure")
+
+## Expected game logic behavior
+Similarly to clients, **netorcai** manages the game logic by associating it
+with a state.
+
+Its expected behavior is described in the following figure:
+
+![game logic expected behavior figure](./fig/expected_behavior_gamelogic.svg "game logic expected behavior figure")

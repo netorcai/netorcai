@@ -5,12 +5,20 @@ real y = 0;
 real yoff = -2;
 real xoff = 4;
 
+object start = draw("", ellipse, (0,y), 0); y += yoff;
 object unlogged = draw("unlogged", ellipse, (0,y), margin); y += yoff;
 object waiting = draw("waiting logging answer", ellipse, (0,y), margin); y += yoff;
 object logged = draw("logged", ellipse, (0,y), margin); y += yoff;
+object gameinit = draw("game init", ellipse, (0,y), margin); y += yoff;
 object listening = draw("listening", ellipse, (-xoff,y), margin);
-object thinking = draw("thinking", ellipse, (xoff,y), margin); y += yoff;
-object gameover = draw("game over", ellipse, (0,y), margin); y += yoff;
+object thinking = draw("computing turn", ellipse, (xoff,y), margin); y += yoff;
+object gameover = draw("can close socket", ellipse, (0,y), margin); y += yoff;
+
+add(new void(picture pic, transform t)
+{
+    draw(pic, "connect socket", point(start,S,t)..point(unlogged,N,t),
+         fontsize(10), Arrow);
+});
 
 add(new void(picture pic, transform t)
 {
@@ -26,24 +34,31 @@ add(new void(picture pic, transform t)
 
 add(new void(picture pic, transform t)
 {
-    draw(pic, "?GAME\_STARTS", point(logged,S,t)..point(listening,N,t),
+    draw(pic, "?DO\_FIRST\_TURN(nb\_turns\_max=X)", point(logged,S,t)..point(gameinit,N,t),
          fontsize(10), Arrow);
 });
 
 add(new void(picture pic, transform t)
 {
-    draw(pic, "?TURN(turn\_number=X)", point(listening,N,t)..point(thinking,N,t),
+    draw(pic, "!DO\_TURN\_ACK", point(gameinit,S,t)..point(listening,N,t),
          fontsize(10), Arrow);
 });
 
 add(new void(picture pic, transform t)
 {
-    draw(pic, "!TURN\_ACK(turn\_number=X)", point(thinking,S,t)..point(listening,S,t),
+    draw(pic, "?DO\_TURN", point(listening,N,t)..point(thinking,N,t),
          fontsize(10), Arrow);
 });
 
 add(new void(picture pic, transform t)
 {
-    draw(pic, "?GAME\_ENDS", point(listening,S,t)..point(gameover,N,t),
+    draw(pic, "!DO\_TURN\_ACK", point(thinking,S,t)..point(listening,S,t),
+         fontsize(10), Arrow);
+});
+
+add(new void(picture pic, transform t)
+{
+    draw(pic, "X DO\_TURN\_ACK have been sent",
+         point(listening,S,t)..point(gameover,N,t),
          fontsize(10), Arrow);
 });
