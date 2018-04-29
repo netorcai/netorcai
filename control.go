@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
@@ -66,7 +67,7 @@ func handleClient(client Client) {
 			"err":            msg.err,
 			"remote address": client.conn.RemoteAddr(),
 		}).Debug("Cannot receive client first message")
-		kick(client, "Invalid first message")
+		kick(client, fmt.Sprintf("Invalid first message: %v", msg.err.Error()))
 		return
 	}
 
@@ -76,7 +77,7 @@ func handleClient(client Client) {
 			"err":            err,
 			"remote address": client.conn.RemoteAddr(),
 		}).Debug("Cannot read LOGIN message")
-		kick(client, "Invalid first message")
+		kick(client, fmt.Sprintf("Invalid first message: %v", err.Error()))
 		return
 	}
 	client.nickname = loginMessage.nickname
@@ -91,7 +92,8 @@ func kick(client Client, reason string) {
 	}).Warn("Kicking client")
 
 	msg := MessageKick{
-		KickReason: reason,
+		MessageType: "KICK",
+		KickReason:  reason,
 	}
 
 	content, err := json.Marshal(msg)

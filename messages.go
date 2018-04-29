@@ -29,7 +29,8 @@ type MessageTurnAck struct {
 }
 
 type MessageKick struct {
-	KickReason string `json:"kick_reason"`
+	MessageType string `json:"message_type"`
+	KickReason  string `json:"kick_reason"`
 }
 
 func checkMessageType(data map[string]interface{}, expectedMessageType string) error {
@@ -80,7 +81,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 		"game_logic":
 		return readMessage, nil
 	default:
-		return readMessage, fmt.Errorf("Unexpected role '%v'",
+		return readMessage, fmt.Errorf("Invalid role '%v'",
 			readMessage.role)
 	}
 }

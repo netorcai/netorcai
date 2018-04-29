@@ -7,7 +7,7 @@ import (
 func readString(data map[string]interface{}, field string) (string, error) {
 	value, exists := data[field]
 	if !exists {
-		return "", fmt.Errorf("Field '%v' does not exist", field)
+		return "", fmt.Errorf("Field '%v' is missing", field)
 	}
 
 	switch value.(type) {
