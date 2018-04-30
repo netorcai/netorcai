@@ -20,21 +20,23 @@ const (
 	CLIENT_UNLOGGED = iota
 	CLIENT_LOGGED   = iota
 	CLIENT_READY    = iota
+	CLIENT_THINKING = iota
 	CLIENT_FINISHED = iota
 	CLIENT_KICKED   = iota
 )
 
 type PlayerClient struct {
-	client  Client
-	newTurn chan string
+	client   *Client
+	newTurn  chan MessageTurn
+	gameEnds chan MessageGameEnds
 }
 
 type GameLogicClient struct {
-	client Client
+	client *Client
 }
 
 type VisuClient struct {
-	client  Client
+	client  *Client
 	newTurn chan string
 }
 
@@ -53,7 +55,7 @@ type GlobalState struct {
 	millisecondsBeforeFirstTurn float64
 }
 
-func handleClient(client Client, globalState *GlobalState) {
+func handleClient(client *Client, globalState *GlobalState) {
 	log.WithFields(log.Fields{
 		"remote address": client.conn.RemoteAddr(),
 	}).Debug("New connection")
@@ -100,7 +102,7 @@ func handleClient(client Client, globalState *GlobalState) {
 			} else {
 				playerClient := PlayerClient{
 					client:  client,
-					newTurn: make(chan string),
+					newTurn: make(chan MessageTurn),
 				}
 
 				globalState.players = append(globalState.players, playerClient)
@@ -175,10 +177,76 @@ func handleClient(client Client, globalState *GlobalState) {
 		kick(client, fmt.Sprintf("LOGIN denied: Unknown role '%v'",
 			loginMessage.role))
 	}
-
 }
 
-func kick(client Client, reason string) {
+func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
+	turnBuffer := make([]MessageTurn, 1)
+	lastTurnNumberSent := -1
+
+	for {
+		select {
+		case turn := <-playerClient.newTurn:
+			// A new turn has been received.
+			if playerClient.client.state == CLIENT_READY {
+				// If no turn is buffered and if the player is waiting for
+				// a new turn, directly send the turn to the player.
+				lastTurnNumberSent = turn.TurnNumber
+				err := sendTurn(playerClient.client, turn)
+				if err != nil {
+					kickLoggedPlayer(playerClient.client, globalState,
+						fmt.Sprintf("Cannot send TURN, "+
+							"remote endpoint closed? Err: %v", err.Error()))
+					return
+				}
+				playerClient.client.state = CLIENT_THINKING
+			} else if len(turnBuffer) > 0 {
+				// The client is not ready, and a message is already buffered.
+				// Update the turn buffer with the new message.
+				turnBuffer[0] = turn
+			} else {
+				// The client is not ready, and the turn buffer is empty.
+				// Put the new message into the turn buffer.
+				turnBuffer = append(turnBuffer, turn)
+			}
+		case msg := <-playerClient.client.incomingMessages:
+			// A new message has been received from the player socket.
+			if msg.err != nil {
+				kickLoggedPlayer(playerClient.client, globalState,
+					fmt.Sprintf("Could not read message from player, "+
+						"remote endpoint closed? Err: %v", msg.err.Error()))
+				return
+			}
+			m, err := readTurnACKMessage(msg.content, lastTurnNumberSent)
+			if err != nil {
+				kickLoggedPlayer(playerClient.client, globalState,
+					fmt.Sprintf("Invalid TURN_ACK received. Err: %v",
+						err.Error()))
+				return
+			}
+
+			// TODO: transmit message to game logic
+
+			if len(turnBuffer) > 0 {
+				// If a TURN is buffered, send it right now.
+				err := sendTurn(playerClient.client, turnBuffer[0])
+				if err != nil {
+					kickLoggedPlayer(playerClient.client, globalState,
+						fmt.Sprintf("Cannot send TURN, "+
+							"remote endpoint closed? Err: %v", err.Error()))
+					return
+				}
+
+				// Empty turn buffer
+				turnBuffer = turnBuffer[0:]
+				playerClient.client.state = CLIENT_THINKING
+			} else {
+				playerClient.client.state = CLIENT_READY
+			}
+		}
+	}
+}
+
+func kick(client *Client, reason string) {
 	client.state = CLIENT_KICKED
 	log.WithFields(log.Fields{
 		"remote address": client.conn.RemoteAddr(),
@@ -202,11 +270,52 @@ func kick(client Client, reason string) {
 	}
 }
 
-func sendLoginACK(client Client) error {
+func kickLoggedPlayer(client *Client, gs *GlobalState, reason string) {
+	// Remove the player from the global state
+	gs.mutex.Lock()
+
+	// Locate the player in the array
+	playerIndex := -1
+	for index, value := range gs.players {
+		if value.client == client {
+			playerIndex = index
+			break
+		}
+	}
+
+	if playerIndex == -1 {
+		log.Error("Could not remove player: Did not find it")
+	} else {
+		// Remove the player by placing it at the end of the slice,
+		// then reducing the slice length
+		gs.players[len(gs.players)-1], gs.players[playerIndex] = gs.players[playerIndex], gs.players[len(gs.players)-1]
+		gs.players = gs.players[:len(gs.players)-1]
+	}
+
+	gs.mutex.Unlock()
+
+	// Kick the player
+	kick(client, reason)
+}
+
+func sendLoginACK(client *Client) error {
 	msg := MessageLoginAck{
 		MessageType: "LOGIN_ACK",
 	}
 
+	content, err := json.Marshal(msg)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("Cannot marshal JSON message")
+		return err
+	} else {
+		err = sendMessage(client, content)
+		return err
+	}
+}
+
+func sendTurn(client *Client, msg MessageTurn) error {
 	content, err := json.Marshal(msg)
 	if err != nil {
 		log.WithFields(log.Fields{

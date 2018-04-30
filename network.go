@@ -45,7 +45,7 @@ func server(port int, globalState *GlobalState, onexit chan int) {
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
 
-			go handleClient(client, globalState)
+			go handleClient(&client, globalState)
 		}
 	}
 
@@ -66,7 +66,7 @@ type ClientMessage struct {
 	err     error
 }
 
-func readClientMessages(client Client) {
+func readClientMessages(client *Client) {
 	var msg ClientMessage
 
 	for {
@@ -109,7 +109,7 @@ func readClientMessages(client Client) {
 	}
 }
 
-func sendMessage(client Client, content []byte) error {
+func sendMessage(client *Client, content []byte) error {
 	// Check content size
 	contentSize := len(content)
 	if contentSize >= 65535 {

@@ -19,6 +19,36 @@ func readString(data map[string]interface{}, field string) (string, error) {
 	}
 }
 
+func readInt(data map[string]interface{}, field string) (int, error) {
+	value, exists := data[field]
+	if !exists {
+		return 0, fmt.Errorf("Field '%v' is missing", field)
+	}
+
+	switch value.(type) {
+	default:
+		return 0, fmt.Errorf("Non-integral value for field '%v'", field)
+	case float64:
+		return int(value.(float64)), nil
+	}
+}
+
+func readObject(data map[string]interface{}, field string) (map[string]interface{}, error) {
+	value, exists := data[field]
+	if !exists {
+		return make(map[string]interface{}),
+			fmt.Errorf("Field '%v' is missing", field)
+	}
+
+	switch value.(type) {
+	default:
+		return make(map[string]interface{}),
+			fmt.Errorf("Non-object value for field '%v'", field)
+	case map[string]interface{}:
+		return value.(map[string]interface{}), nil
+	}
+}
+
 func readIntInString(data map[string]interface{}, field string, bitSize,
 	minValue, maxValue int) (int, error) {
 	value, exists := data[field]

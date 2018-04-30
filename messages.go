@@ -15,13 +15,22 @@ type MessageLoginAck struct {
 }
 
 type MessageGameStarts struct {
-	playerID  int                    `json:"player_id"`
-	gameState map[string]interface{} `json:"game_state"`
+	PlayerID       int                    `json:"player_id"`
+	NbPlayers      int                    `json:"nb_players"`
+	NbTurnsMax     int                    `json:"nb_turns_max"`
+	DelayFirstTurn float64                `json:"milliseconds_before_first_turn"`
+	Data           map[string]interface{} `json:"data"`
+}
+
+type MessageGameEnds struct {
+	WinnerPlayerID int                    `json:"winner_player_id"`
+	Data           map[string]interface{} `json:"data"`
 }
 
 type MessageTurn struct {
-	turnNumber int                    `json:"turn_number"`
-	gameState  map[string]interface{} `json:"game_state"`
+	MessageType string                 `json:"message_type"`
+	TurnNumber  int                    `json:"turn_number"`
+	GameState   map[string]interface{} `json:"game_state"`
 }
 
 type MessageTurnAck struct {
@@ -85,4 +94,35 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 		return readMessage, fmt.Errorf("Invalid role '%v'",
 			readMessage.role)
 	}
+}
+
+func readTurnACKMessage(data map[string]interface{}, expectedTurnNumber int) (
+	MessageTurnAck, error) {
+	var readMessage MessageTurnAck
+
+	// Check message type
+	err := checkMessageType(data, "TURN_ACK")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Read turn number
+	readMessage.turnNumber, err = readInt(data, "turn_number")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Check turn number
+	if readMessage.turnNumber != expectedTurnNumber {
+		return readMessage, fmt.Errorf("Invalid value (turn_number=%v): "+
+			"expecting %v", readMessage.turnNumber, expectedTurnNumber)
+	}
+
+	// Read actions
+	readMessage.actions, err = readObject(data, "actions")
+	if err != nil {
+		return readMessage, err
+	}
+
+	return readMessage, nil
 }
