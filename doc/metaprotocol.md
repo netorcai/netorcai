@@ -256,13 +256,19 @@ Fields:
 - `winner_player_id` (non-negative integral number or null):
   The unique identifier of the player currently winning the game.
   Can be null if there is no current winner.
-- `game_state` (object): Game-dependent content.
+- `game_state` (object): The current game state, as it should be
+  transmitted to clients.
+  Only the `all_clients` key of this object is currently implemented, which
+  means the associated game-dependent object will be transmitted to all the
+  clients (players and visualizations).
 
 Example:
 ```json
 {
   "message_type": "DO_TURN_ACK",
-  "game_state": {}
+  "game_state": {
+    "all_clients": {}
+  }
 }
 ```
 

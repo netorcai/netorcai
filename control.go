@@ -34,7 +34,8 @@ type GameLogicClient struct {
 }
 
 type VisuClient struct {
-	client Client
+	client  Client
+	newTurn chan string
 }
 
 type GlobalState struct {
@@ -42,7 +43,7 @@ type GlobalState struct {
 
 	gameState int
 
-	gameLogic GameLogicClient
+	gameLogic []GameLogicClient
 	players   []PlayerClient
 	visus     []VisuClient
 
@@ -52,7 +53,7 @@ type GlobalState struct {
 	millisecondsBeforeFirstTurn float64
 }
 
-func handleClient(client Client) {
+func handleClient(client Client, globalState GlobalState) {
 	log.WithFields(log.Fields{
 		"remote address": client.conn.RemoteAddr(),
 	}).Debug("New connection")
@@ -81,6 +82,80 @@ func handleClient(client Client) {
 		return
 	}
 	client.nickname = loginMessage.nickname
+
+	globalState.mutex.Lock()
+	switch loginMessage.role {
+	case "player":
+		if globalState.gameState != GAME_NOT_RUNNING {
+			globalState.mutex.Unlock()
+			kick(client, "LOGIN denied: Game is not running")
+		} else if len(globalState.players) >= globalState.nbPlayersMax {
+			globalState.mutex.Unlock()
+			kick(client, "LOGIN denied: Maximum number of players reached")
+		} else {
+			err = sendLoginACK(client)
+			if err != nil {
+				globalState.mutex.Unlock()
+				kick(client, "LOGIN denied: Could not send LOGIN_ACK")
+			} else {
+				playerClient := PlayerClient{
+					client:  client,
+					newTurn: make(chan string),
+				}
+
+				globalState.players = append(globalState.players, playerClient)
+				globalState.mutex.Unlock()
+
+				// TODO: call handlePlayer
+			}
+		}
+	case "visualization":
+		if len(globalState.visus) >= globalState.nbVisusMax {
+			globalState.mutex.Unlock()
+			kick(client, "LOGIN denied: Maximum number of visus reached")
+		} else {
+			err = sendLoginACK(client)
+			if err != nil {
+				globalState.mutex.Unlock()
+				kick(client, "LOGIN denied: Could not send LOGIN_ACK")
+			} else {
+				visuClient := VisuClient{
+					client:  client,
+					newTurn: make(chan string),
+				}
+
+				globalState.visus = append(globalState.visus, visuClient)
+				globalState.mutex.Unlock()
+
+				// TODO: call handleVisu
+			}
+		}
+	case "game logic":
+		if len(globalState.gameLogic) >= 1 {
+			globalState.mutex.Unlock()
+			kick(client, "LOGIN denied: A game logic is already logged in")
+		} else {
+			err = sendLoginACK(client)
+			if err != nil {
+				globalState.mutex.Unlock()
+				kick(client, "LOGIN denied: Could not send LOGIN_ACK")
+			} else {
+				glClient := GameLogicClient{
+					client: client,
+				}
+
+				globalState.gameLogic = append(globalState.gameLogic, glClient)
+				globalState.mutex.Unlock()
+
+				// TODO: call handleGameLogic
+			}
+		}
+	default:
+		globalState.mutex.Unlock()
+		kick(client, fmt.Sprintf("LOGIN denied: Unknown role '%v'",
+			loginMessage.role))
+	}
+
 }
 
 func kick(client Client, reason string) {
@@ -104,5 +179,22 @@ func kick(client Client, reason string) {
 	} else {
 		_ = sendMessage(client, content)
 		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func sendLoginACK(client Client) error {
+	msg := MessageLoginAck{
+		MessageType: "LOGIN_ACK",
+	}
+
+	content, err := json.Marshal(msg)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("Cannot marshal JSON message")
+		return err
+	} else {
+		err = sendMessage(client, content)
+		return err
 	}
 }

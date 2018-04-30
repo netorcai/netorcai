@@ -11,6 +11,7 @@ type MessageLogin struct {
 }
 
 type MessageLoginAck struct {
+	MessageType string `json:"message_type"`
 }
 
 type MessageGameStarts struct {
@@ -78,7 +79,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 	switch readMessage.role {
 	case "player",
 		"visualization",
-		"game_logic":
+		"game logic":
 		return readMessage, nil
 	default:
 		return readMessage, fmt.Errorf("Invalid role '%v'",
