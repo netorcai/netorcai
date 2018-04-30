@@ -142,7 +142,7 @@ Options:
 
 	serverExit := make(chan int)
 
-	go server(int(port), globalState, serverExit)
+	go server(int(port), &globalState, serverExit)
 
 	select {
 	case serverExitCode := <-serverExit:

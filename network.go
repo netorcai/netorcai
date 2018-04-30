@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func server(port int, globalState GlobalState, onexit chan int) {
+func server(port int, globalState *GlobalState, onexit chan int) {
 	// Listen all incoming TCP connections on the specified port
 	listenAddress := ":" + strconv.Itoa(port)
 	listener, err := net.Listen("tcp", listenAddress)

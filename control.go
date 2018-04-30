@@ -53,7 +53,7 @@ type GlobalState struct {
 	millisecondsBeforeFirstTurn float64
 }
 
-func handleClient(client Client, globalState GlobalState) {
+func handleClient(client Client, globalState *GlobalState) {
 	log.WithFields(log.Fields{
 		"remote address": client.conn.RemoteAddr(),
 	}).Debug("New connection")
