@@ -222,15 +222,28 @@ This message type is sent from **netorcai** to **game logic**.
 It tells the game logic to do a new turn.
 
 Fields:
-- `player_actions` (array): Game-dependent content.
-  Each element of this array exactly correspond to the `actions` field of the
-  [TURN_ACK](#turn_ack) message.
+- `player_actions` (array): The actions decided by the players.
+  There is at most one array element per player.
+  This array contains dictionaries that must be formatted in the following way:
+    - `player_id` (non-negative integral number):
+      The unique identifier of the player who decided the actions.
+    - `turn_number` (non-negative integral number):
+      The turn whose the actions comes from
+      (received from [TURN_ACK](#turn_ack)).
+    - `actions` (array): The actions of the player.
+      Game-dependent content (received from [TURN_ACK](#turn_ack)).
 
 Example:
 ```json
 {
   "message_type": "DO_TURN",
-  "player_actions": []
+  "player_actions": [
+    {
+      "player_id": 0,
+      "turn_number": 0,
+      "actions": []
+    }
+  ]
 }
 ```
 
