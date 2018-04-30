@@ -104,6 +104,13 @@ func handleClient(client Client, globalState *GlobalState) {
 				}
 
 				globalState.players = append(globalState.players, playerClient)
+
+				log.WithFields(log.Fields{
+					"nickname":       client.nickname,
+					"remote address": client.conn.RemoteAddr(),
+					"player count":   len(globalState.players),
+				}).Info("New player accepted")
+
 				globalState.mutex.Unlock()
 
 				// TODO: call handlePlayer
@@ -125,6 +132,13 @@ func handleClient(client Client, globalState *GlobalState) {
 				}
 
 				globalState.visus = append(globalState.visus, visuClient)
+
+				log.WithFields(log.Fields{
+					"nickname":       client.nickname,
+					"remote address": client.conn.RemoteAddr(),
+					"visu count":     len(globalState.visus),
+				}).Info("New visualization accepted")
+
 				globalState.mutex.Unlock()
 
 				// TODO: call handleVisu
@@ -145,6 +159,12 @@ func handleClient(client Client, globalState *GlobalState) {
 				}
 
 				globalState.gameLogic = append(globalState.gameLogic, glClient)
+
+				log.WithFields(log.Fields{
+					"nickname":       client.nickname,
+					"remote address": client.conn.RemoteAddr(),
+				}).Info("Game logic accepted")
+
 				globalState.mutex.Unlock()
 
 				// TODO: call handleGameLogic
