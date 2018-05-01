@@ -74,8 +74,7 @@ func readClientMessages(client *Client) {
 		contentSizeBuf := make([]byte, 2)
 		_, err := io.ReadFull(client.reader, contentSizeBuf)
 		if err != nil {
-			msg.err = fmt.Errorf("Cannot read content size. "+
-				"Remote endpoint closed? Err=%v", err)
+			msg.err = fmt.Errorf("Remote endpoint closed? Read error: %v", err)
 			client.incomingMessages <- msg
 			return
 		}
@@ -87,8 +86,7 @@ func readClientMessages(client *Client) {
 		contentBuf := make([]byte, contentSize)
 		_, err = io.ReadFull(client.reader, contentBuf)
 		if err != nil {
-			msg.err = fmt.Errorf("Cannot read content. "+
-				"Remote endpoint closed? Err=%v", err)
+			msg.err = fmt.Errorf("Remote endpoint closed? Read error: %v", err)
 			client.incomingMessages <- msg
 			return
 		}
@@ -122,22 +120,19 @@ func sendMessage(client *Client, content []byte) error {
 	binary.LittleEndian.PutUint16(contentSizeBuf, contentSizeUint16)
 	_, err := client.writer.Write(contentSizeBuf)
 	if err != nil {
-		return fmt.Errorf("Cannot write content size. "+
-			"Remote endpoint closed? Err=%v", err)
+		return fmt.Errorf("Remote endpoint closed? Write error: %v", err)
 	}
 
 	// Write content on socket
 	_, err = client.writer.Write(content)
 	if err != nil {
-		return fmt.Errorf("Cannot write content. Remote endpoint closed? "+
-			"Err=%v", err)
+		return fmt.Errorf("Remote endpoint closed? Write error: %v", err)
 	}
 
 	// Write terminating "\n" character on socket
 	err = client.writer.WriteByte(0x0A)
 	if err != nil {
-		return fmt.Errorf("Cannot write terminating character. "+
-			"Remote endpoint closed? Err=%v", err)
+		return fmt.Errorf("Remote endpoint closed? Write error: %v", err)
 	}
 
 	// Flush socket

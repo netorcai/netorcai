@@ -115,7 +115,8 @@ func handleClient(client *Client, globalState *GlobalState) {
 
 				globalState.mutex.Unlock()
 
-				// TODO: call handlePlayer
+				// Player behavior is handled in dedicated function.
+				handlePlayer(&playerClient, globalState)
 			}
 		}
 	case "visualization":
@@ -194,8 +195,7 @@ func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
 				err := sendTurn(playerClient.client, turn)
 				if err != nil {
 					kickLoggedPlayer(playerClient.client, globalState,
-						fmt.Sprintf("Cannot send TURN, "+
-							"remote endpoint closed? Err: %v", err.Error()))
+						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
 					return
 				}
 				playerClient.client.state = CLIENT_THINKING
@@ -212,14 +212,13 @@ func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
 			// A new message has been received from the player socket.
 			if msg.err != nil {
 				kickLoggedPlayer(playerClient.client, globalState,
-					fmt.Sprintf("Could not read message from player, "+
-						"remote endpoint closed? Err: %v", msg.err.Error()))
+					fmt.Sprintf("Cannot read TURN_ACK. %v", msg.err.Error()))
 				return
 			}
-			m, err := readTurnACKMessage(msg.content, lastTurnNumberSent)
+			_, err := readTurnACKMessage(msg.content, lastTurnNumberSent)
 			if err != nil {
 				kickLoggedPlayer(playerClient.client, globalState,
-					fmt.Sprintf("Invalid TURN_ACK received. Err: %v",
+					fmt.Sprintf("Invalid TURN_ACK received. %v",
 						err.Error()))
 				return
 			}
@@ -231,8 +230,7 @@ func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
 				err := sendTurn(playerClient.client, turnBuffer[0])
 				if err != nil {
 					kickLoggedPlayer(playerClient.client, globalState,
-						fmt.Sprintf("Cannot send TURN, "+
-							"remote endpoint closed? Err: %v", err.Error()))
+						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
 					return
 				}
 
