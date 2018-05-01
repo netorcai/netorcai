@@ -5,4 +5,5 @@ go:
 
 script:
   - go install .
-  - netorcai --version
+  - cd test
+  - bats .
