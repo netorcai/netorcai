@@ -20,5 +20,8 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.bats
     # Client
     pkgs.python36
+    # Misc
+    pkgs.psmisc
+    pkgs.netcat-gnu
   ];
 }
