@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mpoquet/netorcai.svg?branch=master)](https://travis-ci.org/mpoquet/netorcai)
+
 A network orchestrator for artificial intelligence games.
 
 Why?
