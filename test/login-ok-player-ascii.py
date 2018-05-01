@@ -3,10 +3,7 @@ import client
 
 C = client.Client()
 C.connect()
-C._send_json({
-    "message_type": "LOGIN",
-    "nickname": "okay",
-    "role": "player"})
+C.send_login("okay", "player")
 
 msg = C.recv_json()
 print(msg)
