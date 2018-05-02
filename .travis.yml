@@ -12,10 +12,12 @@ script:
   # Run the tests
   - cd ${TRAVIS_BUILD_DIR}/test
   - bats .
+  # Install coverage dependencies
+  - go get github.com/wadey/gocovmerge
+  - go get github.com/mattn/goveralls
+  - export PATH="${PATH}:${GOPATH:=${HOME}/go}/bin"
   # Run the tests in coverage mode
   - cd ${TRAVIS_BUILD_DIR}/test
   - ./cover.bash
   # Send coverage results to coveralls
-  - go get github.com/mattn/goveralls
-  - export PATH="${PATH}:${GOPATH:=${HOME}/go}/bin"
   - goveralls -coverprofile=./merged.covout -service=travis-ci -repotoken ${COVERALLS_TOKEN}
