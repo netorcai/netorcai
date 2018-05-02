@@ -50,7 +50,8 @@ def generate_bats_file(input_filename, output_filename):
 
 # Input files definition
 NETORCAI_FILES = ["invalid-client.bats",
-                  "cli.bats"
+                  "cli.bats",
+                  "scenarios.bats"
                  ]
 
 for robintest_file in NETORCAI_FILES:
