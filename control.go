@@ -25,8 +25,9 @@ const (
 	CLIENT_KICKED   = iota
 )
 
-type PlayerClient struct {
+type PlayerOrVisuClient struct {
 	client   *Client
+	isPlayer bool
 	newTurn  chan MessageTurn
 	gameEnds chan MessageGameEnds
 }
@@ -35,19 +36,14 @@ type GameLogicClient struct {
 	client *Client
 }
 
-type VisuClient struct {
-	client  *Client
-	newTurn chan string
-}
-
 type GlobalState struct {
 	mutex sync.Mutex
 
 	gameState int
 
 	gameLogic []GameLogicClient
-	players   []PlayerClient
-	visus     []VisuClient
+	players   []PlayerOrVisuClient
+	visus     []PlayerOrVisuClient
 
 	nbPlayersMax                int
 	nbVisusMax                  int
@@ -100,12 +96,13 @@ func handleClient(client *Client, globalState *GlobalState) {
 				globalState.mutex.Unlock()
 				kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
-				playerClient := PlayerClient{
-					client:  client,
-					newTurn: make(chan MessageTurn),
+				pvClient := PlayerOrVisuClient{
+					client:   client,
+					isPlayer: true,
+					newTurn:  make(chan MessageTurn),
 				}
 
-				globalState.players = append(globalState.players, playerClient)
+				globalState.players = append(globalState.players, pvClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -116,7 +113,7 @@ func handleClient(client *Client, globalState *GlobalState) {
 				globalState.mutex.Unlock()
 
 				// Player behavior is handled in dedicated function.
-				handlePlayer(&playerClient, globalState)
+				handlePlayerOrVisu(&pvClient, globalState)
 			}
 		}
 	case "visualization":
@@ -129,12 +126,13 @@ func handleClient(client *Client, globalState *GlobalState) {
 				globalState.mutex.Unlock()
 				kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
-				visuClient := VisuClient{
-					client:  client,
-					newTurn: make(chan string),
+				pvClient := PlayerOrVisuClient{
+					client:   client,
+					isPlayer: false,
+					newTurn:  make(chan MessageTurn),
 				}
 
-				globalState.visus = append(globalState.visus, visuClient)
+				globalState.visus = append(globalState.visus, pvClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -144,7 +142,8 @@ func handleClient(client *Client, globalState *GlobalState) {
 
 				globalState.mutex.Unlock()
 
-				// TODO: call handleVisu
+				// Visu behavior is handled in dedicated function.
+				handlePlayerOrVisu(&pvClient, globalState)
 			}
 		}
 	case "game logic":
@@ -180,25 +179,26 @@ func handleClient(client *Client, globalState *GlobalState) {
 	}
 }
 
-func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
+func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
+	globalState *GlobalState) {
 	turnBuffer := make([]MessageTurn, 1)
 	lastTurnNumberSent := -1
 
 	for {
 		select {
-		case turn := <-playerClient.newTurn:
+		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
-			if playerClient.client.state == CLIENT_READY {
+			if pvClient.client.state == CLIENT_READY {
 				// If no turn is buffered and if the player is waiting for
 				// a new turn, directly send the turn to the player.
 				lastTurnNumberSent = turn.TurnNumber
-				err := sendTurn(playerClient.client, turn)
+				err := sendTurn(pvClient.client, turn)
 				if err != nil {
-					kickLoggedPlayer(playerClient.client, globalState,
+					kickLoggedPlayerOrVisu(pvClient, globalState,
 						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
 					return
 				}
-				playerClient.client.state = CLIENT_THINKING
+				pvClient.client.state = CLIENT_THINKING
 			} else if len(turnBuffer) > 0 {
 				// The client is not ready, and a message is already buffered.
 				// Update the turn buffer with the new message.
@@ -208,16 +208,16 @@ func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
 				// Put the new message into the turn buffer.
 				turnBuffer = append(turnBuffer, turn)
 			}
-		case msg := <-playerClient.client.incomingMessages:
+		case msg := <-pvClient.client.incomingMessages:
 			// A new message has been received from the player socket.
 			if msg.err != nil {
-				kickLoggedPlayer(playerClient.client, globalState,
+				kickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Cannot read TURN_ACK. %v", msg.err.Error()))
 				return
 			}
 			_, err := readTurnACKMessage(msg.content, lastTurnNumberSent)
 			if err != nil {
-				kickLoggedPlayer(playerClient.client, globalState,
+				kickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Invalid TURN_ACK received. %v",
 						err.Error()))
 				return
@@ -227,18 +227,18 @@ func handlePlayer(playerClient *PlayerClient, globalState *GlobalState) {
 
 			if len(turnBuffer) > 0 {
 				// If a TURN is buffered, send it right now.
-				err := sendTurn(playerClient.client, turnBuffer[0])
+				err := sendTurn(pvClient.client, turnBuffer[0])
 				if err != nil {
-					kickLoggedPlayer(playerClient.client, globalState,
+					kickLoggedPlayerOrVisu(pvClient, globalState,
 						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
 					return
 				}
 
 				// Empty turn buffer
 				turnBuffer = turnBuffer[0:]
-				playerClient.client.state = CLIENT_THINKING
+				pvClient.client.state = CLIENT_THINKING
 			} else {
-				playerClient.client.state = CLIENT_READY
+				pvClient.client.state = CLIENT_READY
 			}
 		}
 	}
@@ -268,32 +268,53 @@ func kick(client *Client, reason string) {
 	}
 }
 
-func kickLoggedPlayer(client *Client, gs *GlobalState, reason string) {
-	// Remove the player from the global state
+func kickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
+	gs *GlobalState, reason string) {
+	// Remove the client from the global state
 	gs.mutex.Lock()
 
-	// Locate the player in the array
-	playerIndex := -1
-	for index, value := range gs.players {
-		if value.client == client {
-			playerIndex = index
-			break
+	if pvClient.isPlayer {
+		// Locate the player in the array
+		playerIndex := -1
+		for index, value := range gs.players {
+			if value.client == pvClient.client {
+				playerIndex = index
+				break
+			}
 		}
-	}
 
-	if playerIndex == -1 {
-		log.Error("Could not remove player: Did not find it")
+		if playerIndex == -1 {
+			log.Error("Could not remove player: Did not find it")
+		} else {
+			// Remove the player by placing it at the end of the slice,
+			// then reducing the slice length
+			gs.players[len(gs.players)-1], gs.players[playerIndex] = gs.players[playerIndex], gs.players[len(gs.players)-1]
+			gs.players = gs.players[:len(gs.players)-1]
+		}
 	} else {
-		// Remove the player by placing it at the end of the slice,
-		// then reducing the slice length
-		gs.players[len(gs.players)-1], gs.players[playerIndex] = gs.players[playerIndex], gs.players[len(gs.players)-1]
-		gs.players = gs.players[:len(gs.players)-1]
+		// Locate the visu in the array
+		visuIndex := -1
+		for index, value := range gs.visus {
+			if value.client == pvClient.client {
+				visuIndex = index
+				break
+			}
+		}
+
+		if visuIndex == -1 {
+			log.Error("Could not remove visu: Did not find it")
+		} else {
+			// Remove the visu by placing it at the end of the slice,
+			// then reducing the slice length
+			gs.visus[len(gs.visus)-1], gs.visus[visuIndex] = gs.visus[visuIndex], gs.visus[len(gs.visus)-1]
+			gs.visus = gs.visus[:len(gs.visus)-1]
+		}
 	}
 
 	gs.mutex.Unlock()
 
-	// Kick the player
-	kick(client, reason)
+	// Kick the client
+	kick(pvClient.client, reason)
 }
 
 func sendLoginACK(client *Client) error {
