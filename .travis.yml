@@ -4,8 +4,18 @@ go:
   - "1.10.1"
 
 script:
+  # Retrieve dependencies
   - go get .
+  # Build and install the binaries
   - make all
   - export PATH="${PATH}:${TRAVIS_BUILD_DIR}"
-  - cd test
+  # Run the tests
+  - cd ${TRAVIS_BUILD_DIR}/test
   - bats .
+  # Run the tests in coverage mode
+  - cd ${TRAVIS_BUILD_DIR}/test
+  - ./cover.bash
+  # Send coverage results to coveralls
+  - go get github.com/mattn/goveralls
+  - export PATH="${PATH}:${GOPATH:=${HOME}/go}/bin"
+  - goveralls -coverprofile=./merged.covout -service=travis-ci -repotoken ${COVERALLS_TOKEN}
