@@ -168,6 +168,4 @@ Options:
 	case guardExitCode := <-guardExit:
 		return guardExitCode
 	}
-
-	return 0
 }
