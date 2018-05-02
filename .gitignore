@@ -1,3 +1,6 @@
 netorcai
 netorcai.cover
 test/__pycache__
+*.covout
+test/*-cover.bats
+test/coverage-report.txt
