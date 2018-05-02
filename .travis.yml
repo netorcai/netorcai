@@ -4,6 +4,7 @@ go:
   - "1.10.1"
 
 script:
+  - go get .
   - make all
   - export PATH="${PATH}:${TRAVIS_BUILD_DIR}"
   - cd test
