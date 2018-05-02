@@ -17,10 +17,10 @@ def generate_bats_file(input_filename, output_filename):
         with open(output_filename, "w") as out_file:
             count = 0
             for line in content:
-                if 'run_netorcai_wait_listening "" ""' in line:
+                if 'run_netorcai_wait_listening "" "' in line:
                     line = re.sub(
-                        'run_netorcai_wait_listening "" ""',
-                        'run_netorcai_wait_listening "netorcai.cover" "" '
+                        r'run_netorcai_wait_listening "" ("\d*")',
+                        r'run_netorcai_wait_listening "netorcai.cover" \1 '
                         '-test.coverprofile=${BATS_TEST_NAME}' + str(count) +
                         '.covout',
                         line)
@@ -28,11 +28,14 @@ def generate_bats_file(input_filename, output_filename):
                 if 'run netorcai' in line:
                     line = re.sub(
                         'run netorcai',
-                        'run netorcai.cover',
+                        'run netorcai.cover '
+                        '-test.coverprofile=${BATS_TEST_NAME}' + str(count) +
+                        '.covout',
                         line)
+                    count = count + 1
                 elif '''[ "${status}" -ne 0 ]''' in line:
-                    line = re.sub('''[ "${status}" -ne 0 ]''',
-                                  '''[ "${status}" -eq 0 ]''', line)
+                    line = re.sub("""\[ "\${status}" -ne 0 \]""",
+                                  '''[ "$status" -eq 0 ]''', line)
 
                 for option in options_to_bypass:
                     line = re.sub(option + '\\b',
