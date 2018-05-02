@@ -5,6 +5,8 @@ import (
 	docopt "github.com/docopt/docopt-go"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 var (
@@ -65,6 +67,17 @@ func initializeGlobalState(arguments map[string]interface{}) (GlobalState, error
 	}
 
 	return gs, nil
+}
+
+func setupGuards(onAbort chan int) {
+	// Guard against SIGINT (ctrl+C) and SIGTERM (kill)
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigterm
+		log.Warn("SIGTERM received. Aborting.")
+		onAbort <- 3
+	}()
 }
 
 func main() {
@@ -140,13 +153,17 @@ Options:
 		return 1
 	}
 
+	guardExit := make(chan int)
 	serverExit := make(chan int)
 
+	go setupGuards(guardExit)
 	go server(int(port), &globalState, serverExit)
 
 	select {
 	case serverExitCode := <-serverExit:
 		return serverExitCode
+	case guardExitCode := <-guardExit:
+		return guardExitCode
 	}
 
 	return 0

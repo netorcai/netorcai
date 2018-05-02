@@ -3,13 +3,13 @@ load test_helper
 # setup is called before each test
 setup() {
     # Kill any running netorcai
-    killall netorcai 2>/dev/null || true
+    killall netorcai netorcai.cover 2>/dev/null || true
 }
 
 # teardown is called after each test
 teardown() {
     # Kill any running netorcai
-    killall netorcai 2>/dev/null || true
+    killall netorcai netorcai.cover 2>/dev/null || true
 }
 
 @test "invalid-login-notjson" {
