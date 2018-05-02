@@ -100,7 +100,7 @@ Options:
 
 	netorcaiVersion := version
 	if netorcaiVersion == "" {
-		netorcaiVersion = "unreleased-yet"
+		netorcaiVersion = "v0.1.0"
 	}
 
 	ret := -1
