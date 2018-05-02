@@ -13,6 +13,7 @@ script:
   - cd ${TRAVIS_BUILD_DIR}/test
   - bats .
   # Install coverage dependencies
+  - go get github.com/wadey/gocov
   - go get github.com/wadey/gocovmerge
   - go get github.com/mattn/goveralls
   - export PATH="${PATH}:${GOPATH:=${HOME}/go}/bin"
