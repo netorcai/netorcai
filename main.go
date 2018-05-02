@@ -57,6 +57,9 @@ func initializeGlobalState(arguments map[string]interface{}) (GlobalState, error
 	}
 
 	msBeforeFirstTurn, err := readFloatInString(arguments, "--delay-first-turn", 64, 50, 10000)
+	if err != nil {
+		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+	}
 
 	gs = GlobalState{
 		gameState:                   GAME_NOT_RUNNING,
@@ -137,7 +140,7 @@ Options:
 
 	setupLogging(arguments)
 
-	port, err := readIntInString(arguments, "--port", 16, 0, 65535)
+	port, err := readIntInString(arguments, "--port", 64, 1, 65535)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err": err,
