@@ -48,8 +48,6 @@ func server(port int, globalState *GlobalState, onexit chan int) {
 			go handleClient(&client, globalState)
 		}
 	}
-
-	onexit <- 0
 }
 
 type Client struct {
