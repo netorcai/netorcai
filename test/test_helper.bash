@@ -37,3 +37,7 @@ run_netorcai_wait_listening() {
 
     return 0
 }
+
+killall_netorcai() {
+    killall netorcai netorcai.cover 2>/dev/null || true
+}

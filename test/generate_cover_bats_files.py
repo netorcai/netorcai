@@ -9,18 +9,26 @@ def generate_bats_file(input_filename, output_filename):
     options_to_bypass = ['--help', '-h', '--version',
                          '--port', '--nb-turns-max', '--nb-players-max',
                          '--nb-visus-max', '--delay-first-turn',
-                         '--debug', '--json-logs']
+                         '--verbose', '--quiet', '--debug', '--json-logs']
 
     with open(input_filename, "r") as in_file:
         content = [x.rstrip() for x in in_file.readlines()]
 
         with open(output_filename, "w") as out_file:
+            count = 0
             for line in content:
                 if 'run_netorcai_wait_listening "" ""' in line:
                     line = re.sub(
                         'run_netorcai_wait_listening "" ""',
                         'run_netorcai_wait_listening "netorcai.cover" "" '
-                        '-test.coverprofile=meh.covout',
+                        '-test.coverprofile=${BATS_TEST_NAME}' + str(count) +
+                        '.covout',
+                        line)
+                    count = count + 1
+                if 'run netorcai' in line:
+                    line = re.sub(
+                        'run netorcai',
+                        'run netorcai.cover',
                         line)
                 elif '''[ "${status}" -ne 0 ]''' in line:
                     line = re.sub('''[ "${status}" -ne 0 ]''',
@@ -37,7 +45,8 @@ def generate_bats_file(input_filename, output_filename):
 ##########
 
 # Input files definition
-NETORCAI_FILES = ["invalid-client.bats"
+NETORCAI_FILES = ["invalid-client.bats",
+                  "cli.bats"
                  ]
 
 for robintest_file in NETORCAI_FILES:
