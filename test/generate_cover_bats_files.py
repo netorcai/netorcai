@@ -9,7 +9,8 @@ def generate_bats_file(input_filename, output_filename):
     options_to_bypass = ['--help', '-h', '--version',
                          '--port', '--nb-turns-max', '--nb-players-max',
                          '--nb-visus-max', '--delay-first-turn',
-                         '--verbose', '--quiet', '--debug', '--json-logs']
+                         '--verbose', '--quiet', '--debug', '--json-logs',
+                         '--meh']
 
     with open(input_filename, "r") as in_file:
         content = [x.rstrip() for x in in_file.readlines()]

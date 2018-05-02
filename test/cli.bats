@@ -52,9 +52,20 @@ teardown() {
     [ "$?" -eq 0 ]
 }
 
+@test "cli-invalid-flag-combination" {
+    run netorcai --debug --verbose
+    [ "${status}" -ne 0 ]
+}
+
 ##################
 # Arguments test #
 ##################
+# unknown argument
+@test "cli-unknown-arg" {
+    run netorcai --meh=meh
+    [ "${status}" -ne 0 ]
+}
+
 # --nb-players-max
 @test "cli-nb-players-max-not-integer" {
     run netorcai --nb-players-max=meh
