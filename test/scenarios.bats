@@ -50,6 +50,14 @@ teardown() {
     [ "${status}" -eq 0 ]
 }
 
+@test "scenario-max-nb-game-logic" {
+    run_netorcai_wait_listening "" ""
+    [ $? -eq 0 ]
+
+    run ./max-nb-gamelogic.py
+    [ "${status}" -eq 0 ]
+}
+
 @test "scenario-parallel-same-port" {
     run_netorcai_wait_listening "" ""
     [ $? -eq 0 ]
