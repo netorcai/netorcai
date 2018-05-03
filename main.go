@@ -172,6 +172,8 @@ Options:
 	go setupGuards(guardExit)
 	go server(int(port), &globalState, serverExit, gameLogicExit)
 
+	run_prompt()
+
 	select {
 	case serverExitCode := <-serverExit:
 		return serverExitCode
