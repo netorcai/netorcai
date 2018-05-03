@@ -158,14 +158,17 @@ Options:
 
 	guardExit := make(chan int)
 	serverExit := make(chan int)
+	gameLogicExit := make(chan int)
 
 	go setupGuards(guardExit)
-	go server(int(port), &globalState, serverExit)
+	go server(int(port), &globalState, serverExit, gameLogicExit)
 
 	select {
 	case serverExitCode := <-serverExit:
 		return serverExitCode
 	case guardExitCode := <-guardExit:
 		return guardExitCode
+	case gameLogicExitCode := <-gameLogicExit:
+		return gameLogicExitCode
 	}
 }

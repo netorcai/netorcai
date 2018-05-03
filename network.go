@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func server(port int, globalState *GlobalState, onexit chan int) {
+func server(port int, globalState *GlobalState, onexit, gameLogicExit chan int) {
 	// Listen all incoming TCP connections on the specified port
 	listenAddress := ":" + strconv.Itoa(port)
 	listener, err := net.Listen("tcp", listenAddress)
@@ -45,7 +45,7 @@ func server(port int, globalState *GlobalState, onexit chan int) {
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
 
-			go handleClient(&client, globalState)
+			go handleClient(&client, globalState, gameLogicExit)
 		}
 	}
 }

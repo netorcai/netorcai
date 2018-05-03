@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -26,14 +27,20 @@ const (
 )
 
 type PlayerOrVisuClient struct {
-	client   *Client
-	isPlayer bool
-	newTurn  chan MessageTurn
-	gameEnds chan MessageGameEnds
+	client     *Client
+	playerID   int // TODO: generate them when the game is started
+	isPlayer   bool
+	gameStarts chan MessageGameStarts
+	newTurn    chan MessageTurn
+	gameEnds   chan MessageGameEnds
 }
 
 type GameLogicClient struct {
 	client *Client
+	// Messages to aggregate from player clients
+	turnAck chan MessageTurnAck
+	// Control messages
+	start chan int
 }
 
 type GlobalState struct {
@@ -51,7 +58,8 @@ type GlobalState struct {
 	millisecondsBeforeFirstTurn float64
 }
 
-func handleClient(client *Client, globalState *GlobalState) {
+func handleClient(client *Client, globalState *GlobalState,
+	gameLogicExit chan int) {
 	log.WithFields(log.Fields{
 		"remote address": client.conn.RemoteAddr(),
 	}).Debug("New connection")
@@ -86,7 +94,7 @@ func handleClient(client *Client, globalState *GlobalState) {
 	case "player":
 		if globalState.gameState != GAME_NOT_RUNNING {
 			globalState.mutex.Unlock()
-			kick(client, "LOGIN denied: Game is not running")
+			kick(client, "LOGIN denied: Game has been started")
 		} else if len(globalState.players) >= globalState.nbPlayersMax {
 			globalState.mutex.Unlock()
 			kick(client, "LOGIN denied: Maximum number of players reached")
@@ -98,6 +106,7 @@ func handleClient(client *Client, globalState *GlobalState) {
 			} else {
 				pvClient := PlayerOrVisuClient{
 					client:   client,
+					playerID: -1,
 					isPlayer: true,
 					newTurn:  make(chan MessageTurn),
 				}
@@ -128,6 +137,7 @@ func handleClient(client *Client, globalState *GlobalState) {
 			} else {
 				pvClient := PlayerOrVisuClient{
 					client:   client,
+					playerID: -1,
 					isPlayer: false,
 					newTurn:  make(chan MessageTurn),
 				}
@@ -147,7 +157,10 @@ func handleClient(client *Client, globalState *GlobalState) {
 			}
 		}
 	case "game logic":
-		if len(globalState.gameLogic) >= 1 {
+		if globalState.gameState != GAME_NOT_RUNNING {
+			globalState.mutex.Unlock()
+			kick(client, "LOGIN denied: Game has been started")
+		} else if len(globalState.gameLogic) >= 1 {
 			globalState.mutex.Unlock()
 			kick(client, "LOGIN denied: A game logic is already logged in")
 		} else {
@@ -169,7 +182,7 @@ func handleClient(client *Client, globalState *GlobalState) {
 
 				globalState.mutex.Unlock()
 
-				// TODO: call handleGameLogic
+				handleGameLogic(glClient, globalState, gameLogicExit)
 			}
 		}
 	default:
@@ -189,8 +202,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
 			if pvClient.client.state == CLIENT_READY {
-				// If no turn is buffered and if the player is waiting for
-				// a new turn, directly send the turn to the player.
+				// The client is ready, the message can be sent right now.
 				lastTurnNumberSent = turn.TurnNumber
 				err := sendTurn(pvClient.client, turn)
 				if err != nil {
@@ -199,14 +211,17 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 					return
 				}
 				pvClient.client.state = CLIENT_THINKING
-			} else if len(turnBuffer) > 0 {
-				// The client is not ready, and a message is already buffered.
-				// Update the turn buffer with the new message.
-				turnBuffer[0] = turn
-			} else {
-				// The client is not ready, and the turn buffer is empty.
-				// Put the new message into the turn buffer.
-				turnBuffer = append(turnBuffer, turn)
+			} else if pvClient.client.state == CLIENT_THINKING {
+				// The client is still computing something (its decisions for
+				// a player, or just updating its display for a visualization).
+				// The turn message therefore buffered.
+				if len(turnBuffer) > 0 {
+					// Update the turn buffer with the new message.
+					turnBuffer[0] = turn
+				} else {
+					// Put the new message into the turn buffer.
+					turnBuffer = append(turnBuffer, turn)
+				}
 			}
 		case msg := <-pvClient.client.incomingMessages:
 			// A new message has been received from the player socket.
@@ -215,7 +230,8 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 					fmt.Sprintf("Cannot read TURN_ACK. %v", msg.err.Error()))
 				return
 			}
-			_, err := readTurnACKMessage(msg.content, lastTurnNumberSent)
+			turnAckMsg, err := readTurnACKMessage(msg.content,
+				lastTurnNumberSent)
 			if err != nil {
 				kickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Invalid TURN_ACK received. %v",
@@ -223,10 +239,30 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				return
 			}
 
-			// TODO: transmit message to game logic
+			// Check client state
+			if pvClient.client.state != CLIENT_THINKING {
+				kickLoggedPlayerOrVisu(pvClient, globalState,
+					"Received a TURN_ACK but the client state is not THINKING")
+				return
+			}
 
+			// Check turnNumber value
+			if turnAckMsg.turnNumber != lastTurnNumberSent {
+				kickLoggedPlayerOrVisu(pvClient, globalState,
+					fmt.Sprintf("Invalid TURN_ACK received: "+
+						"Expected turn_number=%v, got %v", lastTurnNumberSent,
+						turnAckMsg.turnNumber))
+			}
+
+			// Forward the TURN_ACK message to the game logic
+			globalState.mutex.Lock()
+			if len(globalState.gameLogic) == 1 {
+				globalState.gameLogic[0].turnAck <- turnAckMsg
+			}
+			globalState.mutex.Unlock()
+
+			// If a TURN is buffered, send it right now.
 			if len(turnBuffer) > 0 {
-				// If a TURN is buffered, send it right now.
 				err := sendTurn(pvClient.client, turnBuffer[0])
 				if err != nil {
 					kickLoggedPlayerOrVisu(pvClient, globalState,
@@ -240,6 +276,74 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			} else {
 				pvClient.client.state = CLIENT_READY
 			}
+		}
+	}
+}
+
+func handleGameLogic(glClient GameLogicClient, globalState *GlobalState,
+	onexit chan int) {
+	// Wait for the game to start
+	<-glClient.start
+
+	// Generate randomized player identifiers
+	globalState.mutex.Lock()
+	playerIDs := rand.Perm(len(globalState.players))
+	for playerIndex, player := range globalState.players {
+		player.playerID = playerIDs[playerIndex]
+	}
+
+	// Send DO_FIRST_TURN
+	err := sendDoInit(glClient, len(globalState.players),
+		globalState.nbTurnsMax)
+	globalState.mutex.Unlock()
+
+	if err != nil {
+		kick(glClient.client, fmt.Sprintf("Cannot send DO_INIT. %v",
+			err.Error()))
+		onexit <- 1
+		return
+	}
+
+	// Wait for first turn (DO_INIT_ACK)
+	msg := <-glClient.client.incomingMessages
+	if msg.err != nil {
+		kick(glClient.client,
+			fmt.Sprintf("Cannot read DO_INIT_ACK. %v", msg.err.Error()))
+		onexit <- 1
+		return
+	}
+
+	doTurnAckMsg, err := readDoInitAckMessage(msg.content)
+	if err != nil {
+		kick(glClient.client,
+			fmt.Sprintf("Invalid DO_INIT_ACK message. %v", msg.err.Error()))
+		onexit <- 1
+		return
+	}
+
+	// Send GAME_STARTS to all clients
+	globalState.mutex.Lock()
+	for _, player := range globalState.players {
+		player.gameStarts <- MessageGameStarts{
+			PlayerID:       player.playerID,
+			NbPlayers:      len(globalState.players),
+			NbTurnsMax:     globalState.nbTurnsMax,
+			DelayFirstTurn: globalState.millisecondsBeforeFirstTurn,
+			Data:           doTurnAckMsg.GameState,
+		}
+	}
+	globalState.mutex.Unlock()
+
+	// Wait before really starting the game
+	time.Sleep(time.Duration(globalState.millisecondsBeforeFirstTurn) *
+		time.Millisecond)
+
+	// Order the game logic to compute a TURN (without any action)
+	sendDoTurn(glClient, make([]MessageDoTurnPlayerAction, 0))
+
+	for {
+		select {
+		//case turnAckMsg := <-glClient.turnAck:
 		}
 	}
 }
@@ -343,6 +447,44 @@ func sendTurn(client *Client, msg MessageTurn) error {
 		return err
 	} else {
 		err = sendMessage(client, content)
+		return err
+	}
+}
+
+func sendDoInit(client GameLogicClient, nbPlayers, nbTurnsMax int) error {
+	msg := MessageDoInit{
+		MessageType: "DO_INIT",
+		NbPlayers:   nbPlayers,
+		NbTurnsMax:  nbTurnsMax,
+	}
+
+	content, err := json.Marshal(msg)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("Cannot marshal JSON message")
+		return err
+	} else {
+		err = sendMessage(client.client, content)
+		return err
+	}
+}
+
+func sendDoTurn(client GameLogicClient,
+	playerActions []MessageDoTurnPlayerAction) error {
+	msg := MessageDoTurn{
+		MessageType:   "DO_TURN",
+		PlayerActions: playerActions,
+	}
+
+	content, err := json.Marshal(msg)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("Cannot marshal JSON message")
+		return err
+	} else {
+		err = sendMessage(client.client, content)
 		return err
 	}
 }

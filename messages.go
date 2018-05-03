@@ -38,6 +38,31 @@ type MessageTurnAck struct {
 	actions    map[string]interface{}
 }
 
+type MessageDoInit struct {
+	MessageType string `json:"message_type"`
+	NbPlayers   int    `json:"nb_players"`
+	NbTurnsMax  int    `json:"nb_turns_max"`
+}
+
+type MessageDoInitAck struct {
+	GameState map[string]interface{}
+}
+
+type MessageDoTurnPlayerAction struct {
+	PlayerID   int           `json:"player_id"`
+	TurnNumber int           `json:"turn_number"`
+	Actions    []interface{} `json:"actions"`
+}
+
+type MessageDoTurn struct {
+	MessageType   string                      `json:"message_type"`
+	PlayerActions []MessageDoTurnPlayerAction `json:"player_actions"`
+}
+
+type MessageDoTurnAck struct {
+	GameState map[string]interface{}
+}
+
 type MessageKick struct {
 	MessageType string `json:"message_type"`
 	KickReason  string `json:"kick_reason"`
@@ -120,6 +145,54 @@ func readTurnACKMessage(data map[string]interface{}, expectedTurnNumber int) (
 
 	// Read actions
 	readMessage.actions, err = readObject(data, "actions")
+	if err != nil {
+		return readMessage, err
+	}
+
+	return readMessage, nil
+}
+
+func readDoInitAckMessage(data map[string]interface{}) (MessageDoInitAck, error) {
+	var readMessage MessageDoInitAck
+
+	// Check message type
+	err := checkMessageType(data, "DO_INIT_ACK")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Read game state
+	gameState, err := readObject(data, "game_state")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Read game state -> all clients
+	readMessage.GameState, err = readObject(gameState, "all_clients")
+	if err != nil {
+		return readMessage, err
+	}
+
+	return readMessage, nil
+}
+
+func readDoTurnAckMessage(data map[string]interface{}) (MessageDoTurnAck, error) {
+	var readMessage MessageDoTurnAck
+
+	// Check message type
+	err := checkMessageType(data, "DO_TURN_ACK")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Read game state
+	gameState, err := readObject(data, "game_state")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Read game state -> all clients
+	readMessage.GameState, err = readObject(gameState, "all_clients")
 	if err != nil {
 		return readMessage, err
 	}
