@@ -38,7 +38,7 @@ type PlayerOrVisuClient struct {
 type GameLogicClient struct {
 	client *Client
 	// Messages to aggregate from player clients
-	turnAck chan MessageTurnAck
+	playerAction chan MessageDoTurnPlayerAction
 	// Control messages
 	start chan int
 }
@@ -56,6 +56,7 @@ type GlobalState struct {
 	nbVisusMax                  int
 	nbTurnsMax                  int
 	millisecondsBeforeFirstTurn float64
+	millisecondsBeforeTurns     float64
 }
 
 func handleClient(client *Client, globalState *GlobalState,
@@ -230,7 +231,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 					fmt.Sprintf("Cannot read TURN_ACK. %v", msg.err.Error()))
 				return
 			}
-			turnAckMsg, err := readTurnACKMessage(msg.content,
+			turnAckMsg, err := readTurnAckMessage(msg.content,
 				lastTurnNumberSent)
 			if err != nil {
 				kickLoggedPlayerOrVisu(pvClient, globalState,
@@ -254,12 +255,18 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 						turnAckMsg.turnNumber))
 			}
 
-			// Forward the TURN_ACK message to the game logic
-			globalState.mutex.Lock()
-			if len(globalState.gameLogic) == 1 {
-				globalState.gameLogic[0].turnAck <- turnAckMsg
+			if pvClient.isPlayer {
+				// Forward the player actions to the game logic
+				globalState.mutex.Lock()
+				if len(globalState.gameLogic) == 1 {
+					globalState.gameLogic[0].playerAction <- MessageDoTurnPlayerAction{
+						PlayerID:   pvClient.playerID,
+						TurnNumber: turnAckMsg.turnNumber,
+						Actions:    turnAckMsg.actions,
+					}
+				}
+				globalState.mutex.Unlock()
 			}
-			globalState.mutex.Unlock()
 
 			// If a TURN is buffered, send it right now.
 			if len(turnBuffer) > 0 {
@@ -323,13 +330,14 @@ func handleGameLogic(glClient GameLogicClient, globalState *GlobalState,
 
 	// Send GAME_STARTS to all clients
 	globalState.mutex.Lock()
+	initialNbPlayers := len(globalState.players)
 	for _, player := range globalState.players {
 		player.gameStarts <- MessageGameStarts{
-			PlayerID:       player.playerID,
-			NbPlayers:      len(globalState.players),
-			NbTurnsMax:     globalState.nbTurnsMax,
-			DelayFirstTurn: globalState.millisecondsBeforeFirstTurn,
-			Data:           doTurnAckMsg.GameState,
+			PlayerID:         player.playerID,
+			NbPlayers:        initialNbPlayers,
+			NbTurnsMax:       globalState.nbTurnsMax,
+			DelayFirstTurn:   globalState.millisecondsBeforeFirstTurn,
+			InitialGameState: doTurnAckMsg.InitialGameState,
 		}
 	}
 	globalState.mutex.Unlock()
@@ -339,11 +347,98 @@ func handleGameLogic(glClient GameLogicClient, globalState *GlobalState,
 		time.Millisecond)
 
 	// Order the game logic to compute a TURN (without any action)
-	sendDoTurn(glClient, make([]MessageDoTurnPlayerAction, 0))
+	turnNumber := 0
+	playerActions := make([]MessageDoTurnPlayerAction, 0)
+	sendDoTurn(glClient, playerActions)
 
 	for {
 		select {
-		//case turnAckMsg := <-glClient.turnAck:
+		case action := <-glClient.playerAction:
+			// A client sent its actions.
+			// Replace the current message from this player if it exists,
+			// and place it at the end of the array.
+			// This may happen if the client was late in a previous turn but
+			// catched up in current turn by sending two TURN_ACK.
+			actionFound := false
+			for actionIndex, act := range playerActions {
+				if act.PlayerID == action.PlayerID {
+					playerActions[len(playerActions)-1], playerActions[actionIndex] = playerActions[actionIndex], playerActions[len(playerActions)-1]
+					playerActions[len(playerActions)-1] = action
+					break
+				}
+			}
+
+			if !actionFound {
+				// Append the action into the actions array
+				playerActions = append(playerActions, action)
+			}
+
+		case msg := <-glClient.client.incomingMessages:
+			// New message received from the game logic
+			if msg.err != nil {
+				kick(glClient.client,
+					fmt.Sprintf("Cannot read DO_TURN_ACK. %v",
+						msg.err.Error()))
+				onexit <- 1
+				return
+			}
+
+			doTurnAckMsg, err := readDoTurnAckMessage(msg.content,
+				initialNbPlayers)
+			if err != nil {
+				kick(glClient.client,
+					fmt.Sprintf("Invalid DO_TURN_ACK message. %v",
+						err.Error()))
+				onexit <- 1
+				return
+			}
+
+			// Forward the TURN to the clients
+			globalState.mutex.Lock()
+			for _, player := range globalState.players {
+				player.newTurn <- MessageTurn{
+					TurnNumber: turnNumber,
+					GameState:  doTurnAckMsg.GameState,
+				}
+			}
+			for _, visu := range globalState.visus {
+				visu.newTurn <- MessageTurn{
+					TurnNumber: turnNumber,
+					GameState:  doTurnAckMsg.GameState,
+				}
+			}
+			globalState.mutex.Unlock()
+			turnNumber = turnNumber + 1
+
+			if turnNumber < globalState.nbTurnsMax {
+				// Trigger a new DO_TURN in some time
+				go func() {
+					time.Sleep(time.Duration(globalState.millisecondsBeforeTurns) *
+						time.Millisecond)
+
+					// Send current actions
+					sendDoTurn(glClient, playerActions)
+					// Clear actions array
+					playerActions = playerActions[:0]
+				}()
+			} else {
+				// Send GAME_ENDS to all clients
+				globalState.mutex.Lock()
+				for _, player := range globalState.players {
+					player.gameEnds <- MessageGameEnds{
+						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
+						GameState:      doTurnAckMsg.GameState,
+					}
+				}
+				for _, visu := range globalState.visus {
+					visu.gameEnds <- MessageGameEnds{
+						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
+						GameState:      doTurnAckMsg.GameState,
+					}
+				}
+
+				globalState.mutex.Unlock()
+			}
 		}
 	}
 }

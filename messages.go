@@ -15,16 +15,16 @@ type MessageLoginAck struct {
 }
 
 type MessageGameStarts struct {
-	PlayerID       int                    `json:"player_id"`
-	NbPlayers      int                    `json:"nb_players"`
-	NbTurnsMax     int                    `json:"nb_turns_max"`
-	DelayFirstTurn float64                `json:"milliseconds_before_first_turn"`
-	Data           map[string]interface{} `json:"data"`
+	PlayerID         int                    `json:"player_id"`
+	NbPlayers        int                    `json:"nb_players"`
+	NbTurnsMax       int                    `json:"nb_turns_max"`
+	DelayFirstTurn   float64                `json:"milliseconds_before_first_turn"`
+	InitialGameState map[string]interface{} `json:"initial_game_state"`
 }
 
 type MessageGameEnds struct {
 	WinnerPlayerID int                    `json:"winner_player_id"`
-	Data           map[string]interface{} `json:"data"`
+	GameState      map[string]interface{} `json:"game_state"`
 }
 
 type MessageTurn struct {
@@ -35,7 +35,7 @@ type MessageTurn struct {
 
 type MessageTurnAck struct {
 	turnNumber int
-	actions    map[string]interface{}
+	actions    []interface{}
 }
 
 type MessageDoInit struct {
@@ -45,7 +45,7 @@ type MessageDoInit struct {
 }
 
 type MessageDoInitAck struct {
-	GameState map[string]interface{}
+	InitialGameState map[string]interface{}
 }
 
 type MessageDoTurnPlayerAction struct {
@@ -60,7 +60,8 @@ type MessageDoTurn struct {
 }
 
 type MessageDoTurnAck struct {
-	GameState map[string]interface{}
+	WinnerPlayerID int
+	GameState      map[string]interface{}
 }
 
 type MessageKick struct {
@@ -121,7 +122,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 	}
 }
 
-func readTurnACKMessage(data map[string]interface{}, expectedTurnNumber int) (
+func readTurnAckMessage(data map[string]interface{}, expectedTurnNumber int) (
 	MessageTurnAck, error) {
 	var readMessage MessageTurnAck
 
@@ -144,7 +145,7 @@ func readTurnACKMessage(data map[string]interface{}, expectedTurnNumber int) (
 	}
 
 	// Read actions
-	readMessage.actions, err = readObject(data, "actions")
+	readMessage.actions, err = readArray(data, "actions")
 	if err != nil {
 		return readMessage, err
 	}
@@ -162,13 +163,13 @@ func readDoInitAckMessage(data map[string]interface{}) (MessageDoInitAck, error)
 	}
 
 	// Read game state
-	gameState, err := readObject(data, "game_state")
+	gameState, err := readObject(data, "initial_game_state")
 	if err != nil {
 		return readMessage, err
 	}
 
 	// Read game state -> all clients
-	readMessage.GameState, err = readObject(gameState, "all_clients")
+	readMessage.InitialGameState, err = readObject(gameState, "all_clients")
 	if err != nil {
 		return readMessage, err
 	}
@@ -176,13 +177,27 @@ func readDoInitAckMessage(data map[string]interface{}) (MessageDoInitAck, error)
 	return readMessage, nil
 }
 
-func readDoTurnAckMessage(data map[string]interface{}) (MessageDoTurnAck, error) {
+func readDoTurnAckMessage(data map[string]interface{}, nbPlayers int) (
+	MessageDoTurnAck, error) {
 	var readMessage MessageDoTurnAck
 
 	// Check message type
 	err := checkMessageType(data, "DO_TURN_ACK")
 	if err != nil {
 		return readMessage, err
+	}
+
+	// Read winner player id
+	readMessage.WinnerPlayerID, err = readInt(data, "winner_player_id")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Check player id
+	if readMessage.WinnerPlayerID < 0 ||
+		readMessage.WinnerPlayerID >= nbPlayers {
+		return readMessage, fmt.Errorf("Invalid winner_player_id: "+
+			"Not in [0, %v[", nbPlayers)
 	}
 
 	// Read game state

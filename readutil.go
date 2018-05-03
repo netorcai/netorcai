@@ -49,6 +49,23 @@ func readObject(data map[string]interface{}, field string) (map[string]interface
 	}
 }
 
+func readArray(data map[string]interface{}, field string) ([]interface{},
+	error) {
+	value, exists := data[field]
+	if !exists {
+		return make([]interface{}, 0),
+			fmt.Errorf("Field '%v' is missing", field)
+	}
+
+	switch value.(type) {
+	default:
+		return make([]interface{}, 0),
+			fmt.Errorf("Non-array value for field '%v'", field)
+	case []interface{}:
+		return value.([]interface{}), nil
+	}
+}
+
 func readIntInString(data map[string]interface{}, field string, bitSize,
 	minValue, maxValue int) (int, error) {
 	value, exists := data[field]
