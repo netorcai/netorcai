@@ -56,7 +56,7 @@ type GlobalState struct {
 	nbVisusMax                  int
 	nbTurnsMax                  int
 	millisecondsBeforeFirstTurn float64
-	millisecondsBeforeTurns     float64
+	millisecondsBetweenTurns    float64
 }
 
 func handleClient(client *Client, globalState *GlobalState,
@@ -413,7 +413,7 @@ func handleGameLogic(glClient GameLogicClient, globalState *GlobalState,
 			if turnNumber < globalState.nbTurnsMax {
 				// Trigger a new DO_TURN in some time
 				go func() {
-					time.Sleep(time.Duration(globalState.millisecondsBeforeTurns) *
+					time.Sleep(time.Duration(globalState.millisecondsBetweenTurns) *
 						time.Millisecond)
 
 					// Send current actions

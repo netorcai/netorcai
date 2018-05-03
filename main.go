@@ -61,12 +61,18 @@ func initializeGlobalState(arguments map[string]interface{}) (GlobalState, error
 		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
+	msBetweenTurns, err := readFloatInString(arguments, "--delay-turns", 64, 50, 10000)
+	if err != nil {
+		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+	}
+
 	gs = GlobalState{
 		gameState:                   GAME_NOT_RUNNING,
 		nbPlayersMax:                nbPlayersMax,
 		nbVisusMax:                  nbVisusMax,
 		nbTurnsMax:                  nbTurnsMax,
 		millisecondsBeforeFirstTurn: msBeforeFirstTurn,
+		millisecondsBetweenTurns:    msBetweenTurns,
 	}
 
 	return gs, nil
@@ -96,6 +102,7 @@ Usage:
            [--nb-players-max=<nbp>]
            [--nb-visus-max=<nbv>]
            [--delay-first-turn=<ms>]
+           [--delay-turns=<ms>]
            [(--verbose | --quiet | --debug)] [--json-logs]
   netorcai -h | --help
   netorcai --version
@@ -109,6 +116,8 @@ Options:
   --delay-first-turn=<ms>   The amount of time (in milliseconds) between the
                             GAME_STARTS message and the first TURN message.
                             [default: 1000]
+  --delay-turns=<ms>		The amount of time (in milliseconds) between two
+  							consecutive TURNs. [default: 1000]
   --quiet                   Only print critical information.
   --verbose                 Print information. Default verbosity mode.
   --debug                   Print debug information.
