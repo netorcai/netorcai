@@ -290,7 +290,21 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 func handleGameLogic(glClient GameLogicClient, globalState *GlobalState,
 	onexit chan int) {
 	// Wait for the game to start
-	<-glClient.start
+	select {
+	case <-glClient.start:
+	case msg := <-glClient.client.incomingMessages:
+		globalState.mutex.Lock()
+		if msg.err == nil {
+			kick(glClient.client, "Received a game logic message but "+
+				"the game has not started")
+		} else {
+			kick(glClient.client, fmt.Sprintf("Game logic error. %v",
+				msg.err.Error()))
+		}
+		globalState.gameLogic = globalState.gameLogic[:0]
+		globalState.mutex.Unlock()
+		return
+	}
 
 	// Generate randomized player identifiers
 	globalState.mutex.Lock()
