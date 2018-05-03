@@ -42,7 +42,8 @@ List of messages between **clients** and **netorcai**:
 List of messages between **netorcai** and **game logic**:
 - [LOGIN](#login)
 - [LOGIN_ACK](#login_ack)
-- [DO_FIRST_TURN](#do_first_turn)
+- [DO_INIT](#do_init)
+- [DO_INIT_ACK](#do_init_ack)
 - [DO_TURN](#do_turn)
 - [DO_TURN_ACK](#do_turn_ack)
 
@@ -196,11 +197,11 @@ Example:
 }
 ```
 
-### DO_FIRST_TURN
+### DO_INIT
 This message type is sent from **netorcai** to **game logic**.
 
-This is a specialization of the [DO_TURN](#do_turn) message: The first message
-does not contain any action, but some information about the players.
+This message starts the sequence to start the game. Netorcai gives information
+to the game logic to initialize it.
 
 Fields:
 - `nb_players` (integral positive number): The number of players in the game.
@@ -210,9 +211,31 @@ Fields:
 Example:
 ```json
 {
-  "message_type": "DO_FIRST_TURN",
+  "message_type": "DO_INIT",
   "nb_players": 4,
   "nb_turns_max": 100
+}
+```
+
+### DO_INIT_ACK
+This message is sent from **game logic** to **netorcai**.
+
+Game logic has finished its initialization.
+It sends initial information about the game, which is forwarded to the clients.
+
+Fields:
+- `game_state` (object): The initial game state, as it should be
+  transmitted to clients.
+  Only the `all_clients` key of this object is currently implemented, which
+  means the associated game-dependent object will be transmitted to all the
+  clients (players and visualizations).
+
+Example:
+```json
+{
+  "game_state": {
+    "all_clients": {}
+  }
 }
 ```
 
