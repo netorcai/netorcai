@@ -9,6 +9,7 @@ def generate_bats_file(input_filename, output_filename):
     options_to_bypass = ['--help', '-h', '--version',
                          '--port', '--nb-turns-max', '--nb-players-max',
                          '--nb-visus-max', '--delay-first-turn',
+                         '--delay-turns',
                          '--verbose', '--quiet', '--debug', '--json-logs',
                          '--meh']
 

@@ -195,3 +195,29 @@ teardown() {
     run netorcai --delay-first-turn=10000.001
     [ "${status}" -ne 0 ]
 }
+
+# --delay-turns
+@test "cli-delay-turns-not-float" {
+    run netorcai --delay-turns=meh
+    [ "${status}" -ne 0 ]
+}
+
+@test "cli-delay-turns-toosmall" {
+    run netorcai --delay-turns=49.999
+    [ "${status}" -ne 0 ]
+}
+
+@test "cli-delay-turns-small" {
+    run_netorcai_wait_listening "" "" --delay-turns=50
+    [ "$?" -eq 0 ]
+}
+
+@test "cli-delay-turns-big" {
+    run_netorcai_wait_listening "" "" --delay-turns=10000
+    [ "$?" -eq 0 ]
+}
+
+@test "cli-delay-turns-toobig" {
+    run netorcai --delay-turns=10000.001
+    [ "${status}" -ne 0 ]
+}
