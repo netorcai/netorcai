@@ -97,7 +97,7 @@ Fields:
   The maximum number of turns of the game.
 - `milliseconds_before_first_turn` (number): The number of milliseconds before
   the first game [TURN](#turn).
-- `data` (object): Game-dependent content.
+- `initial_game_state` (object): Game-dependent content.
 
 Example:
 ```json
@@ -107,7 +107,7 @@ Example:
   "nb_players": 4,
   "nb_turns_max": 100,
   "milliseconds_before_first_turn": 1000,
-  "data": {}
+  "initial_game_state": {}
 }
 ```
 
@@ -121,14 +121,14 @@ Fields:
 - `winner_player_id` (integral non-negative number or null):
   The unique identifier of the player that won the game.
   Can be null if there is no winner.
-- `data` (object): Game-dependent content.
+- `game_state` (object): Game-dependent content.
 
 Example:
 ```json
 {
   "message_type": "GAME_ENDS",
   "winner_player_id": 0,
-  "data": {}
+  "game_state": {}
 }
 ```
 
@@ -289,6 +289,7 @@ Example:
 ```json
 {
   "message_type": "DO_TURN_ACK",
+  "winner_player_id": 0,
   "game_state": {
     "all_clients": {}
   }
