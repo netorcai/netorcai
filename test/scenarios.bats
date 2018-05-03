@@ -10,6 +10,30 @@ teardown() {
     killall_netorcai
 }
 
+@test "scenario-login-player-ascii" {
+    run_netorcai_wait_listening "" ""
+    [ $? -eq 0 ]
+
+    run ./login-ok-player-ascii.py
+    [ "${status}" -eq 0 ]
+}
+
+@test "scenario-login-player-arabic" {
+    run_netorcai_wait_listening "" ""
+    [ $? -eq 0 ]
+
+    run ./login-ok-player-arabic.py
+    [ "${status}" -eq 0 ]
+}
+
+@test "scenario-login-player-japanese" {
+    run_netorcai_wait_listening "" ""
+    [ $? -eq 0 ]
+
+    run ./login-ok-player-japanese.py
+    [ "${status}" -eq 0 ]
+}
+
 @test "scenario-max-nb-players" {
     run_netorcai_wait_listening "" ""
     [ $? -eq 0 ]
