@@ -168,11 +168,11 @@ Options:
 	guardExit := make(chan int)
 	serverExit := make(chan int)
 	gameLogicExit := make(chan int)
+	shellExit := make(chan int)
 
 	go setupGuards(guardExit)
 	go server(int(port), &globalState, serverExit, gameLogicExit)
-
-	run_prompt(&globalState)
+	go run_prompt(&globalState, shellExit)
 
 	select {
 	case serverExitCode := <-serverExit:
@@ -181,5 +181,7 @@ Options:
 		return guardExitCode
 	case gameLogicExitCode := <-gameLogicExit:
 		return gameLogicExitCode
+	case shellExitCode := <-shellExit:
+		return shellExitCode
 	}
 }

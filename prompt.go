@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/c-bata/go-prompt"
+	"github.com/mpoquet/go-prompt"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-var globalGS *GlobalState
+var (
+	globalGS        *GlobalState
+	globalShellExit chan int
+)
 
 func stringInSlice(searchedValue string, slice []string) bool {
 	for _, value := range slice {
@@ -22,6 +25,7 @@ func stringInSlice(searchedValue string, slice []string) bool {
 func executor(line string) {
 	line = strings.TrimSpace(line)
 	rStart, _ := regexp.Compile(`\Astart\z`)
+	rQuit, _ := regexp.Compile(`\Aquit\z`)
 	rPrint, _ := regexp.Compile(`\Aprint\s+(?P<variable>\S+)\z`)
 	rSet, _ := regexp.Compile(`\Aset\s+(?P<variable>\S+)(?P<sep>\s|=)(?P<value>\S+)\z`)
 
@@ -47,6 +51,8 @@ func executor(line string) {
 			fmt.Printf("Game has already been started\n")
 		}
 		globalGS.mutex.Unlock()
+	} else if rQuit.MatchString(line) {
+		globalShellExit <- 1
 	} else if rPrint.MatchString(line) {
 		m := rPrint.FindStringSubmatch(line)
 		names := rPrint.SubexpNames()
@@ -168,6 +174,8 @@ func executor(line string) {
 	} else {
 		if strings.HasPrefix(line, "start") {
 			fmt.Println("expected syntax: start")
+		} else if strings.HasPrefix(line, "quit") {
+			fmt.Println("expected syntax: quit")
 		} else if strings.HasPrefix(line, "print") {
 			fmt.Println("expected syntax: print VARIABLE")
 		} else if strings.HasPrefix(line, "set") {
@@ -211,8 +219,9 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 }
 
-func run_prompt(gs *GlobalState) {
+func run_prompt(gs *GlobalState, onexit chan int) {
 	globalGS = gs
+	globalShellExit = onexit
 	p := prompt.New(
 		executor,
 		completer,
@@ -220,4 +229,5 @@ func run_prompt(gs *GlobalState) {
 		prompt.OptionTitle(""),
 	)
 	p.Run()
+	onexit <- 1
 }
