@@ -15,3 +15,4 @@ gocovmerge *.covout > merged.covout
 
 # Get a readable coverage report
 gocov convert merged.covout | gocov report > coverage-report.txt
+go tool cover -html=merged.covout -o coverage-report.html
