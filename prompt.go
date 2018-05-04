@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var globalGS *GlobalState
+
 func stringInSlice(searchedValue string, slice []string) bool {
 	for _, value := range slice {
 		if value == searchedValue {
@@ -34,7 +36,17 @@ func executor(line string) {
 	acceptedPrintVariables := append(acceptedSetVariables, "all")
 
 	if rStart.MatchString(line) {
-		fmt.Println("start")
+		globalGS.mutex.Lock()
+		if globalGS.gameState == GAME_NOT_RUNNING {
+			if len(globalGS.gameLogic) == 1 {
+				globalGS.gameLogic[0].start <- 1
+			} else {
+				fmt.Printf("Cannot start: Game logic not connected\n")
+			}
+		} else {
+			fmt.Printf("Game has already been started\n")
+		}
+		globalGS.mutex.Unlock()
 	} else if rPrint.MatchString(line) {
 		m := rPrint.FindStringSubmatch(line)
 		names := rPrint.SubexpNames()
@@ -44,7 +56,30 @@ func executor(line string) {
 		}
 
 		if stringInSlice(matches["variable"], acceptedPrintVariables) {
-			fmt.Printf("print %v\n", matches["variable"])
+			switch matches["variable"] {
+			case "nb-turns-max":
+				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.nbTurnsMax)
+			case "nb-players-max":
+				fmt.Printf("%v=%v\n", "nb-players-max",
+					globalGS.nbPlayersMax)
+			case "nb-visus-max":
+				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.nbVisusMax)
+			case "delay-first-turn":
+				fmt.Printf("%v=%v\n", "delay-first-turn",
+					globalGS.millisecondsBeforeFirstTurn)
+			case "delay-turns":
+				fmt.Printf("%v=%v\n", "delay-turns",
+					globalGS.millisecondsBetweenTurns)
+			case "all":
+				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.nbTurnsMax)
+				fmt.Printf("%v=%v\n", "nb-players-max",
+					globalGS.nbPlayersMax)
+				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.nbVisusMax)
+				fmt.Printf("%v=%v\n", "delay-first-turn",
+					globalGS.millisecondsBeforeFirstTurn)
+				fmt.Printf("%v=%v\n", "delay-turns",
+					globalGS.millisecondsBetweenTurns)
+			}
 		} else {
 			fmt.Printf("Bad VARIABLE=%v. Accepted values: %v\n",
 				matches["variable"],
@@ -70,8 +105,7 @@ func executor(line string) {
 						matches["value"], errInt.Error())
 				} else {
 					if intValue >= 1 && intValue <= 65535 {
-						fmt.Printf("set %v=%v\n", matches["variable"],
-							intValue)
+						globalGS.nbTurnsMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [1,65535]\n",
 							intValue)
@@ -83,8 +117,7 @@ func executor(line string) {
 						matches["value"], errInt.Error())
 				} else {
 					if intValue >= 1 && intValue <= 1024 {
-						fmt.Printf("set %v=%v\n", matches["variable"],
-							intValue)
+						globalGS.nbPlayersMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [1,1024]\n",
 							intValue)
@@ -96,8 +129,7 @@ func executor(line string) {
 						matches["value"], errInt.Error())
 				} else {
 					if intValue >= 0 && intValue <= 1024 {
-						fmt.Printf("set %v=%v\n", matches["variable"],
-							intValue)
+						globalGS.nbVisusMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [0,1024]\n",
 							intValue)
@@ -109,8 +141,7 @@ func executor(line string) {
 						matches["value"], errFloat.Error())
 				} else {
 					if floatValue >= 50 && floatValue <= 10000 {
-						fmt.Printf("set %v=%v\n", matches["variable"],
-							floatValue)
+						globalGS.millisecondsBeforeFirstTurn = floatValue
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [50,10000]\n",
 							floatValue)
@@ -122,8 +153,7 @@ func executor(line string) {
 						matches["value"], errFloat.Error())
 				} else {
 					if floatValue >= 50 && floatValue <= 10000 {
-						fmt.Printf("set %v=%v\n", matches["variable"],
-							floatValue)
+						globalGS.millisecondsBetweenTurns = floatValue
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [50,10000]\n",
 							floatValue)
@@ -181,7 +211,8 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 }
 
-func run_prompt() {
+func run_prompt(gs *GlobalState) {
+	globalGS = gs
 	p := prompt.New(
 		executor,
 		completer,
