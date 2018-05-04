@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/mpoquet/go-prompt"
+	"golang.org/x/crypto/ssh/terminal"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -219,9 +222,19 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 }
 
-func run_prompt(gs *GlobalState, onexit chan int) {
+func runPrompt(gs *GlobalState, onexit chan int) {
 	globalGS = gs
 	globalShellExit = onexit
+
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		interactivePrompt(onexit)
+	} else {
+		fmt.Println("Who are you?  You're not a terminal.")
+	}
+
+}
+
+func interactivePrompt(onexit chan int) {
 	p := prompt.New(
 		executor,
 		completer,
@@ -230,4 +243,13 @@ func run_prompt(gs *GlobalState, onexit chan int) {
 	)
 	p.Run()
 	onexit <- 1
+}
+
+func nonInteractivePrompt(onexit chan int) {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		line, _ := reader.ReadString('\n')
+		executor(line)
+	}
 }

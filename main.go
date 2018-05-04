@@ -172,7 +172,7 @@ Options:
 
 	go setupGuards(guardExit)
 	go server(int(port), &globalState, serverExit, gameLogicExit)
-	go run_prompt(&globalState, shellExit)
+	go runPrompt(&globalState, shellExit)
 
 	select {
 	case serverExitCode := <-serverExit:
