@@ -229,7 +229,7 @@ func runPrompt(gs *GlobalState, onexit chan int) {
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
 		interactivePrompt(onexit)
 	} else {
-		fmt.Println("Who are you?  You're not a terminal.")
+		nonInteractivePrompt(onexit)
 	}
 
 }
