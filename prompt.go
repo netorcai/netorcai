@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/c-bata/go-prompt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -58,7 +59,77 @@ func executor(line string) {
 		}
 
 		if stringInSlice(matches["variable"], acceptedSetVariables) {
-			fmt.Printf("set %v\n", matches["variable"])
+			// Read value
+			intValue, errInt := strconv.ParseInt(matches["value"], 0, 64)
+			floatValue, errFloat := strconv.ParseFloat(matches["value"], 64)
+
+			switch matches["variable"] {
+			case "nb-turns-max":
+				if errInt != nil {
+					fmt.Printf("Bad VALUE=%v. %v\n",
+						matches["value"], errInt.Error())
+				} else {
+					if intValue >= 1 && intValue <= 65535 {
+						fmt.Printf("set %v=%v\n", matches["variable"],
+							intValue)
+					} else {
+						fmt.Printf("Bad VALUE=%v: Not in [1,65535]\n",
+							intValue)
+					}
+				}
+			case "nb-players-max":
+				if errInt != nil {
+					fmt.Printf("Bad VALUE=%v. %v\n",
+						matches["value"], errInt.Error())
+				} else {
+					if intValue >= 1 && intValue <= 1024 {
+						fmt.Printf("set %v=%v\n", matches["variable"],
+							intValue)
+					} else {
+						fmt.Printf("Bad VALUE=%v: Not in [1,1024]\n",
+							intValue)
+					}
+				}
+			case "nb-visus-max":
+				if errInt != nil {
+					fmt.Printf("Bad VALUE=%v. %v\n",
+						matches["value"], errInt.Error())
+				} else {
+					if intValue >= 0 && intValue <= 1024 {
+						fmt.Printf("set %v=%v\n", matches["variable"],
+							intValue)
+					} else {
+						fmt.Printf("Bad VALUE=%v: Not in [0,1024]\n",
+							intValue)
+					}
+				}
+			case "delay-first-turn":
+				if errFloat != nil {
+					fmt.Printf("Bad VALUE=%v. %v\n",
+						matches["value"], errFloat.Error())
+				} else {
+					if floatValue >= 50 && floatValue <= 10000 {
+						fmt.Printf("set %v=%v\n", matches["variable"],
+							floatValue)
+					} else {
+						fmt.Printf("Bad VALUE=%v: Not in [50,10000]\n",
+							floatValue)
+					}
+				}
+			case "delay-turns":
+				if errFloat != nil {
+					fmt.Printf("Bad VALUE=%v. %v\n",
+						matches["value"], errFloat.Error())
+				} else {
+					if floatValue >= 50 && floatValue <= 10000 {
+						fmt.Printf("set %v=%v\n", matches["variable"],
+							floatValue)
+					} else {
+						fmt.Printf("Bad VALUE=%v: Not in [50,10000]\n",
+							floatValue)
+					}
+				}
+			}
 		} else {
 			fmt.Printf("Bad VARIABLE=%v. Accepted values: %v\n",
 				matches["variable"],
