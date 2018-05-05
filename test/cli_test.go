@@ -73,7 +73,7 @@ func TestCLIArgVersion(t *testing.T) {
 	defer killallNetorcai()
 
 	_, err = waitOutputTimeout(regexp.MustCompile(`\Av\d+\.\d+\.\d+\S*\z`),
-		nocOC, 1000)
+		nocOC, 1000, false)
 	assert.NoError(t, err, "Cannot read version")
 
 	retCode, err := waitCompletionTimeout(nocCompletion, 1000)

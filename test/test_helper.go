@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -21,7 +20,7 @@ func waitCompletionTimeout(completion chan int, timeoutMS int) (
 }
 
 func waitOutputTimeout(re *regexp.Regexp, output chan string,
-	timeoutMS int) (matchingLine string, err error) {
+	timeoutMS int, leaveOnNonMatch bool) (matchingLine string, err error) {
 	timeoutReached := make(chan int)
 	go func() {
 		time.Sleep(time.Duration(timeoutMS) * time.Millisecond)
@@ -34,7 +33,9 @@ func waitOutputTimeout(re *regexp.Regexp, output chan string,
 			if re.MatchString(line) {
 				return line, nil
 			} else {
-				log.Printf("Read non-matching line: %v\n", line)
+				if leaveOnNonMatch {
+					return line, fmt.Errorf("Non-matching line read: %v", line)
+				}
 			}
 		case <-timeoutReached:
 			return "", fmt.Errorf("Timeout reached")
@@ -45,7 +46,7 @@ func waitOutputTimeout(re *regexp.Regexp, output chan string,
 func waitListening(output chan string, timeoutMS int) (
 	matchingLine string, err error) {
 	re := regexp.MustCompile("Listening incoming connections")
-	return waitOutputTimeout(re, output, timeoutMS)
+	return waitOutputTimeout(re, output, timeoutMS, true)
 }
 
 func killallNetorcai() error {
