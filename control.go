@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"net"
 	"sync"
 	"time"
 )
@@ -45,6 +46,8 @@ type GameLogicClient struct {
 
 type GlobalState struct {
 	mutex sync.Mutex
+
+	listener net.Listener
 
 	gameState int
 

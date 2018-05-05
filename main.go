@@ -85,7 +85,28 @@ func setupGuards(onAbort chan int) {
 	go func() {
 		<-sigterm
 		log.Warn("SIGTERM received. Aborting.")
-		onAbort <- 3
+		globalGS.mutex.Lock()
+
+		log.Warn("Closing listening socket.")
+		globalGS.listener.Close()
+
+		log.Warn("Kicking all clients")
+		nbClients := len(globalGS.players) + len(globalGS.visus)
+		kickChan := make(chan int, nbClients)
+		for _, client := range append(globalGS.players, globalGS.visus...) {
+			go func() {
+				kick(client.client, "Aborting: netorcai got a SIGTERM")
+				client.client.conn.Close()
+				kickChan <- 0
+			}()
+		}
+
+		for i := 0; i < nbClients; i++ {
+			<-kickChan
+		}
+
+		globalGS.mutex.Unlock()
+		onAbort <- 1
 	}()
 }
 

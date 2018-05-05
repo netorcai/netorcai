@@ -11,10 +11,27 @@ import (
 	"strconv"
 )
 
+type Client struct {
+	conn             net.Conn
+	nickname         string
+	state            int
+	reader           *bufio.Reader
+	writer           *bufio.Writer
+	incomingMessages chan ClientMessage
+}
+
+type ClientMessage struct {
+	content map[string]interface{}
+	err     error
+}
+
 func server(port int, globalState *GlobalState, onexit, gameLogicExit chan int) {
 	// Listen all incoming TCP connections on the specified port
 	listenAddress := ":" + strconv.Itoa(port)
-	listener, err := net.Listen("tcp", listenAddress)
+	globalState.mutex.Lock()
+	var err error
+	globalState.listener, err = net.Listen("tcp", listenAddress)
+	globalState.mutex.Unlock()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":            err,
@@ -28,12 +45,12 @@ func server(port int, globalState *GlobalState, onexit, gameLogicExit chan int) 
 	log.WithFields(log.Fields{
 		"port": port,
 	}).Info("Listening incoming connections")
-	defer listener.Close()
+	defer globalState.listener.Close()
 
 	for {
 		// Wait for an incoming connection.
 		var client Client
-		client.conn, err = listener.Accept()
+		client.conn, err = globalState.listener.Accept()
 		if err != nil {
 			log.WithFields(log.Fields{
 				"err": err,
@@ -48,20 +65,6 @@ func server(port int, globalState *GlobalState, onexit, gameLogicExit chan int) 
 			go handleClient(&client, globalState, gameLogicExit)
 		}
 	}
-}
-
-type Client struct {
-	conn             net.Conn
-	nickname         string
-	state            int
-	reader           *bufio.Reader
-	writer           *bufio.Writer
-	incomingMessages chan ClientMessage
-}
-
-type ClientMessage struct {
-	content map[string]interface{}
-	err     error
 }
 
 func readClientMessages(client *Client) {
