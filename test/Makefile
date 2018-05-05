@@ -12,4 +12,4 @@ cover: setup clean
 
 test: setup clean
 	@unset DO_COVERAGE || true
-	GOCACHE=off go test .
+	GOCACHE=off go test -v .

@@ -8,7 +8,7 @@ set -eux
 rm -f *.covout coverage-report.txt
 
 # Run the tests, so coverage files can be obtained
-GOCACHE=off DO_COVERAGE=1 go test .
+GOCACHE=off DO_COVERAGE=1 go test -v .
 
 # Merge all coverage files into one
 gocovmerge *.covout > merged.covout

@@ -3,7 +3,7 @@ package test
 import (
 	"bufio"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"
 )
@@ -19,7 +19,9 @@ func runNetorcai(command string, arguments []string,
 		return fmt.Errorf("Could not setup process input/output pipes")
 	}
 
-	log.Printf("Starting process: %v\n", cmd.Args)
+	log.WithFields(log.Fields{
+		"args": cmd.Args,
+	}).Debug("Starting process")
 	err := cmd.Start()
 	if err != nil {
 		return fmt.Errorf("Cannot start process. %v", err)
