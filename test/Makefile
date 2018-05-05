@@ -11,5 +11,5 @@ cover: setup clean
 	./cover.bash
 
 test: setup clean
-	@unset DO_COVERAGE
+	@unset DO_COVERAGE || true
 	GOCACHE=off go test .
