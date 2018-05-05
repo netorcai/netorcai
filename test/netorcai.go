@@ -40,6 +40,9 @@ func runNetorcaiCover(coverFile string, arguments []string,
 			}
 		}
 
+		arguments = append([]string{"-test.coverprofile=" + coverFile},
+			arguments...)
+
 		return runNetorcai("netorcai.cover", arguments, inputControl,
 			outputControl, completion)
 	} else {

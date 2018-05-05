@@ -1,11 +1,15 @@
 default:
 	@echo "No default target."
 
+setup:
+	@go get github.com/stretchr/testify/assert
+
 clean:
 	rm -f *.covout *-cover.bats
 
-cover: clean
+cover: setup clean
 	./cover.bash
 
-test: clean
-	bats *.bats
+test: setup clean
+	@unset DO_COVERAGE
+	GOCACHE=off go test .

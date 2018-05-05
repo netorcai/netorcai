@@ -23,7 +23,7 @@ func TestCLINoArgs(t *testing.T) {
 	nocOC := make(chan string)
 	nocCompletion := make(chan int)
 
-	err := runNetorcaiCover("", args, nocIC, nocOC, nocCompletion)
+	err := runNetorcaiCover(genCoverfile(t), args, nocIC, nocOC, nocCompletion)
 	assert.NoError(t, err, "Cannot start netorcai")
 	_, err = waitListening(nocOC, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")

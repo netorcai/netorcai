@@ -2,8 +2,11 @@ package test
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"os/exec"
 	"regexp"
+	"testing"
 	"time"
 )
 
@@ -30,6 +33,8 @@ func waitOutputTimeout(re *regexp.Regexp, output chan string,
 		case line := <-output:
 			if re.MatchString(line) {
 				return line, nil
+			} else {
+				log.Printf("Read non-matching line: %v\n", line)
 			}
 		case <-timeoutReached:
 			return "", fmt.Errorf("Timeout reached")
@@ -47,4 +52,13 @@ func killallNetorcai() error {
 	cmd := exec.Command("killall")
 	cmd.Args = []string{"killall", "--quiet", "netorcai", "netorcai.cover"}
 	return cmd.Run()
+}
+
+func genCoverfile(t *testing.T) string {
+	_, exists := os.LookupEnv("DO_COVERAGE")
+	if exists {
+		return t.Name() + ".covout"
+	} else {
+		return ""
+	}
 }
