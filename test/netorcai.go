@@ -3,6 +3,7 @@ package test
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os/exec"
 	"strings"
 )
@@ -18,6 +19,7 @@ func runNetorcai(command string, arguments []string,
 		return fmt.Errorf("Could not setup process input/output pipes")
 	}
 
+	log.Printf("Starting process: %v\n", cmd.Args)
 	err := cmd.Start()
 	if err != nil {
 		return fmt.Errorf("Cannot start process. %v", err)
@@ -34,9 +36,9 @@ func runNetorcaiCover(coverFile string, arguments []string,
 
 	if coverFile != "" {
 		// Bypass arguments
-		for _, arg := range arguments {
+		for index, arg := range arguments {
 			if strings.HasPrefix(arg, "-") {
-				arg = "__bypass" + arg
+				arguments[index] = "__bypass" + arg
 			}
 		}
 

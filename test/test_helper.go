@@ -54,11 +54,17 @@ func killallNetorcai() error {
 	return cmd.Run()
 }
 
-func genCoverfile(t *testing.T) string {
+func handleCoverage(t *testing.T, expRetCode int) (coverFilename string,
+	expectedReturnCode int) {
 	_, exists := os.LookupEnv("DO_COVERAGE")
 	if exists {
-		return t.Name() + ".covout"
+		coverFilename = t.Name() + ".covout"
+		expectedReturnCode = 0
+		return
 	} else {
-		return ""
+		coverFilename = ""
+		expectedReturnCode = expRetCode
 	}
+
+	return coverFilename, expectedReturnCode
 }
