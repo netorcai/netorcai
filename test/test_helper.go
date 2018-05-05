@@ -2,12 +2,31 @@ package test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"os/exec"
 	"regexp"
 	"testing"
 	"time"
 )
+
+// Netorcai helpers
+func runNetorcaiWaitListening(t *testing.T) (nocIC, nocOC chan string,
+	nocCompletion chan int) {
+	args := []string{}
+	nocIC = make(chan string)
+	nocOC = make(chan string)
+	nocCompletion = make(chan int)
+	coverFile, _ := handleCoverage(t, 0)
+
+	err := runNetorcaiCover(coverFile, args, nocIC, nocOC, nocCompletion)
+	assert.NoError(t, err, "Cannot start netorcai")
+
+	_, err = waitListening(nocOC, 1000)
+	assert.NoError(t, err, "Netorcai is not listening")
+
+	return nocIC, nocOC, nocCompletion
+}
 
 func waitCompletionTimeout(completion chan int, timeoutMS int) (
 	exitCode int, err error) {
@@ -68,4 +87,29 @@ func handleCoverage(t *testing.T, expRetCode int) (coverFilename string,
 	}
 
 	return coverFilename, expectedReturnCode
+}
+
+// Client helpers
+func waitReadMessage(client *Client, timeoutMS int) (
+	msg map[string]interface{}, err error) {
+	msgChan := make(chan int)
+	go func() {
+		msg, err = client.ReadMessage()
+		msgChan <- 0
+	}()
+
+	select {
+	case <-msgChan:
+		return msg, err
+	case <-time.After(time.Duration(timeoutMS) * time.Millisecond):
+		return msg, fmt.Errorf("Timeout reached")
+	}
+}
+
+func checkKick(t *testing.T, msg map[string]interface{},
+	reasonMatcher *regexp.Regexp) {
+	assert.Equal(t, "KICK", msg["message_type"].(string),
+		"Unexpected message type")
+	assert.Regexp(t, reasonMatcher, msg["kick_reason"].(string),
+		"Unexpected kick reason")
 }
