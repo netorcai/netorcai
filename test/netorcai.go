@@ -4,38 +4,53 @@ import (
 	"bufio"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"os/exec"
 	"strings"
 )
 
-func runNetorcai(command string, arguments []string,
-	inputControl, outputControl chan string, completion chan int) error {
-	cmd := exec.Command(command)
-	cmd.Args = append([]string{command}, arguments...)
+type NetorcaiProcess struct {
+	cmd           *exec.Cmd
+	stdinPipe     io.WriteCloser
+	stdoutPipe    io.ReadCloser
+	inputControl  chan string // user can send messages on this channel
+	outputControl chan string // user can receive messages on this channel
+	completion    chan int    // user can receive an exit code on this channel
+}
 
-	stdinPipe, errIn := cmd.StdinPipe()
-	stdoutPipe, errOut := cmd.StdoutPipe()
+func runNetorcai(command string, arguments []string) (*NetorcaiProcess, error) {
+	proc := &NetorcaiProcess{
+		inputControl:  make(chan string),
+		outputControl: make(chan string),
+		completion:    make(chan int),
+	}
+	proc.cmd = exec.Command(command)
+	proc.cmd.Args = append([]string{command}, arguments...)
+
+	var errIn, errOut error
+	proc.stdinPipe, errIn = proc.cmd.StdinPipe()
+	proc.stdoutPipe, errOut = proc.cmd.StdoutPipe()
+
 	if errIn != nil || errOut != nil {
-		return fmt.Errorf("Could not setup process input/output pipes")
+		return proc, fmt.Errorf("Could not setup process input/output pipes")
 	}
 
 	log.WithFields(log.Fields{
-		"args": cmd.Args,
+		"args": proc.cmd.Args,
 	}).Debug("Starting process")
-	err := cmd.Start()
+	err := proc.cmd.Start()
 	if err != nil {
-		return fmt.Errorf("Cannot start process. %v", err)
+		return proc, fmt.Errorf("Cannot start process. %v", err)
 	}
 
-	go lineReader(bufio.NewReader(stdoutPipe), outputControl)
-	go lineWriter(bufio.NewWriter(stdinPipe), inputControl)
-	go waitCompletion(cmd, completion)
-	return nil
+	go lineReader(bufio.NewReader(proc.stdoutPipe), proc.outputControl)
+	go lineWriter(bufio.NewWriter(proc.stdinPipe), proc.inputControl)
+	go waitCompletion(proc.cmd, proc.completion)
+	return proc, nil
 }
 
-func runNetorcaiCover(coverFile string, arguments []string,
-	inputControl, outputControl chan string, completion chan int) error {
-
+func runNetorcaiCover(coverFile string, arguments []string) (
+	*NetorcaiProcess, error) {
 	if coverFile != "" {
 		// Bypass arguments
 		for index, arg := range arguments {
@@ -47,11 +62,9 @@ func runNetorcaiCover(coverFile string, arguments []string,
 		arguments = append([]string{"-test.coverprofile=" + coverFile},
 			arguments...)
 
-		return runNetorcai("netorcai.cover", arguments, inputControl,
-			outputControl, completion)
+		return runNetorcai("netorcai.cover", arguments)
 	} else {
-		return runNetorcai("netorcai", arguments, inputControl,
-			outputControl, completion)
+		return runNetorcai("netorcai", arguments)
 	}
 }
 

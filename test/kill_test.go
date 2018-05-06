@@ -7,7 +7,7 @@ import (
 )
 
 func TestKillKick(t *testing.T) {
-	_, _, _ = runNetorcaiWaitListening(t)
+	_ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
 	// Do client connections sequentially

@@ -12,21 +12,17 @@ import (
 )
 
 // Netorcai helpers
-func runNetorcaiWaitListening(t *testing.T) (nocIC, nocOC chan string,
-	nocCompletion chan int) {
-	args := []string{}
-	nocIC = make(chan string)
-	nocOC = make(chan string)
-	nocCompletion = make(chan int)
+func runNetorcaiWaitListening(t *testing.T) *NetorcaiProcess {
 	coverFile, _ := handleCoverage(t, 0)
+	args := []string{}
 
-	err := runNetorcaiCover(coverFile, args, nocIC, nocOC, nocCompletion)
+	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
 
-	_, err = waitListening(nocOC, 1000)
+	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
 
-	return nocIC, nocOC, nocCompletion
+	return proc
 }
 
 func waitCompletionTimeout(completion chan int, timeoutMS int) (
