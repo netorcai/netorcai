@@ -611,7 +611,7 @@ func Cleanup() {
 	if nbClients > 0 {
 		log.Warn("Sending KICK messages to clients")
 		kickChan := make(chan int)
-		for _, client := range globalGS.Players {
+		for _, client := range append(globalGS.Players, globalGS.Visus...) {
 			go func(c *Client) {
 				Kick(c, "netorcai abort")
 				kickChan <- 0
