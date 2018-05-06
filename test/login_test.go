@@ -245,7 +245,7 @@ func TestLoginMaxNbGameLogicSequential(t *testing.T) {
 
 func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
 	// Do many client connections in parallel
@@ -330,6 +330,11 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		err := client.Disconnect()
 		assert.NoError(t, err, "Could not disconnect")
 	}
+
+	killallNetorcai()
+	_, err := waitOutputTimeout(regexp.MustCompile(`Closing listening socket`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Could not read line")
 }
 
 func TestLoginMaxNbPlayerParallel(t *testing.T) {
