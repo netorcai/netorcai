@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	docopt "github.com/docopt/docopt-go"
+	"github.com/mpoquet/netorcai"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
@@ -35,68 +36,71 @@ func setupLogging(arguments map[string]interface{}) {
 	}
 }
 
-func initializeGlobalState(arguments map[string]interface{}) (GlobalState, error) {
-	var gs GlobalState
+func initializeGlobalState(arguments map[string]interface{}) (
+	netorcai.GlobalState, error) {
+	var gs netorcai.GlobalState
 
-	nbPlayersMax, err := readIntInString(arguments, "--nb-players-max",
-		64, 1, 1024)
+	nbPlayersMax, err := netorcai.ReadIntInString(arguments,
+		"--nb-players-max", 64, 1, 1024)
 	if err != nil {
 		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
-	nbVisusMax, err := readIntInString(arguments, "--nb-visus-max",
-		64, 0, 1024)
+	nbVisusMax, err := netorcai.ReadIntInString(arguments,
+		"--nb-visus-max", 64, 0, 1024)
 	if err != nil {
 		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
-	nbTurnsMax, err := readIntInString(arguments, "--nb-turns-max",
-		64, 1, 65535)
+	nbTurnsMax, err := netorcai.ReadIntInString(arguments,
+		"--nb-turns-max", 64, 1, 65535)
 	if err != nil {
 		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
-	msBeforeFirstTurn, err := readFloatInString(arguments, "--delay-first-turn", 64, 50, 10000)
+	msBeforeFirstTurn, err := netorcai.ReadFloatInString(arguments, "--delay-first-turn", 64, 50, 10000)
 	if err != nil {
 		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
-	msBetweenTurns, err := readFloatInString(arguments, "--delay-turns", 64, 50, 10000)
+	msBetweenTurns, err := netorcai.ReadFloatInString(arguments,
+		"--delay-turns", 64, 50, 10000)
 	if err != nil {
 		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
-	gs = GlobalState{
-		gameState:                   GAME_NOT_RUNNING,
-		nbPlayersMax:                nbPlayersMax,
-		nbVisusMax:                  nbVisusMax,
-		nbTurnsMax:                  nbTurnsMax,
-		millisecondsBeforeFirstTurn: msBeforeFirstTurn,
-		millisecondsBetweenTurns:    msBetweenTurns,
+	gs = netorcai.GlobalState{
+		GameState:                   netorcai.GAME_NOT_RUNNING,
+		NbPlayersMax:                nbPlayersMax,
+		NbVisusMax:                  nbVisusMax,
+		NbTurnsMax:                  nbTurnsMax,
+		MillisecondsBeforeFirstTurn: msBeforeFirstTurn,
+		MillisecondsBetweenTurns:    msBetweenTurns,
 	}
 
 	return gs, nil
 }
 
-func setupGuards(onAbort chan int) {
+func setupGuards(gs *netorcai.GlobalState, onAbort chan int) {
 	// Guard against SIGINT (ctrl+C) and SIGTERM (kill)
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigterm
 		log.Warn("SIGTERM received. Aborting.")
-		globalGS.mutex.Lock()
+		gs.Mutex.Lock()
 
 		log.Warn("Closing listening socket.")
-		globalGS.listener.Close()
+		gs.Listener.Close()
 
 		log.Warn("Kicking all clients")
-		nbClients := len(globalGS.players) + len(globalGS.visus)
+		nbClients := len(gs.Players) + len(gs.Visus)
 		kickChan := make(chan int, nbClients)
-		for _, client := range append(globalGS.players, globalGS.visus...) {
+		for _, client := range append(gs.Players, gs.Visus...) {
 			go func() {
-				kick(client.client, "Aborting: netorcai got a SIGTERM")
-				client.client.conn.Close()
+				netorcai.Kick(client.Client,
+					"Aborting: netorcai got a SIGTERM")
+				client.Client.Conn.Close()
 				kickChan <- 0
 			}()
 		}
@@ -105,7 +109,7 @@ func setupGuards(onAbort chan int) {
 			<-kickChan
 		}
 
-		globalGS.mutex.Unlock()
+		gs.Mutex.Unlock()
 		onAbort <- 1
 	}()
 }
@@ -170,7 +174,7 @@ Options:
 
 	setupLogging(arguments)
 
-	port, err := readIntInString(arguments, "--port", 64, 1, 65535)
+	port, err := netorcai.ReadIntInString(arguments, "--port", 64, 1, 65535)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err": err,
@@ -191,9 +195,9 @@ Options:
 	gameLogicExit := make(chan int)
 	shellExit := make(chan int)
 
-	go setupGuards(guardExit)
-	go server(int(port), &globalState, serverExit, gameLogicExit)
-	go runPrompt(&globalState, shellExit)
+	go setupGuards(&globalState, guardExit)
+	go netorcai.RunServer(int(port), &globalState, serverExit, gameLogicExit)
+	go netorcai.RunPrompt(&globalState, shellExit)
 
 	select {
 	case serverExitCode := <-serverExit:

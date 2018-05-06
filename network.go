@@ -1,4 +1,4 @@
-package main
+package netorcai
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ import (
 )
 
 type Client struct {
-	conn             net.Conn
+	Conn             net.Conn
 	nickname         string
 	state            int
 	reader           *bufio.Reader
@@ -25,13 +25,14 @@ type ClientMessage struct {
 	err     error
 }
 
-func server(port int, globalState *GlobalState, onexit, gameLogicExit chan int) {
+func RunServer(port int, globalState *GlobalState, onexit,
+	gameLogicExit chan int) {
 	// Listen all incoming TCP connections on the specified port
 	listenAddress := ":" + strconv.Itoa(port)
-	globalState.mutex.Lock()
+	globalState.Mutex.Lock()
 	var err error
-	globalState.listener, err = net.Listen("tcp", listenAddress)
-	globalState.mutex.Unlock()
+	globalState.Listener, err = net.Listen("tcp", listenAddress)
+	globalState.Mutex.Unlock()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":            err,
@@ -45,20 +46,20 @@ func server(port int, globalState *GlobalState, onexit, gameLogicExit chan int) 
 	log.WithFields(log.Fields{
 		"port": port,
 	}).Info("Listening incoming connections")
-	defer globalState.listener.Close()
+	defer globalState.Listener.Close()
 
 	for {
 		// Wait for an incoming connection.
 		var client Client
-		client.conn, err = globalState.listener.Accept()
+		client.Conn, err = globalState.Listener.Accept()
 		if err != nil {
 			log.WithFields(log.Fields{
 				"err": err,
 			}).Warn("Could not accept incoming connection")
 		} else {
 			// Handle connections in a new goroutine.
-			client.reader = bufio.NewReader(client.conn)
-			client.writer = bufio.NewWriter(client.conn)
+			client.reader = bufio.NewReader(client.Conn)
+			client.writer = bufio.NewWriter(client.Conn)
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
 

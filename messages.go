@@ -1,4 +1,4 @@
-package main
+package netorcai
 
 import (
 	"fmt"
@@ -70,7 +70,7 @@ type MessageKick struct {
 }
 
 func checkMessageType(data map[string]interface{}, expectedMessageType string) error {
-	messageType, err := readString(data, "message_type")
+	messageType, err := ReadString(data, "message_type")
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 	}
 
 	// Read nickname
-	readMessage.nickname, err = readString(data, "nickname")
+	readMessage.nickname, err = ReadString(data, "nickname")
 	if err != nil {
 		return readMessage, err
 	}
@@ -105,7 +105,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 	}
 
 	// Read role
-	readMessage.role, err = readString(data, "role")
+	readMessage.role, err = ReadString(data, "role")
 	if err != nil {
 		return readMessage, err
 	}

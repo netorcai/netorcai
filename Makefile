@@ -2,10 +2,10 @@ VERSION=`git describe --dirty`
 LDFLAGS=-ldflags "-X main.version=${VERSION}"
 
 netorcai:
-	go build ${LDFLAGS} -o ./netorcai ./
+	go build ${LDFLAGS} -o ./netorcai ./cmd/netorcai
 
 netorcai.cover:
-	go test -c -o ./netorcai.cover -covermode=count -coverpkg=./ ./
+	go test -c -o ./netorcai.cover -covermode=count -coverpkg=./,./cmd/netorcai ./cmd/netorcai
 
 all: netorcai netorcai.cover
 

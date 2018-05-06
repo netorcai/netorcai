@@ -1,4 +1,4 @@
-package main
+package netorcai
 
 import (
 	"bufio"
@@ -43,17 +43,17 @@ func executor(line string) {
 	acceptedPrintVariables := append(acceptedSetVariables, "all")
 
 	if rStart.MatchString(line) {
-		globalGS.mutex.Lock()
-		if globalGS.gameState == GAME_NOT_RUNNING {
-			if len(globalGS.gameLogic) == 1 {
-				globalGS.gameLogic[0].start <- 1
+		globalGS.Mutex.Lock()
+		if globalGS.GameState == GAME_NOT_RUNNING {
+			if len(globalGS.GameLogic) == 1 {
+				globalGS.GameLogic[0].start <- 1
 			} else {
 				fmt.Printf("Cannot start: Game logic not connected\n")
 			}
 		} else {
 			fmt.Printf("Game has already been started\n")
 		}
-		globalGS.mutex.Unlock()
+		globalGS.Mutex.Unlock()
 	} else if rQuit.MatchString(line) {
 		globalShellExit <- 1
 	} else if rPrint.MatchString(line) {
@@ -67,27 +67,27 @@ func executor(line string) {
 		if stringInSlice(matches["variable"], acceptedPrintVariables) {
 			switch matches["variable"] {
 			case "nb-turns-max":
-				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.nbTurnsMax)
+				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.NbTurnsMax)
 			case "nb-players-max":
 				fmt.Printf("%v=%v\n", "nb-players-max",
-					globalGS.nbPlayersMax)
+					globalGS.NbPlayersMax)
 			case "nb-visus-max":
-				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.nbVisusMax)
+				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.NbVisusMax)
 			case "delay-first-turn":
 				fmt.Printf("%v=%v\n", "delay-first-turn",
-					globalGS.millisecondsBeforeFirstTurn)
+					globalGS.MillisecondsBeforeFirstTurn)
 			case "delay-turns":
 				fmt.Printf("%v=%v\n", "delay-turns",
-					globalGS.millisecondsBetweenTurns)
+					globalGS.MillisecondsBetweenTurns)
 			case "all":
-				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.nbTurnsMax)
+				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.NbTurnsMax)
 				fmt.Printf("%v=%v\n", "nb-players-max",
-					globalGS.nbPlayersMax)
-				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.nbVisusMax)
+					globalGS.NbPlayersMax)
+				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.NbVisusMax)
 				fmt.Printf("%v=%v\n", "delay-first-turn",
-					globalGS.millisecondsBeforeFirstTurn)
+					globalGS.MillisecondsBeforeFirstTurn)
 				fmt.Printf("%v=%v\n", "delay-turns",
-					globalGS.millisecondsBetweenTurns)
+					globalGS.MillisecondsBetweenTurns)
 			}
 		} else {
 			fmt.Printf("Bad VARIABLE=%v. Accepted values: %v\n",
@@ -114,7 +114,7 @@ func executor(line string) {
 						matches["value"], errInt.Error())
 				} else {
 					if intValue >= 1 && intValue <= 65535 {
-						globalGS.nbTurnsMax = int(intValue)
+						globalGS.NbTurnsMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [1,65535]\n",
 							intValue)
@@ -126,7 +126,7 @@ func executor(line string) {
 						matches["value"], errInt.Error())
 				} else {
 					if intValue >= 1 && intValue <= 1024 {
-						globalGS.nbPlayersMax = int(intValue)
+						globalGS.NbPlayersMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [1,1024]\n",
 							intValue)
@@ -138,7 +138,7 @@ func executor(line string) {
 						matches["value"], errInt.Error())
 				} else {
 					if intValue >= 0 && intValue <= 1024 {
-						globalGS.nbVisusMax = int(intValue)
+						globalGS.NbVisusMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [0,1024]\n",
 							intValue)
@@ -150,7 +150,7 @@ func executor(line string) {
 						matches["value"], errFloat.Error())
 				} else {
 					if floatValue >= 50 && floatValue <= 10000 {
-						globalGS.millisecondsBeforeFirstTurn = floatValue
+						globalGS.MillisecondsBeforeFirstTurn = floatValue
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [50,10000]\n",
 							floatValue)
@@ -162,7 +162,7 @@ func executor(line string) {
 						matches["value"], errFloat.Error())
 				} else {
 					if floatValue >= 50 && floatValue <= 10000 {
-						globalGS.millisecondsBetweenTurns = floatValue
+						globalGS.MillisecondsBetweenTurns = floatValue
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [50,10000]\n",
 							floatValue)
@@ -222,7 +222,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 }
 
-func runPrompt(gs *GlobalState, onexit chan int) {
+func RunPrompt(gs *GlobalState, onexit chan int) {
 	globalGS = gs
 	globalShellExit = onexit
 

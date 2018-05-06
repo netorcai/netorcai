@@ -1,11 +1,11 @@
-package main
+package netorcai
 
 import (
 	"fmt"
 	"strconv"
 )
 
-func readString(data map[string]interface{}, field string) (string, error) {
+func ReadString(data map[string]interface{}, field string) (string, error) {
 	value, exists := data[field]
 	if !exists {
 		return "", fmt.Errorf("Field '%v' is missing", field)
@@ -66,7 +66,7 @@ func readArray(data map[string]interface{}, field string) ([]interface{},
 	}
 }
 
-func readIntInString(data map[string]interface{}, field string, bitSize,
+func ReadIntInString(data map[string]interface{}, field string, bitSize,
 	minValue, maxValue int) (int, error) {
 	value, exists := data[field]
 	if !exists {
@@ -100,7 +100,7 @@ func readIntInString(data map[string]interface{}, field string, bitSize,
 	}
 }
 
-func readFloatInString(data map[string]interface{}, field string, bitSize int,
+func ReadFloatInString(data map[string]interface{}, field string, bitSize int,
 	minValue, maxValue float64) (float64, error) {
 	value, exists := data[field]
 	if !exists {

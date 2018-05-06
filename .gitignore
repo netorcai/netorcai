@@ -1,5 +1,5 @@
-netorcai
-netorcai.cover
+/netorcai
+/netorcai.cover
 test/__pycache__
 *.covout
 test/*-cover.bats
