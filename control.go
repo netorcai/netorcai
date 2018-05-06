@@ -189,10 +189,6 @@ func handleClient(client *Client, globalState *GlobalState,
 				handleGameLogic(glClient, globalState, gameLogicExit)
 			}
 		}
-	default:
-		globalState.Mutex.Unlock()
-		Kick(client, fmt.Sprintf("LOGIN denied: Unknown role '%v'",
-			loginMessage.role))
 	}
 }
 
