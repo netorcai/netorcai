@@ -150,51 +150,27 @@ func TestScenarioLoginPlayerAscii(t *testing.T) {
 	_, _, _ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
-	var client Client
-	err := client.Connect("localhost", 4242)
-	assert.NoError(t, err, "Cannot connect")
-	defer client.Disconnect()
-
-	err = client.SendLogin("player", "player")
-	assert.NoError(t, err, "Cannot send LOGIN")
-
-	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
-	checkLoginAck(t, msg)
+	player, err := connectClient(t, "player", "player", 1000)
+	assert.NoError(t, err, "Cannot connect client")
+	defer player.Disconnect()
 }
 
 func TestScenarioLoginPlayerArabic(t *testing.T) {
 	_, _, _ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
-	var client Client
-	err := client.Connect("localhost", 4242)
-	assert.NoError(t, err, "Cannot connect")
-	defer client.Disconnect()
-
-	err = client.SendLogin("player", "لاعب")
-	assert.NoError(t, err, "Cannot send LOGIN")
-
-	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
-	checkLoginAck(t, msg)
+	player, err := connectClient(t, "player", "لاعب", 1000)
+	assert.NoError(t, err, "Cannot connect client")
+	defer player.Disconnect()
 }
 
 func TestScenarioLoginPlayerJapanese(t *testing.T) {
 	_, _, _ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
-	var client Client
-	err := client.Connect("localhost", 4242)
-	assert.NoError(t, err, "Cannot connect")
-	defer client.Disconnect()
-
-	err = client.SendLogin("player", "プレーヤー")
-	assert.NoError(t, err, "Cannot send LOGIN")
-
-	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
-	checkLoginAck(t, msg)
+	player, err := connectClient(t, "player", "プレーヤー", 1000)
+	assert.NoError(t, err, "Cannot connect client")
+	defer player.Disconnect()
 }
 
 /**************************
@@ -247,17 +223,8 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 
 	// Connect the expected number of players
 	for i := 0; i < expectedNbLogged; i++ {
-		var client Client
-		err := client.Connect("localhost", 4242)
-		assert.NoError(t, err, "Cannot connect")
-		defer client.Disconnect()
-
-		err = client.SendLogin(loginRole, "клиент")
-		assert.NoError(t, err, "Cannot send LOGIN")
-
-		msg, err := waitReadMessage(&client, 1000)
-		assert.NoError(t, err, "Cannot read message")
-		checkLoginAck(t, msg)
+		_, err := connectClient(t, loginRole, "клиент", 1000)
+		assert.NoError(t, err, "Cannot connect client")
 	}
 }
 
@@ -341,17 +308,9 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	// Connect the expected number of players
 	for i := 0; i < expectedNbLogged; i++ {
 		go func() {
-			var client Client
-			err := client.Connect("localhost", 4242)
-			assert.NoError(t, err, "Cannot connect")
-			clientsChan <- &client
-
-			err = client.SendLogin("player", "клиент")
-			assert.NoError(t, err, "Cannot send LOGIN")
-
-			msg, err := waitReadMessage(&client, 1000)
-			assert.NoError(t, err, "Cannot read message")
-			checkLoginAck(t, msg)
+			player, err := connectClient(t, loginRole, "клиент", 1000)
+			assert.NoError(t, err, "Cannot connect client")
+			clientsChan <- &player
 			clientLogged <- 1
 		}()
 	}

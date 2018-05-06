@@ -106,6 +106,20 @@ func waitReadMessage(client *Client, timeoutMS int) (
 	}
 }
 
+func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
+	client Client, err error) {
+	err = client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+
+	err = client.SendLogin(role, nickname)
+	assert.NoError(t, err, "Cannot send LOGIN")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read message")
+	checkLoginAck(t, msg)
+	return client, err
+}
+
 func checkKick(t *testing.T, msg map[string]interface{},
 	reasonMatcher *regexp.Regexp) {
 	assert.Equal(t, "KICK", msg["message_type"].(string),
@@ -115,6 +129,12 @@ func checkKick(t *testing.T, msg map[string]interface{},
 }
 
 func checkLoginAck(t *testing.T, msg map[string]interface{}) {
-	assert.Equal(t, "LOGIN_ACK", msg["message_type"].(string),
-		"Unexpected message type")
+	switch msgType := msg["message_type"].(string); msgType {
+	case "LOGIN_ACK":
+	case "KICK":
+		assert.Failf(t, "Expected LOGIN_ACK, got KICK",
+			msg["kick_reason"].(string))
+	default:
+		assert.Failf(t, "Expected LOGIN_ACK", msgType)
+	}
 }
