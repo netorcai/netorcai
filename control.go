@@ -108,14 +108,14 @@ func handleClient(client *Client, globalState *GlobalState,
 				globalState.Mutex.Unlock()
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
-				pvClient := PlayerOrVisuClient{
+				pvClient := &PlayerOrVisuClient{
 					client:   client,
 					playerID: -1,
 					isPlayer: true,
 					newTurn:  make(chan MessageTurn),
 				}
 
-				globalState.Players = append(globalState.Players, &pvClient)
+				globalState.Players = append(globalState.Players, pvClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -126,7 +126,7 @@ func handleClient(client *Client, globalState *GlobalState,
 				globalState.Mutex.Unlock()
 
 				// Player behavior is handled in dedicated function.
-				handlePlayerOrVisu(&pvClient, globalState)
+				handlePlayerOrVisu(pvClient, globalState)
 			}
 		}
 	case "visualization":
@@ -139,14 +139,14 @@ func handleClient(client *Client, globalState *GlobalState,
 				globalState.Mutex.Unlock()
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
-				pvClient := PlayerOrVisuClient{
+				pvClient := &PlayerOrVisuClient{
 					client:   client,
 					playerID: -1,
 					isPlayer: false,
 					newTurn:  make(chan MessageTurn),
 				}
 
-				globalState.Visus = append(globalState.Visus, &pvClient)
+				globalState.Visus = append(globalState.Visus, pvClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -157,7 +157,7 @@ func handleClient(client *Client, globalState *GlobalState,
 				globalState.Mutex.Unlock()
 
 				// Visu behavior is handled in dedicated function.
-				handlePlayerOrVisu(&pvClient, globalState)
+				handlePlayerOrVisu(pvClient, globalState)
 			}
 		}
 	case "game logic":
@@ -173,12 +173,11 @@ func handleClient(client *Client, globalState *GlobalState,
 				globalState.Mutex.Unlock()
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
-				glClient := GameLogicClient{
+				glClient := &GameLogicClient{
 					client: client,
 				}
 
-				globalState.GameLogic = append(globalState.GameLogic,
-					&glClient)
+				globalState.GameLogic = append(globalState.GameLogic, glClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -291,7 +290,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 	}
 }
 
-func handleGameLogic(glClient GameLogicClient, globalState *GlobalState,
+func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	onexit chan int) {
 	// Wait for the game to start
 	select {
@@ -564,7 +563,7 @@ func sendTurn(client *Client, msg MessageTurn) error {
 	}
 }
 
-func sendDoInit(client GameLogicClient, nbPlayers, nbTurnsMax int) error {
+func sendDoInit(client *GameLogicClient, nbPlayers, nbTurnsMax int) error {
 	msg := MessageDoInit{
 		MessageType: "DO_INIT",
 		NbPlayers:   nbPlayers,
@@ -583,7 +582,7 @@ func sendDoInit(client GameLogicClient, nbPlayers, nbTurnsMax int) error {
 	}
 }
 
-func sendDoTurn(client GameLogicClient,
+func sendDoTurn(client *GameLogicClient,
 	playerActions []MessageDoTurnPlayerAction) error {
 	msg := MessageDoTurn{
 		MessageType:   "DO_TURN",

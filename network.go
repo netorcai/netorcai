@@ -50,7 +50,7 @@ func RunServer(port int, globalState *GlobalState, onexit,
 
 	for {
 		// Wait for an incoming connection.
-		var client Client
+		client := &Client{}
 		client.Conn, err = globalState.Listener.Accept()
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -65,7 +65,7 @@ func RunServer(port int, globalState *GlobalState, onexit,
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
 
-			go handleClient(&client, globalState, gameLogicExit)
+			go handleClient(client, globalState, gameLogicExit)
 		}
 	}
 }
