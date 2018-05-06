@@ -5,7 +5,7 @@ setup:
 	@go get github.com/stretchr/testify/assert
 
 clean:
-	rm -f *.covout *-cover.bats
+	rm -f *.covout
 
 cover: setup clean
 	./cover.bash

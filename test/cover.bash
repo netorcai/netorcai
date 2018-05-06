@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -eux
 
-# Create bats files with coverage
-./generate_cover_bats_files.py
-
 # Clean previous coverage results if needed
 rm -f *.covout coverage-report.txt
 
