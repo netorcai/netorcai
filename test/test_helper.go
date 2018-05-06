@@ -113,3 +113,8 @@ func checkKick(t *testing.T, msg map[string]interface{},
 	assert.Regexp(t, reasonMatcher, msg["kick_reason"].(string),
 		"Unexpected kick reason")
 }
+
+func checkLoginAck(t *testing.T, msg map[string]interface{}) {
+	assert.Equal(t, "LOGIN_ACK", msg["message_type"].(string),
+		"Unexpected message type")
+}

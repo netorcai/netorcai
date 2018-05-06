@@ -79,6 +79,16 @@ func (c *Client) SendJSON(msg map[string]interface{}) error {
 	}
 }
 
+func (c *Client) SendLogin(role, nickname string) error {
+	msg := map[string]interface{}{
+		"message_type": "LOGIN",
+		"role":         role,
+		"nickname":     nickname,
+	}
+
+	return c.SendJSON(msg)
+}
+
 func (c *Client) ReadMessage() (map[string]interface{}, error) {
 	var msg map[string]interface{}
 	contentSizeBuf := make([]byte, 2)
