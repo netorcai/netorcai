@@ -4,8 +4,6 @@ go:
   - "1.10.1"
 
 script:
-  # Retrieve dependencies
-  - go get .
   # Build and install the binaries
   - make all
   - export PATH="${PATH}:${TRAVIS_BUILD_DIR}"
