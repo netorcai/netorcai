@@ -20,7 +20,10 @@ func runNetorcaiWaitListening(t *testing.T) *NetorcaiProcess {
 	assert.NoError(t, err, "Cannot start netorcai")
 
 	_, err = waitListening(proc.outputControl, 1000)
-	assert.NoError(t, err, "Netorcai is not listening")
+	if err != nil {
+		killallNetorcai()
+		assert.NoError(t, err, "Netorcai is not listening")
+	}
 
 	return proc
 }
@@ -126,7 +129,10 @@ func runNetorcaiAndAllClients(t *testing.T, timeoutMS int) (
 	// 4 players
 	for i := 0; i < 4; i++ {
 		player, err := connectClient(t, "player", "player", timeoutMS)
-		assert.NoError(t, err, "Cannot connect client")
+		if err != nil {
+			killallNetorcai()
+			assert.NoError(t, err, "Cannot connect client")
+		}
 		clients = append(clients, player)
 		playerClients = append(playerClients, player)
 	}
@@ -134,7 +140,10 @@ func runNetorcaiAndAllClients(t *testing.T, timeoutMS int) (
 	// 1 visu
 	for i := 0; i < 1; i++ {
 		visu, err := connectClient(t, "visualization", "visu", timeoutMS)
-		assert.NoError(t, err, "Cannot connect client")
+		if err != nil {
+			killallNetorcai()
+			assert.NoError(t, err, "Cannot connect client")
+		}
 		clients = append(clients, visu)
 		visuClients = append(visuClients, visu)
 	}
@@ -142,7 +151,10 @@ func runNetorcaiAndAllClients(t *testing.T, timeoutMS int) (
 	// 1 game logic
 	for i := 0; i < 1; i++ {
 		gl, err := connectClient(t, "game logic", "game_logic", timeoutMS)
-		assert.NoError(t, err, "Cannot connect client")
+		if err != nil {
+			killallNetorcai()
+			assert.NoError(t, err, "Cannot connect client")
+		}
 		clients = append(clients, gl)
 		glClients = append(glClients, gl)
 	}
