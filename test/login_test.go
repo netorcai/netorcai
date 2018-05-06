@@ -310,7 +310,7 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		go func() {
 			player, err := connectClient(t, loginRole, "клиент", 1000)
 			assert.NoError(t, err, "Cannot connect client")
-			clientsChan <- &player
+			clientsChan <- player
 			clientLogged <- 1
 		}()
 	}

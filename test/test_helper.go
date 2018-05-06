@@ -108,17 +108,18 @@ func waitReadMessage(client *Client, timeoutMS int) (
 }
 
 func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
-	client Client, err error) {
-	err = client.Connect("localhost", 4242)
+	*Client, error) {
+	client := &Client{}
+	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 
 	err = client.SendLogin(role, nickname)
 	assert.NoError(t, err, "Cannot send LOGIN")
 
-	msg, err := waitReadMessage(&client, 1000)
+	msg, err := waitReadMessage(client, 1000)
 	assert.NoError(t, err, "Cannot read message")
 	checkLoginAck(t, msg)
-	return client, err
+	return client, nil
 }
 
 func checkKick(t *testing.T, msg map[string]interface{},
@@ -142,9 +143,9 @@ func checkLoginAck(t *testing.T, msg map[string]interface{}) {
 		kickReason, err := netorcai.ReadString(msg, "kick_reason")
 		assert.NoError(t, err, "Cannot read kick_reason")
 
-		assert.Fail(t, "Expected LOGIN_ACK, got KICK", kickReason)
+		assert.FailNow(t, "Expected LOGIN_ACK, got KICK", kickReason)
 	default:
-		assert.Failf(t, "Expected LOGIN_ACK, got another message type",
+		assert.FailNowf(t, "Expected LOGIN_ACK, got another message type",
 			messageType)
 	}
 }
