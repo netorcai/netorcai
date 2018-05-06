@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/mpoquet/netorcai"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"os/exec"
@@ -122,19 +123,28 @@ func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
 
 func checkKick(t *testing.T, msg map[string]interface{},
 	reasonMatcher *regexp.Regexp) {
-	assert.Equal(t, "KICK", msg["message_type"].(string),
-		"Unexpected message type")
-	assert.Regexp(t, reasonMatcher, msg["kick_reason"].(string),
-		"Unexpected kick reason")
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read message_type")
+	assert.Equal(t, "KICK", messageType, "Unexpected message type")
+
+	kickReason, err := netorcai.ReadString(msg, "kick_reason")
+	assert.NoError(t, err, "Cannot read kick_reason")
+	assert.Regexp(t, reasonMatcher, kickReason, "Unexpected kick reason")
 }
 
 func checkLoginAck(t *testing.T, msg map[string]interface{}) {
-	switch msgType := msg["message_type"].(string); msgType {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read message_type")
+
+	switch messageType {
 	case "LOGIN_ACK":
 	case "KICK":
-		assert.Failf(t, "Expected LOGIN_ACK, got KICK",
-			msg["kick_reason"].(string))
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.Fail(t, "Expected LOGIN_ACK, got KICK", kickReason)
 	default:
-		assert.Failf(t, "Expected LOGIN_ACK", msgType)
+		assert.Failf(t, "Expected LOGIN_ACK, got another message type",
+			messageType)
 	}
 }
