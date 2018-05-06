@@ -118,6 +118,66 @@ func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
 	return client, nil
 }
 
+func runNetorcaiAndAllClients(t *testing.T, timeoutMS int) (
+	proc *NetorcaiProcess, clients, playerClients, visuClients,
+	glClients []*Client) {
+	proc = runNetorcaiWaitListening(t)
+
+	// 4 players
+	for i := 0; i < 4; i++ {
+		player, err := connectClient(t, "player", "player", timeoutMS)
+		assert.NoError(t, err, "Cannot connect client")
+		clients = append(clients, player)
+		playerClients = append(playerClients, player)
+	}
+
+	// 1 visu
+	for i := 0; i < 1; i++ {
+		visu, err := connectClient(t, "visualization", "visu", timeoutMS)
+		assert.NoError(t, err, "Cannot connect client")
+		clients = append(clients, visu)
+		visuClients = append(visuClients, visu)
+	}
+
+	// 1 game logic
+	for i := 0; i < 1; i++ {
+		gl, err := connectClient(t, "game logic", "game_logic", timeoutMS)
+		assert.NoError(t, err, "Cannot connect client")
+		clients = append(clients, gl)
+		glClients = append(glClients, gl)
+	}
+
+	return proc, clients, playerClients, visuClients, glClients
+}
+
+func checkAllKicked(t *testing.T, clients []*Client,
+	reasonMatcher *regexp.Regexp, timeoutMS int) {
+	timeoutChan := make(chan int)
+	go func() {
+		time.Sleep(time.Duration(timeoutMS) * time.Millisecond)
+		timeoutChan <- 0
+	}()
+
+	// All clients should receive a KICK
+	kickChan := make(chan int, len(clients))
+	for _, client := range clients {
+		go func(c *Client) {
+			msg, err := waitReadMessage(c, timeoutMS)
+			assert.NoError(t, err, "Cannot read message")
+			checkKick(t, msg, reasonMatcher)
+			kickChan <- 0
+		}(client)
+	}
+
+	for _ = range clients {
+		select {
+		case <-kickChan:
+		case <-timeoutChan:
+			assert.FailNow(t, "Timeout reached")
+		}
+	}
+}
+
 func checkKick(t *testing.T, msg map[string]interface{},
 	reasonMatcher *regexp.Regexp) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
