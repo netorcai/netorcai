@@ -28,7 +28,7 @@ const (
 )
 
 type PlayerOrVisuClient struct {
-	Client     *Client
+	client     *Client
 	playerID   int // TODO: generate them when the game is started
 	isPlayer   bool
 	gameStarts chan MessageGameStarts
@@ -109,7 +109,7 @@ func handleClient(client *Client, globalState *GlobalState,
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := PlayerOrVisuClient{
-					Client:   client,
+					client:   client,
 					playerID: -1,
 					isPlayer: true,
 					newTurn:  make(chan MessageTurn),
@@ -140,7 +140,7 @@ func handleClient(client *Client, globalState *GlobalState,
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := PlayerOrVisuClient{
-					Client:   client,
+					client:   client,
 					playerID: -1,
 					isPlayer: false,
 					newTurn:  make(chan MessageTurn),
@@ -206,17 +206,17 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 		select {
 		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
-			if pvClient.Client.state == CLIENT_READY {
+			if pvClient.client.state == CLIENT_READY {
 				// The client is ready, the message can be sent right now.
 				lastTurnNumberSent = turn.TurnNumber
-				err := sendTurn(pvClient.Client, turn)
+				err := sendTurn(pvClient.client, turn)
 				if err != nil {
 					KickLoggedPlayerOrVisu(pvClient, globalState,
 						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
 					return
 				}
-				pvClient.Client.state = CLIENT_THINKING
-			} else if pvClient.Client.state == CLIENT_THINKING {
+				pvClient.client.state = CLIENT_THINKING
+			} else if pvClient.client.state == CLIENT_THINKING {
 				// The client is still computing something (its decisions for
 				// a player, or just updating its display for a visualization).
 				// The turn message therefore buffered.
@@ -228,7 +228,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 					turnBuffer = append(turnBuffer, turn)
 				}
 			}
-		case msg := <-pvClient.Client.incomingMessages:
+		case msg := <-pvClient.client.incomingMessages:
 			// A new message has been received from the player socket.
 			if msg.err != nil {
 				KickLoggedPlayerOrVisu(pvClient, globalState,
@@ -245,7 +245,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			}
 
 			// Check client state
-			if pvClient.Client.state != CLIENT_THINKING {
+			if pvClient.client.state != CLIENT_THINKING {
 				KickLoggedPlayerOrVisu(pvClient, globalState,
 					"Received a TURN_ACK but the client state is not THINKING")
 				return
@@ -274,7 +274,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 			// If a TURN is buffered, send it right now.
 			if len(turnBuffer) > 0 {
-				err := sendTurn(pvClient.Client, turnBuffer[0])
+				err := sendTurn(pvClient.client, turnBuffer[0])
 				if err != nil {
 					KickLoggedPlayerOrVisu(pvClient, globalState,
 						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
@@ -283,9 +283,9 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 				// Empty turn buffer
 				turnBuffer = turnBuffer[0:]
-				pvClient.Client.state = CLIENT_THINKING
+				pvClient.client.state = CLIENT_THINKING
 			} else {
-				pvClient.Client.state = CLIENT_READY
+				pvClient.client.state = CLIENT_READY
 			}
 		}
 	}
@@ -481,7 +481,7 @@ func Kick(client *Client, reason string) {
 		}).Error("Cannot marshal JSON message")
 	} else {
 		_ = sendMessage(client, content)
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
 }
 
@@ -494,7 +494,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 		// Locate the player in the array
 		playerIndex := -1
 		for index, player := range gs.Players {
-			if player.Client == pvClient.Client {
+			if player.client == pvClient.client {
 				playerIndex = index
 				break
 			}
@@ -512,7 +512,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 		// Locate the visu in the array
 		visuIndex := -1
 		for index, visu := range gs.Visus {
-			if visu.Client == pvClient.Client {
+			if visu.client == pvClient.client {
 				visuIndex = index
 				break
 			}
@@ -531,7 +531,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 	gs.Mutex.Unlock()
 
 	// Kick the client
-	Kick(pvClient.Client, reason)
+	Kick(pvClient.client, reason)
 }
 
 func sendLoginACK(client *Client) error {
@@ -600,4 +600,43 @@ func sendDoTurn(client GameLogicClient,
 		err = sendMessage(client.client, content)
 		return err
 	}
+}
+
+func Cleanup() {
+	globalGS.Mutex.Lock()
+	log.Warn("Closing listening socket.")
+	globalGS.Listener.Close()
+
+	nbClients := len(globalGS.Players) + len(globalGS.Visus) +
+		len(globalGS.GameLogic)
+	if nbClients > 0 {
+		log.Warn("Sending KICK messages to clients")
+		kickChan := make(chan int)
+		for _, client := range append(globalGS.Players, globalGS.Visus...) {
+			go func() {
+				Kick(client.client, "netorcai abort")
+				kickChan <- 0
+			}()
+		}
+		for _, client := range globalGS.GameLogic {
+			go func() {
+				Kick(client.client, "netorcai abort")
+				kickChan <- 0
+			}()
+		}
+
+		for i := 0; i < nbClients; i++ {
+			<-kickChan
+		}
+
+		log.Warn("Closing client sockets")
+		for _, client := range append(globalGS.Players, globalGS.Visus...) {
+			client.client.Conn.Close()
+		}
+		for _, client := range globalGS.GameLogic {
+			client.client.Conn.Close()
+		}
+	}
+
+	globalGS.Mutex.Unlock()
 }

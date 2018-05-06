@@ -83,33 +83,10 @@ func initializeGlobalState(arguments map[string]interface{}) (
 
 func setupGuards(gs *netorcai.GlobalState, onAbort chan int) {
 	// Guard against SIGINT (ctrl+C) and SIGTERM (kill)
-	sigterm := make(chan os.Signal, 1)
+	sigterm := make(chan os.Signal, 2)
 	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigterm
-		log.Warn("SIGTERM received. Aborting.")
-		gs.Mutex.Lock()
-
-		log.Warn("Closing listening socket.")
-		gs.Listener.Close()
-
-		log.Warn("Kicking all clients")
-		nbClients := len(gs.Players) + len(gs.Visus)
-		kickChan := make(chan int, nbClients)
-		for _, client := range append(gs.Players, gs.Visus...) {
-			go func() {
-				netorcai.Kick(client.Client,
-					"Aborting: netorcai got a SIGTERM")
-				client.Client.Conn.Close()
-				kickChan <- 0
-			}()
-		}
-
-		for i := 0; i < nbClients; i++ {
-			<-kickChan
-		}
-
-		gs.Mutex.Unlock()
 		onAbort <- 1
 	}()
 }
@@ -195,7 +172,7 @@ Options:
 	gameLogicExit := make(chan int)
 	shellExit := make(chan int)
 
-	go setupGuards(&globalState, guardExit)
+	setupGuards(&globalState, guardExit)
 	go netorcai.RunServer(int(port), &globalState, serverExit, gameLogicExit)
 	go netorcai.RunPrompt(&globalState, shellExit)
 
@@ -203,10 +180,16 @@ Options:
 	case serverExitCode := <-serverExit:
 		return serverExitCode
 	case guardExitCode := <-guardExit:
+		log.Warn("SIGTERM received. Aborting.")
+		netorcai.Cleanup()
 		return guardExitCode
 	case gameLogicExitCode := <-gameLogicExit:
+		log.Warn("Game logic failed. Aborting.")
+		netorcai.Cleanup()
 		return gameLogicExitCode
 	case shellExitCode := <-shellExit:
+		log.Warn("Shell exited. Aborting.")
+		netorcai.Cleanup()
 		return shellExitCode
 	}
 }
