@@ -51,9 +51,9 @@ type GlobalState struct {
 
 	GameState int
 
-	GameLogic []GameLogicClient
-	Players   []PlayerOrVisuClient
-	Visus     []PlayerOrVisuClient
+	GameLogic []*GameLogicClient
+	Players   []*PlayerOrVisuClient
+	Visus     []*PlayerOrVisuClient
 
 	NbPlayersMax                int
 	NbVisusMax                  int
@@ -115,7 +115,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					newTurn:  make(chan MessageTurn),
 				}
 
-				globalState.Players = append(globalState.Players, pvClient)
+				globalState.Players = append(globalState.Players, &pvClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -146,7 +146,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					newTurn:  make(chan MessageTurn),
 				}
 
-				globalState.Visus = append(globalState.Visus, pvClient)
+				globalState.Visus = append(globalState.Visus, &pvClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
@@ -177,7 +177,8 @@ func handleClient(client *Client, globalState *GlobalState,
 					client: client,
 				}
 
-				globalState.GameLogic = append(globalState.GameLogic, glClient)
+				globalState.GameLogic = append(globalState.GameLogic,
+					&glClient)
 
 				log.WithFields(log.Fields{
 					"nickname":       client.nickname,
