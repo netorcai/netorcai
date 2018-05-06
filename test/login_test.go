@@ -146,7 +146,7 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
  * LOGIN ok *
  ************/
 
-func TestScenarioLoginPlayerAscii(t *testing.T) {
+func TestLoginPlayerAscii(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
@@ -155,7 +155,7 @@ func TestScenarioLoginPlayerAscii(t *testing.T) {
 	defer player.Disconnect()
 }
 
-func TestScenarioLoginPlayerArabic(t *testing.T) {
+func TestLoginPlayerArabic(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
@@ -164,7 +164,7 @@ func TestScenarioLoginPlayerArabic(t *testing.T) {
 	defer player.Disconnect()
 }
 
-func TestScenarioLoginPlayerJapanese(t *testing.T) {
+func TestLoginPlayerJapanese(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
@@ -178,7 +178,7 @@ func TestScenarioLoginPlayerJapanese(t *testing.T) {
  **************************/
 
 func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
-	nbConnections, expectedNbLogged int) {
+	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
 	_ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
@@ -205,7 +205,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 			checkLoginAck(t, msg)
 			nbLogged += 1
 		} else {
-			checkKick(t, msg, regexp.MustCompile("Maximum number of players reached"))
+			checkKick(t, msg, kickReasonMatcher)
 		}
 	}
 
@@ -228,20 +228,23 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	}
 }
 
-func LoginMaxNbPlayerSequential(t *testing.T) {
-	subtestLoginMaxNbClientSequential(t, "player", 100, 4)
+func TestLoginMaxNbPlayerSequential(t *testing.T) {
+	subtestLoginMaxNbClientSequential(t, "player", 100, 4,
+		regexp.MustCompile(`Maximum number of players reached`))
 }
 
-func LoginMaxNbVisusSequential(t *testing.T) {
-	subtestLoginMaxNbClientSequential(t, "visualization", 100, 1)
+func TestLoginMaxNbVisuSequential(t *testing.T) {
+	subtestLoginMaxNbClientSequential(t, "visualization", 100, 1,
+		regexp.MustCompile(`Maximum number of visus reached`))
 }
 
-func LoginMaxNbGameLogicSequential(t *testing.T) {
-	subtestLoginMaxNbClientSequential(t, "game logic", 100, 1)
+func TestLoginMaxNbGameLogicSequential(t *testing.T) {
+	subtestLoginMaxNbClientSequential(t, "game logic", 100, 1,
+		regexp.MustCompile(`A game logic is already logged in`))
 }
 
 func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
-	nbConnections, expectedNbLogged int) {
+	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
 	_ = runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
@@ -273,7 +276,7 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 				clientLogged <- 1
 			case "KICK":
 				assert.Regexp(t,
-					regexp.MustCompile(`Maximum number of \S* reached`),
+					kickReasonMatcher,
 					msg["kick_reason"].(string), "Unexpected kick reason")
 				clientLogged <- 0
 			default:
@@ -329,14 +332,17 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	}
 }
 
-func LoginMaxNbPlayerParallel(t *testing.T) {
-	subtestLoginMaxNbClientParallel(t, "player", 100, 4)
+func TestLoginMaxNbPlayerParallel(t *testing.T) {
+	subtestLoginMaxNbClientParallel(t, "player", 100, 4,
+		regexp.MustCompile(`Maximum number of players reached`))
 }
 
-func LoginMaxNbVisusParallel(t *testing.T) {
-	subtestLoginMaxNbClientParallel(t, "visualization", 100, 1)
+func TestLoginMaxNbVisuParallel(t *testing.T) {
+	subtestLoginMaxNbClientParallel(t, "visualization", 100, 1,
+		regexp.MustCompile(`Maximum number of visus reached`))
 }
 
-func LoginMaxNbGameLogicParallel(t *testing.T) {
-	subtestLoginMaxNbClientParallel(t, "game logic", 100, 1)
+func TestLoginMaxNbGameLogicParallel(t *testing.T) {
+	subtestLoginMaxNbClientParallel(t, "game logic", 100, 1,
+		regexp.MustCompile(`A game logic is already logged in`))
 }
