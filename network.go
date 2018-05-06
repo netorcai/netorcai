@@ -55,7 +55,9 @@ func RunServer(port int, globalState *GlobalState, onexit,
 		if err != nil {
 			log.WithFields(log.Fields{
 				"err": err,
-			}).Warn("Could not accept incoming connection")
+			}).Warn("Could not accept incoming connection. Aborting server.")
+			onexit <- 1
+			return
 		} else {
 			// Handle connections in a new goroutine.
 			client.reader = bufio.NewReader(client.Conn)
