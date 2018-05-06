@@ -37,8 +37,14 @@ class Client:
 
     def _recv_string(self):
         buf = self.sock.recv(2)
+        if len(buf) != 2:
+            raise Exception("Could not read socket. Closed on remote?")
+
         content_size = struct.unpack("<H", buf)[0]
         buf = self.sock.recv(content_size)
+        if len(buf) != content_size:
+            raise Exception("Could not read socket. Closed on remote?")
+
         return buf.decode('utf-8')
 
     def recv_json(self):
