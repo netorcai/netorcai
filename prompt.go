@@ -55,7 +55,7 @@ func executor(line string) {
 		}
 		globalGS.Mutex.Unlock()
 	} else if rQuit.MatchString(line) {
-		globalShellExit <- 1
+		globalShellExit <- 0
 	} else if rPrint.MatchString(line) {
 		m := rPrint.FindStringSubmatch(line)
 		names := rPrint.SubexpNames()
