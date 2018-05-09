@@ -74,6 +74,12 @@ func killallNetorcai() error {
 	return cmd.Run()
 }
 
+func killallNetorcaiSIGKILL() error {
+	cmd := exec.Command("killall")
+	cmd.Args = []string{"killall", "-KILL", "--quiet", "netorcai", "netorcai.cover"}
+	return cmd.Run()
+}
+
 func handleCoverage(t *testing.T, expRetCode int) (coverFilename string,
 	expectedReturnCode int) {
 	_, exists := os.LookupEnv("DO_COVERAGE")

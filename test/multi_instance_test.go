@@ -12,7 +12,7 @@ func TestTwoInstancesSamePort(t *testing.T) {
 
 	proc1, err := runNetorcaiCover("", args) // never covered
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc1.outputControl, 1000)
 	assert.NoError(t, err, "First instance is not listening")
@@ -37,7 +37,7 @@ func TestTwoInstancesDifferentPort(t *testing.T) {
 
 	proc1, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc1.outputControl, 1000)
 	assert.NoError(t, err, "First instance is not listening")

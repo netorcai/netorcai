@@ -10,7 +10,7 @@ import (
 
 func TestPromptStartNoClient(t *testing.T) {
 	proc := runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "start"
 	_, err := waitOutputTimeout(regexp.MustCompile(`Cannot start`),
@@ -20,7 +20,7 @@ func TestPromptStartNoClient(t *testing.T) {
 
 func TestPromptQuitNoClient(t *testing.T) {
 	proc := runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "quit"
 	_, err := waitOutputTimeout(regexp.MustCompile(`Shell exit`),
@@ -34,7 +34,7 @@ func TestPromptQuitNoClient(t *testing.T) {
 
 func TestPromptQuitAllClient(t *testing.T) {
 	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, 1000)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "quit"
 	_, err := waitOutputTimeout(regexp.MustCompile(`Shell exit`),

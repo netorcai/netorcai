@@ -8,9 +8,9 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	killallNetorcai()
+	killallNetorcaiSIGKILL()
 	retCode := m.Run()
-	killallNetorcai()
+	killallNetorcaiSIGKILL()
 	os.Exit(retCode)
 }
 
@@ -20,7 +20,7 @@ func TestCLINoArgs(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -32,7 +32,7 @@ func TestCLIArgHelp(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -45,7 +45,7 @@ func TestCLIArgHelpShort(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -58,7 +58,7 @@ func TestCLIArgVersion(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitOutputTimeout(regexp.MustCompile(`\Av\d+\.\d+\.\d+\S*\z`),
 		proc.outputControl, 1000, false)
@@ -75,7 +75,7 @@ func TestCLIArgVerbose(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -87,6 +87,7 @@ func TestCLIArgQuiet(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -99,7 +100,7 @@ func TestCLIArgDebug(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -111,7 +112,7 @@ func TestCLIArgJsonLogs(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -123,7 +124,7 @@ func TestCLIInvalidVerbosityCombination(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -136,7 +137,7 @@ func TestCLIUnknownArg(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -152,7 +153,7 @@ func TestCLIArgNbPlayersMaxNotInteger(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -165,7 +166,7 @@ func TestCLIArgNbPlayersMaxTooSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -178,7 +179,7 @@ func TestCLIArgNbPlayersMaxTooBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -191,7 +192,7 @@ func TestCLIArgNbPlayersMaxSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -203,7 +204,7 @@ func TestCLIArgNbPlayersMaxBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -218,7 +219,7 @@ func TestCLIArgPortNotInteger(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -231,7 +232,7 @@ func TestCLIArgPortTooSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -244,7 +245,7 @@ func TestCLIArgPortTooBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -257,7 +258,7 @@ func TestCLIArgPortSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -269,7 +270,7 @@ func TestCLIArgPortBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -284,7 +285,7 @@ func TestCLIArgNbTurnsMaxNotInteger(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -297,7 +298,7 @@ func TestCLIArgNbTurnsMaxTooSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -310,7 +311,7 @@ func TestCLIArgNbTurnsMaxTooBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -323,7 +324,7 @@ func TestCLIArgNbTurnsMaxSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -335,7 +336,7 @@ func TestCLIArgNbTurnsMaxBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -350,7 +351,7 @@ func TestCLIArgNbVisusMaxNotInteger(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -363,7 +364,7 @@ func TestCLIArgNbVisusMaxTooSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -376,7 +377,7 @@ func TestCLIArgNbVisusMaxTooBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -389,7 +390,7 @@ func TestCLIArgNbVisusMaxSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -401,7 +402,7 @@ func TestCLIArgNbVisusMaxBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -416,7 +417,7 @@ func TestCLIArgDelayFirstTurnNotFloat(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -429,7 +430,7 @@ func TestCLIArgDelayFirstTurnTooSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -442,7 +443,7 @@ func TestCLIArgDelayFirstTurnTooBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -455,7 +456,7 @@ func TestCLIArgDelayFirstTurnSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -467,7 +468,7 @@ func TestCLIArgDelayFirstTurnBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -482,7 +483,7 @@ func TestCLIArgDelayTurnsNotFloat(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -495,7 +496,7 @@ func TestCLIArgDelayTurnsTooSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -508,7 +509,7 @@ func TestCLIArgDelayTurnsTooBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -521,7 +522,7 @@ func TestCLIArgDelayTurnsSmall(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
@@ -533,7 +534,7 @@ func TestCLIArgDelayTurnsBig(t *testing.T) {
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")

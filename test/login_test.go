@@ -9,7 +9,7 @@ import (
 
 func TestLoginNotJson(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -26,7 +26,7 @@ func TestLoginNotJson(t *testing.T) {
 
 func TestLoginNoMessageType(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -43,7 +43,7 @@ func TestLoginNoMessageType(t *testing.T) {
 
 func TestLoginNoRole(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -60,7 +60,7 @@ func TestLoginNoRole(t *testing.T) {
 
 func TestLoginNoNickname(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -77,7 +77,7 @@ func TestLoginNoNickname(t *testing.T) {
 
 func TestLoginBadRole(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -94,7 +94,7 @@ func TestLoginBadRole(t *testing.T) {
 
 func TestLoginBadNicknameShort(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -111,7 +111,7 @@ func TestLoginBadNicknameShort(t *testing.T) {
 
 func TestLoginBadNicknameLong(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -128,7 +128,7 @@ func TestLoginBadNicknameLong(t *testing.T) {
 
 func TestLoginBadNicknameBadCharacters(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	var client Client
 	err := client.Connect("localhost", 4242)
@@ -149,7 +149,7 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 
 func TestLoginPlayerAscii(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	player, err := connectClient(t, "player", "player", 1000)
 	assert.NoError(t, err, "Cannot connect client")
@@ -158,7 +158,7 @@ func TestLoginPlayerAscii(t *testing.T) {
 
 func TestLoginPlayerArabic(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	player, err := connectClient(t, "player", "لاعب", 1000)
 	assert.NoError(t, err, "Cannot connect client")
@@ -167,7 +167,7 @@ func TestLoginPlayerArabic(t *testing.T) {
 
 func TestLoginPlayerJapanese(t *testing.T) {
 	_ = runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	player, err := connectClient(t, "player", "プレーヤー", 1000)
 	assert.NoError(t, err, "Cannot connect client")
@@ -181,7 +181,7 @@ func TestLoginPlayerJapanese(t *testing.T) {
 func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
 	proc := runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	// Do many player connections sequentially
 	var clients []*Client
@@ -255,7 +255,7 @@ func TestLoginMaxNbGameLogicSequential(t *testing.T) {
 func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
 	proc := runNetorcaiWaitListening(t)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	// Do many client connections in parallel
 	var clients []*Client

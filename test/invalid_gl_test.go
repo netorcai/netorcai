@@ -9,7 +9,7 @@ import (
 func TestInvalidGlMessageBeforeStart(t *testing.T) {
 	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
 		t, 1000)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	glClients[0].SendString(`{}`)
 	checkAllKicked(t, glClients, regexp.MustCompile(
@@ -28,7 +28,7 @@ func TestInvalidGlMessageBeforeStart(t *testing.T) {
 func TestInvalidGlNoDoInitAck(t *testing.T) {
 	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
 		t, 1000)
-	defer killallNetorcai()
+	defer killallNetorcaiSIGKILL()
 
 	go func(glClient *Client) {
 		msg, err := waitReadMessage(glClient, 1000)
