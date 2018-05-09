@@ -315,7 +315,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		player.playerID = playerIDs[playerIndex]
 	}
 
-	// Send DO_FIRST_TURN
+	// Send DO_INIT
+	log.Debug("Sending DO_INIT to game logic")
 	err := sendDoInit(glClient, len(globalState.Players),
 		globalState.NbTurnsMax)
 	globalState.Mutex.Unlock()
@@ -328,10 +329,17 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	}
 
 	// Wait for first turn (DO_INIT_ACK)
-	msg := <-glClient.client.incomingMessages
-	if msg.err != nil {
-		Kick(glClient.client,
-			fmt.Sprintf("Cannot read DO_INIT_ACK. %v", msg.err.Error()))
+	var msg ClientMessage
+	select {
+	case msg = <-glClient.client.incomingMessages:
+		if msg.err != nil {
+			Kick(glClient.client,
+				fmt.Sprintf("Cannot read DO_INIT_ACK. %v", msg.err.Error()))
+			onexit <- 1
+			return
+		}
+	case <-time.After(3 * time.Second):
+		Kick(glClient.client, "Did not receive DO_INIT_ACK after 3 seconds.")
 		onexit <- 1
 		return
 	}
