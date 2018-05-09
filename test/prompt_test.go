@@ -33,17 +33,16 @@ func TestPromptQuitNoClient(t *testing.T) {
 }
 
 func TestPromptQuitAllClient(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+
+	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, 1000)
 	defer killallNetorcai()
 
 	proc.inputControl <- "quit"
 	_, err := waitOutputTimeout(regexp.MustCompile(`Shell exit`),
-		proc.outputControl, 1000, true)
+		proc.outputControl, 1000, false)
 	assert.NoError(t, err, "Cannot read line")
 
-	exitCode, err := waitCompletionTimeout(proc.completion, 1000)
-	assert.NoError(t, err, "Cannot wait netorcai completion")
-	assert.Equal(t, 0, exitCode, "Invalid netorcai exit code")
+	checkAllKicked(t, clients, regexp.MustCompile(`netorcai abort`), 1000)
 }
 
 func TestControlProcessInputCatNoInut(t *testing.T) {
