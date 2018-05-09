@@ -303,12 +303,17 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		}()
 	}
 
-	timeoutChan := make(chan int, 2)
-	defer close(timeoutChan)
-	go func(c chan int) {
-		time.Sleep(1000 * time.Millisecond)
-		c <- 0
-	}(timeoutChan)
+	timeoutReached := make(chan int)
+	stopTimeout := make(chan int)
+	defer close(timeoutReached)
+	defer close(stopTimeout)
+	go func(timeout, stop chan int) {
+		select {
+		case <-stopTimeout:
+		case <-time.After(1000 * time.Millisecond):
+			timeoutReached <- 0
+		}
+	}(timeoutReached, stopTimeout)
 
 	// Wait for all clients to finish their connection procedure
 	for i := 0; i < 2*nbConnections; i++ {
@@ -317,10 +322,12 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 			clients = append(clients, client)
 		case logResult := <-clientLogged:
 			nbLogged += logResult
-		case <-timeoutChan:
+		case <-timeoutReached:
 			assert.FailNow(t, "Timeout reached while waiting all clients to finish their connection procedure (first phase)")
 		}
 	}
+
+	stopTimeout <- 0
 
 	// Make sure the right number of clients could LOGIN successfully
 	assert.Equal(t, expectedNbLogged, nbLogged,
@@ -357,12 +364,13 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		}()
 	}
 
-	timeoutChan2 := make(chan int, 2)
-	defer close(timeoutChan2)
-	go func(c chan int) {
-		time.Sleep(1000 * time.Millisecond)
-		c <- 0
-	}(timeoutChan)
+	go func(timeout, stop chan int) {
+		select {
+		case <-stopTimeout:
+		case <-time.After(1000 * time.Millisecond):
+			timeoutReached <- 0
+		}
+	}(timeoutReached, stopTimeout)
 
 	// Wait for all clients to finish their connection procedure
 	for i := 0; i < 2*expectedNbLogged; i++ {
@@ -371,10 +379,12 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 			clients = append(clients, client)
 		case logResult := <-clientLogged:
 			nbLogged += logResult
-		case <-timeoutChan2:
+		case <-timeoutReached:
 			assert.FailNow(t, "Timeout reached while waiting all clients to finish their connection procedure (second phase)")
 		}
 	}
+
+	stopTimeout <- 0
 
 	assert.Equal(t, expectedNbLogged, nbLogged,
 		"Unexpected number of logged clients")

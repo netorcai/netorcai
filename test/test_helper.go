@@ -41,18 +41,26 @@ func waitCompletionTimeout(completion chan int, timeoutMS int) (
 func waitOutputTimeout(re *regexp.Regexp, output chan string,
 	timeoutMS int, leaveOnNonMatch bool) (matchingLine string, err error) {
 	timeoutReached := make(chan int)
+	stopTimeout := make(chan int)
+	defer close(timeoutReached)
+	defer close(stopTimeout)
 	go func() {
-		time.Sleep(time.Duration(timeoutMS) * time.Millisecond)
-		timeoutReached <- 0
+		select {
+		case <-stopTimeout:
+		case <-time.After(time.Duration(timeoutMS) * time.Millisecond):
+			timeoutReached <- 0
+		}
 	}()
 
 	for {
 		select {
 		case line := <-output:
 			if re.MatchString(line) {
+				stopTimeout <- 0
 				return line, nil
 			} else {
 				if leaveOnNonMatch {
+					stopTimeout <- 0
 					return line, fmt.Errorf("Non-matching line read: %v", line)
 				}
 			}
@@ -106,6 +114,7 @@ func waitReadMessage(client *Client, timeoutMS int) (
 
 	select {
 	case <-msgChan:
+		close(msgChan)
 		return msg, err
 	case <-time.After(time.Duration(timeoutMS) * time.Millisecond):
 		return msg, fmt.Errorf("Timeout reached")
@@ -170,10 +179,16 @@ func runNetorcaiAndAllClients(t *testing.T, timeoutMS int) (
 
 func checkAllKicked(t *testing.T, clients []*Client,
 	reasonMatcher *regexp.Regexp, timeoutMS int) {
-	timeoutChan := make(chan int)
+	timeoutReached := make(chan int)
+	stopTimeout := make(chan int)
+	defer close(timeoutReached)
+	defer close(stopTimeout)
 	go func() {
-		time.Sleep(time.Duration(timeoutMS) * time.Millisecond)
-		timeoutChan <- 0
+		select {
+		case <-stopTimeout:
+		case <-time.After(time.Duration(timeoutMS) * time.Millisecond):
+			timeoutReached <- 0
+		}
 	}()
 
 	// All clients should receive a KICK
@@ -190,10 +205,13 @@ func checkAllKicked(t *testing.T, clients []*Client,
 	for _ = range clients {
 		select {
 		case <-kickChan:
-		case <-timeoutChan:
+		case <-timeoutReached:
 			assert.FailNow(t, "Timeout reached")
 		}
 	}
+
+	stopTimeout <- 0
+	close(kickChan)
 }
 
 func checkKick(t *testing.T, msg map[string]interface{},
