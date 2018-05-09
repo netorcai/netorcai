@@ -174,7 +174,9 @@ func handleClient(client *Client, globalState *GlobalState,
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				glClient := &GameLogicClient{
-					client: client,
+					client:       client,
+					playerAction: make(chan MessageDoTurnPlayerAction),
+					start:        make(chan int),
 				}
 
 				globalState.GameLogic = append(globalState.GameLogic, glClient)
