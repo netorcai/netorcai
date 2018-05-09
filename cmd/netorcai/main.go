@@ -37,39 +37,37 @@ func setupLogging(arguments map[string]interface{}) {
 }
 
 func initializeGlobalState(arguments map[string]interface{}) (
-	netorcai.GlobalState, error) {
-	var gs netorcai.GlobalState
-
+	*netorcai.GlobalState, error) {
 	nbPlayersMax, err := netorcai.ReadIntInString(arguments,
 		"--nb-players-max", 64, 1, 1024)
 	if err != nil {
-		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
 	nbVisusMax, err := netorcai.ReadIntInString(arguments,
 		"--nb-visus-max", 64, 0, 1024)
 	if err != nil {
-		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
 	nbTurnsMax, err := netorcai.ReadIntInString(arguments,
 		"--nb-turns-max", 64, 1, 65535)
 	if err != nil {
-		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
 	msBeforeFirstTurn, err := netorcai.ReadFloatInString(arguments, "--delay-first-turn", 64, 50, 10000)
 	if err != nil {
-		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
 	msBetweenTurns, err := netorcai.ReadFloatInString(arguments,
 		"--delay-turns", 64, 50, 10000)
 	if err != nil {
-		return gs, fmt.Errorf("Invalid arguments: %v", err.Error())
+		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
-	gs = netorcai.GlobalState{
+	gs := &netorcai.GlobalState{
 		GameState:                   netorcai.GAME_NOT_RUNNING,
 		NbPlayersMax:                nbPlayersMax,
 		NbVisusMax:                  nbVisusMax,
@@ -172,9 +170,9 @@ Options:
 	gameLogicExit := make(chan int)
 	shellExit := make(chan int)
 
-	setupGuards(&globalState, guardExit)
-	go netorcai.RunServer(int(port), &globalState, serverExit, gameLogicExit)
-	go netorcai.RunPrompt(&globalState, shellExit)
+	setupGuards(globalState, guardExit)
+	go netorcai.RunServer(int(port), globalState, serverExit, gameLogicExit)
+	go netorcai.RunPrompt(globalState, shellExit)
 
 	select {
 	case serverExitCode := <-serverExit:
