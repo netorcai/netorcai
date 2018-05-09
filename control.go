@@ -460,6 +460,10 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 }
 
 func Kick(client *Client, reason string) {
+	if client.state == CLIENT_KICKED {
+		return
+	}
+
 	client.state = CLIENT_KICKED
 	log.WithFields(log.Fields{
 		"remote address": client.Conn.RemoteAddr(),
