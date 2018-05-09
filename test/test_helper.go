@@ -131,7 +131,7 @@ func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
 	assert.NoError(t, err, "Cannot send LOGIN")
 
 	msg, err := waitReadMessage(client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (LOGIN_ACK)")
 	checkLoginAck(t, msg)
 	return client, nil
 }
@@ -196,7 +196,7 @@ func checkAllKicked(t *testing.T, clients []*Client,
 	for _, client := range clients {
 		go func(c *Client) {
 			msg, err := waitReadMessage(c, timeoutMS)
-			assert.NoError(t, err, "Cannot read message")
+			assert.NoError(t, err, "Cannot read client message (KICK)")
 			checkKick(t, msg, reasonMatcher)
 			kickChan <- 0
 		}(client)
@@ -217,17 +217,19 @@ func checkAllKicked(t *testing.T, clients []*Client,
 func checkKick(t *testing.T, msg map[string]interface{},
 	reasonMatcher *regexp.Regexp) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
-	assert.NoError(t, err, "Cannot read message_type")
+	assert.NoError(t, err,
+		"Cannot read 'message_type' field in received client message (KICK)")
 	assert.Equal(t, "KICK", messageType, "Unexpected message type")
 
 	kickReason, err := netorcai.ReadString(msg, "kick_reason")
-	assert.NoError(t, err, "Cannot read kick_reason")
+	assert.NoError(t, err, "Cannot read 'kick_reason' in received client message (KICK)")
 	assert.Regexp(t, reasonMatcher, kickReason, "Unexpected kick reason")
 }
 
 func checkLoginAck(t *testing.T, msg map[string]interface{}) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
-	assert.NoError(t, err, "Cannot read message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (LOGIN_ACK)")
 
 	switch messageType {
 	case "LOGIN_ACK":
@@ -245,7 +247,8 @@ func checkLoginAck(t *testing.T, msg map[string]interface{}) {
 func checkDoInit(t *testing.T, msg map[string]interface{},
 	expectedNbPlayers, expectedNbTurnsMax int) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
-	assert.NoError(t, err, "Cannot read message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (DO_INIT)")
 
 	switch messageType {
 	case "DO_INIT":

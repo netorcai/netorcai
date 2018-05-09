@@ -20,7 +20,7 @@ func TestLoginNotJson(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Non-JSON"))
 }
 
@@ -37,7 +37,7 @@ func TestLoginNoMessageType(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Field 'message_type' is missing"))
 }
 
@@ -54,7 +54,7 @@ func TestLoginNoRole(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Field 'role' is missing"))
 }
 
@@ -71,7 +71,7 @@ func TestLoginNoNickname(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Field 'nickname' is missing"))
 }
 
@@ -88,7 +88,7 @@ func TestLoginBadRole(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid role"))
 }
 
@@ -105,7 +105,7 @@ func TestLoginBadNicknameShort(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
 }
 
@@ -122,7 +122,7 @@ func TestLoginBadNicknameLong(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
 }
 
@@ -139,7 +139,7 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 	assert.NoError(t, err, "Cannot send message")
 
 	msg, err := waitReadMessage(&client, 1000)
-	assert.NoError(t, err, "Cannot read message")
+	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
 }
 
@@ -200,7 +200,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		assert.NoError(t, err, "Cannot send LOGIN")
 
 		msg, err := waitReadMessage(client, 1000)
-		assert.NoError(t, err, "Cannot read message")
+		assert.NoError(t, err, "Cannot read client message (LOGIN_ACK|KICK)")
 
 		if i < expectedNbLogged {
 			checkLoginAck(t, msg)
