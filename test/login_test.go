@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
+	"time"
 )
 
 func TestLoginNotJson(t *testing.T) {
@@ -267,36 +268,52 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 
 	clientsChan := make(chan *Client, nbConnections)
 	clientLogged := make(chan int, nbConnections)
+	defer close(clientsChan)
+	defer close(clientLogged)
+
 	for i := 0; i < nbConnections; i++ {
 		go func() {
-			var client Client
+			client := &Client{}
 			err := client.Connect("localhost", 4242)
-			assert.NoError(t, err, "Cannot connect")
-			clientsChan <- &client
+			assert.NoError(t, err, "Client cannot connect")
+			clientsChan <- client
 
 			err = client.SendLogin(loginRole, "клиент")
-			assert.NoError(t, err, "Cannot send LOGIN")
+			assert.NoError(t, err, "Client cannot send LOGIN")
 
-			msg, err := waitReadMessage(&client, 1000)
-			assert.NoError(t, err, "Cannot read message")
+			msg, err := waitReadMessage(client, 1000)
+			assert.NoError(t, err, "Client cannot read LOGIN_ACK|KICK")
 			switch msgType := msg["message_type"].(string); msgType {
 			case "LOGIN_ACK":
 				clientLogged <- 1
 			case "KICK":
-				assert.Regexp(t,
-					kickReasonMatcher,
-					msg["kick_reason"].(string), "Unexpected kick reason")
 				clientLogged <- 0
+				assert.Regexp(t, kickReasonMatcher,
+					msg["kick_reason"].(string),
+					"Client kicked for an unexpected reason")
 			default:
 				assert.Fail(t, "Unexpected message type %v", msgType)
 			}
 		}()
 	}
 
+	timeoutChan := make(chan int, 2)
+	defer close(timeoutChan)
+	go func(c chan int) {
+		time.Sleep(1000 * time.Millisecond)
+		c <- 0
+	}(timeoutChan)
+
 	// Wait for all clients to finish their connection procedure
-	for i := 0; i < nbConnections; i++ {
-		clients = append(clients, <-clientsChan)
-		nbLogged = nbLogged + <-clientLogged
+	for i := 0; i < 2*nbConnections; i++ {
+		select {
+		case client := <-clientsChan:
+			clients = append(clients, client)
+		case logResult := <-clientLogged:
+			nbLogged += logResult
+		case <-timeoutChan:
+			assert.FailNow(t, "Timeout reached while waiting all clients to finish their connection procedure (first phase)")
+		}
 	}
 
 	// Make sure the right number of clients could LOGIN successfully
@@ -316,6 +333,14 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	clients = clients[:0]
 	nbLogged = 0
 
+	// Wait netorcai awareness of the disconnection
+	for i := 0; i < expectedNbLogged; i++ {
+		_, err := waitOutputTimeout(
+			regexp.MustCompile(`Remote endpoint closed`), proc.outputControl,
+			500, false)
+		assert.NoError(t, err, "Could not read disconnection discovery in netorcai output")
+	}
+
 	// Connect the expected number of players
 	for i := 0; i < expectedNbLogged; i++ {
 		go func() {
@@ -326,23 +351,37 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		}()
 	}
 
-	for i := 0; i < expectedNbLogged; i++ {
-		clients = append(clients, <-clientsChan)
-		nbLogged = nbLogged + <-clientLogged
+	timeoutChan2 := make(chan int, 2)
+	defer close(timeoutChan2)
+	go func(c chan int) {
+		time.Sleep(1000 * time.Millisecond)
+		c <- 0
+	}(timeoutChan)
+
+	// Wait for all clients to finish their connection procedure
+	for i := 0; i < 2*expectedNbLogged; i++ {
+		select {
+		case client := <-clientsChan:
+			clients = append(clients, client)
+		case logResult := <-clientLogged:
+			nbLogged += logResult
+		case <-timeoutChan2:
+			assert.FailNow(t, "Timeout reached while waiting all clients to finish their connection procedure (second phase)")
+		}
 	}
 
 	assert.Equal(t, expectedNbLogged, nbLogged,
-		"Unexpected number of logged players")
+		"Unexpected number of logged clients")
 
 	for _, client := range clients {
 		err := client.Disconnect()
-		assert.NoError(t, err, "Could not disconnect")
+		assert.NoError(t, err, "Logged client could not disconnect")
 	}
 
 	killallNetorcai()
 	_, err := waitOutputTimeout(regexp.MustCompile(`Closing listening socket`),
 		proc.outputControl, 1000, false)
-	assert.NoError(t, err, "Could not read line")
+	assert.NoError(t, err, "Could not read `Closing listening socket` in netorcai output")
 }
 
 func TestLoginMaxNbPlayerParallel(t *testing.T) {
