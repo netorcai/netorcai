@@ -235,6 +235,12 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		_, err := connectClient(t, loginRole, "клиент", 1000)
 		assert.NoError(t, err, "Cannot connect client")
 	}
+
+	// Kill netorcai and wait for its port to be freed
+	killallNetorcai()
+	_, err := waitOutputTimeout(regexp.MustCompile(`Closing listening socket`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Could not read `Closing listening socket` in netorcai output")
 }
 
 func TestLoginMaxNbPlayerSequential(t *testing.T) {
@@ -378,6 +384,7 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		assert.NoError(t, err, "Logged client could not disconnect")
 	}
 
+	// Kill netorcai and wait for its port to be freed
 	killallNetorcai()
 	_, err := waitOutputTimeout(regexp.MustCompile(`Closing listening socket`),
 		proc.outputControl, 1000, false)
