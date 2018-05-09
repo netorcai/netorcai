@@ -33,7 +33,6 @@ func TestPromptQuitNoClient(t *testing.T) {
 }
 
 func TestPromptQuitAllClient(t *testing.T) {
-
 	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, 1000)
 	defer killallNetorcai()
 

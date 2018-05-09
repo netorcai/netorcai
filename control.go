@@ -302,6 +302,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		}
 		globalState.GameLogic = globalState.GameLogic[:0]
 		globalState.Mutex.Unlock()
+		onexit <- 1
 		return
 	}
 
