@@ -217,3 +217,30 @@ func checkLoginAck(t *testing.T, msg map[string]interface{}) {
 			messageType)
 	}
 }
+
+func checkDoInit(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedNbTurnsMax int) {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read message_type")
+
+	switch messageType {
+	case "DO_INIT":
+		nbPlayers, err := netorcai.ReadInt(msg, "nb_players")
+		assert.NoError(t, err, "Cannot read nb_players")
+		assert.Equal(t, expectedNbPlayers, nbPlayers,
+			"Unexpected value for nb_players in received DO_INIT message")
+
+		nbTurnsMax, err := netorcai.ReadInt(msg, "nb_turns_max")
+		assert.NoError(t, err, "Cannot read nb_turns_max")
+		assert.Equal(t, expectedNbTurnsMax, nbTurnsMax,
+			"Unexpected value for nb_turns_max in received DO_INIT message")
+	case "KICK":
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.FailNow(t, "Expected LOGIN_ACK, got KICK", kickReason)
+	default:
+		assert.FailNowf(t, "Expected LOGIN_ACK, got another message type",
+			messageType)
+	}
+}
