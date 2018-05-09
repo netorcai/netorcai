@@ -31,6 +31,8 @@ func (c *Client) Connect(hostname string, port int) error {
 }
 
 func (c *Client) Disconnect() error {
+	c.reader = nil
+	c.writer = nil
 	return c.conn.Close()
 }
 

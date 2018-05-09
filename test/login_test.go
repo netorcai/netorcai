@@ -179,18 +179,18 @@ func TestLoginPlayerJapanese(t *testing.T) {
 
 func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcai()
 
 	// Do many player connections sequentially
-	var clients []Client
+	var clients []*Client
 	nbLogged := 0
 
 	assert.Condition(t, func() bool {
 		return expectedNbLogged <= nbConnections
 	})
 	for i := 0; i < nbConnections; i++ {
-		var client Client
+		client := &Client{}
 		err := client.Connect("localhost", 4242)
 		assert.NoError(t, err, "Cannot connect")
 		clients = append(clients, client)
@@ -198,7 +198,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		err = client.SendLogin(loginRole, "клиент")
 		assert.NoError(t, err, "Cannot send LOGIN")
 
-		msg, err := waitReadMessage(&client, 1000)
+		msg, err := waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Cannot read message")
 
 		if i < expectedNbLogged {
@@ -209,7 +209,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		}
 	}
 
-	// Make sure only 4 clients could LOGIN successfully
+	// Make sure the expected number of clients could LOGIN successfully
 	assert.Equal(t, expectedNbLogged, nbLogged,
 		"Unexpected number of logged players")
 
@@ -219,6 +219,14 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		if i < expectedNbLogged {
 			assert.NoError(t, err, "Disconnection of connected client failed")
 		}
+	}
+
+	// Wait netorcai awareness of the disconnection
+	for i := 0; i < expectedNbLogged; i++ {
+		_, err := waitOutputTimeout(
+			regexp.MustCompile(`Remote endpoint closed`), proc.outputControl,
+			500, false)
+		assert.NoError(t, err, "Could not read disconnection discovery in netorcai output")
 	}
 
 	// Connect the expected number of players
