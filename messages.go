@@ -133,7 +133,7 @@ func readTurnAckMessage(data map[string]interface{}, expectedTurnNumber int) (
 	}
 
 	// Read turn number
-	readMessage.turnNumber, err = readInt(data, "turn_number")
+	readMessage.turnNumber, err = ReadInt(data, "turn_number")
 	if err != nil {
 		return readMessage, err
 	}
@@ -145,7 +145,7 @@ func readTurnAckMessage(data map[string]interface{}, expectedTurnNumber int) (
 	}
 
 	// Read actions
-	readMessage.actions, err = readArray(data, "actions")
+	readMessage.actions, err = ReadArray(data, "actions")
 	if err != nil {
 		return readMessage, err
 	}
@@ -163,13 +163,13 @@ func readDoInitAckMessage(data map[string]interface{}) (MessageDoInitAck, error)
 	}
 
 	// Read game state
-	gameState, err := readObject(data, "initial_game_state")
+	gameState, err := ReadObject(data, "initial_game_state")
 	if err != nil {
 		return readMessage, err
 	}
 
 	// Read game state -> all clients
-	readMessage.InitialGameState, err = readObject(gameState, "all_clients")
+	readMessage.InitialGameState, err = ReadObject(gameState, "all_clients")
 	if err != nil {
 		return readMessage, err
 	}
@@ -188,7 +188,7 @@ func readDoTurnAckMessage(data map[string]interface{}, nbPlayers int) (
 	}
 
 	// Read winner player id
-	readMessage.WinnerPlayerID, err = readInt(data, "winner_player_id")
+	readMessage.WinnerPlayerID, err = ReadInt(data, "winner_player_id")
 	if err != nil {
 		return readMessage, err
 	}
@@ -201,13 +201,13 @@ func readDoTurnAckMessage(data map[string]interface{}, nbPlayers int) (
 	}
 
 	// Read game state
-	gameState, err := readObject(data, "game_state")
+	gameState, err := ReadObject(data, "game_state")
 	if err != nil {
 		return readMessage, err
 	}
 
 	// Read game state -> all clients
-	readMessage.GameState, err = readObject(gameState, "all_clients")
+	readMessage.GameState, err = ReadObject(gameState, "all_clients")
 	if err != nil {
 		return readMessage, err
 	}

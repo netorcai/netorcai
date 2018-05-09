@@ -19,7 +19,7 @@ func ReadString(data map[string]interface{}, field string) (string, error) {
 	}
 }
 
-func readInt(data map[string]interface{}, field string) (int, error) {
+func ReadInt(data map[string]interface{}, field string) (int, error) {
 	value, exists := data[field]
 	if !exists {
 		return 0, fmt.Errorf("Field '%v' is missing", field)
@@ -33,7 +33,7 @@ func readInt(data map[string]interface{}, field string) (int, error) {
 	}
 }
 
-func readObject(data map[string]interface{}, field string) (map[string]interface{}, error) {
+func ReadObject(data map[string]interface{}, field string) (map[string]interface{}, error) {
 	value, exists := data[field]
 	if !exists {
 		return make(map[string]interface{}),
@@ -49,7 +49,7 @@ func readObject(data map[string]interface{}, field string) (map[string]interface
 	}
 }
 
-func readArray(data map[string]interface{}, field string) ([]interface{},
+func ReadArray(data map[string]interface{}, field string) ([]interface{},
 	error) {
 	value, exists := data[field]
 	if !exists {
