@@ -24,6 +24,9 @@ func TestCLINoArgs(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgHelp(t *testing.T) {
@@ -79,15 +82,20 @@ func TestCLIArgVerbose(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgQuiet(t *testing.T) {
-	args := []string{"--quiet", "--port=-1"}
+	args := []string{"--quiet"}
 	coverFile, expRetCode := handleCoverage(t, 1)
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
 	defer killallNetorcaiSIGKILL()
+
+	killallNetorcai()
 
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
@@ -104,6 +112,9 @@ func TestCLIArgDebug(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgJsonLogs(t *testing.T) {
@@ -116,6 +127,9 @@ func TestCLIArgJsonLogs(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIInvalidVerbosityCombination(t *testing.T) {
@@ -196,6 +210,9 @@ func TestCLIArgNbPlayersMaxSmall(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgNbPlayersMaxBig(t *testing.T) {
@@ -208,6 +225,9 @@ func TestCLIArgNbPlayersMaxBig(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /**********
@@ -262,6 +282,9 @@ func TestCLIArgPortSmall(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgPortBig(t *testing.T) {
@@ -274,6 +297,9 @@ func TestCLIArgPortBig(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /******************
@@ -328,6 +354,9 @@ func TestCLIArgNbTurnsMaxSmall(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgNbTurnsMaxBig(t *testing.T) {
@@ -340,6 +369,9 @@ func TestCLIArgNbTurnsMaxBig(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /******************
@@ -394,6 +426,9 @@ func TestCLIArgNbVisusMaxSmall(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgNbVisusMaxBig(t *testing.T) {
@@ -406,6 +441,9 @@ func TestCLIArgNbVisusMaxBig(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /**********************
@@ -460,6 +498,9 @@ func TestCLIArgDelayFirstTurnSmall(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgDelayFirstTurnBig(t *testing.T) {
@@ -472,6 +513,9 @@ func TestCLIArgDelayFirstTurnBig(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /*****************
@@ -526,6 +570,9 @@ func TestCLIArgDelayTurnsSmall(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestCLIArgDelayTurnsBig(t *testing.T) {
@@ -538,4 +585,7 @@ func TestCLIArgDelayTurnsBig(t *testing.T) {
 
 	_, err = waitListening(proc.outputControl, 1000)
 	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }

@@ -29,6 +29,9 @@ func TestTwoInstancesSamePort(t *testing.T) {
 	assert.NoError(t, err, "Second instance has not completed")
 	assert.Equal(t, expectedExitCode2, exitCode,
 		"Second instance bad exit code")
+
+	err = killNetorcaiGently(proc1, 1000)
+	assert.NoError(t, err, "First instance could not be killed gently")
 }
 
 func TestTwoInstancesDifferentPort(t *testing.T) {
@@ -48,4 +51,10 @@ func TestTwoInstancesDifferentPort(t *testing.T) {
 
 	_, err = waitListening(proc2.outputControl, 1000)
 	assert.NoError(t, err, "Second instance is not listening")
+
+	err = killNetorcaiGently(proc1, 1000)
+	assert.NoError(t, err, "First instance could not be killed gently")
+
+	err = killNetorcaiGently(proc2, 1000)
+	assert.NoError(t, err, "First instance could not be killed gently")
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func TestLoginNotJson(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -22,10 +22,13 @@ func TestLoginNotJson(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Non-JSON"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginNoMessageType(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -39,10 +42,13 @@ func TestLoginNoMessageType(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Field 'message_type' is missing"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginNoRole(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -56,10 +62,13 @@ func TestLoginNoRole(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Field 'role' is missing"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginNoNickname(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -73,10 +82,13 @@ func TestLoginNoNickname(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Field 'nickname' is missing"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginBadRole(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -90,10 +102,13 @@ func TestLoginBadRole(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid role"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginBadNicknameShort(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -107,10 +122,13 @@ func TestLoginBadNicknameShort(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginBadNicknameLong(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -124,10 +142,13 @@ func TestLoginBadNicknameLong(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginBadNicknameBadCharacters(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	var client Client
@@ -141,6 +162,9 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
 	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /************
@@ -148,30 +172,39 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
  ************/
 
 func TestLoginPlayerAscii(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	player, err := connectClient(t, "player", "player", 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	defer player.Disconnect()
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginPlayerArabic(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	player, err := connectClient(t, "player", "لاعب", 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	defer player.Disconnect()
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestLoginPlayerJapanese(t *testing.T) {
-	_ = runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
 	player, err := connectClient(t, "player", "プレーヤー", 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	defer player.Disconnect()
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 /**************************
@@ -241,6 +274,11 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	_, err := waitOutputTimeout(regexp.MustCompile(`Closing listening socket`),
 		proc.outputControl, 1000, false)
 	assert.NoError(t, err, "Could not read `Closing listening socket` in netorcai output")
+
+	_, expRetCode := handleCoverage(t, 1)
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
 }
 
 func TestLoginMaxNbPlayerSequential(t *testing.T) {
@@ -399,6 +437,11 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	_, err := waitOutputTimeout(regexp.MustCompile(`Closing listening socket`),
 		proc.outputControl, 1000, false)
 	assert.NoError(t, err, "Could not read `Closing listening socket` in netorcai output")
+
+	_, expRetCode := handleCoverage(t, 1)
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
 }
 
 func TestLoginMaxNbPlayerParallel(t *testing.T) {

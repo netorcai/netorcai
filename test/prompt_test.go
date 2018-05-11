@@ -16,6 +16,9 @@ func TestPromptStartNoClient(t *testing.T) {
 	_, err := waitOutputTimeout(regexp.MustCompile(`Cannot start`),
 		proc.outputControl, 1000, true)
 	assert.NoError(t, err, "Cannot read line")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "First instance could not be killed gently")
 }
 
 func TestPromptQuitNoClient(t *testing.T) {

@@ -12,4 +12,6 @@ func TestKickallOnAbortKillSigterm(t *testing.T) {
 	killallNetorcai()
 
 	checkAllKicked(t, clients, regexp.MustCompile(`netorcai abort`), 1000)
+
+	// TODO
 }

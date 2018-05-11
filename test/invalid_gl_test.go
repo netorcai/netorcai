@@ -20,6 +20,11 @@ func TestInvalidGlMessageBeforeStart(t *testing.T) {
 	assert.NoError(t, err,
 		"Cannot read `Game logic failed` in netorcai output")
 
+	_, expRetCode := handleCoverage(t, 1)
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
+
 	checkAllKicked(t, playerClients, regexp.MustCompile(`netorcai abort`),
 		1000)
 	checkAllKicked(t, visuClients, regexp.MustCompile(`netorcai abort`), 1000)
@@ -45,6 +50,11 @@ func TestInvalidGlNoDoInitAck(t *testing.T) {
 		proc.outputControl, 4000, false)
 	assert.NoError(t, err,
 		"Cannot read `Game logic failed` in netorcai output")
+
+	_, expRetCode := handleCoverage(t, 1)
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
 
 	checkAllKicked(t, playerClients, regexp.MustCompile(`netorcai abort`),
 		1000)

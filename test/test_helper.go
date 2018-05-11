@@ -271,3 +271,10 @@ func checkDoInit(t *testing.T, msg map[string]interface{},
 			messageType)
 	}
 }
+
+func killNetorcaiGently(proc *NetorcaiProcess, timeoutMS int) error {
+	killallNetorcai()
+
+	_, err := waitCompletionTimeout(proc.completion, timeoutMS)
+	return err
+}
