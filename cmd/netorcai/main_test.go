@@ -27,5 +27,5 @@ func TestRunMain(t *testing.T) {
 
 	// To retrieve coverage results, os.Exit must NOT be called
 	returnCode := mainReturnWithCode()
-	fmt.Println("Robin return code:", returnCode)
+	fmt.Println("Netorcai return code:", returnCode)
 }
