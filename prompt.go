@@ -46,6 +46,7 @@ func executor(line string) {
 		globalGS.Mutex.Lock()
 		if globalGS.GameState == GAME_NOT_RUNNING {
 			if len(globalGS.GameLogic) == 1 {
+				globalGS.GameState = GAME_RUNNING
 				globalGS.GameLogic[0].start <- 1
 			} else {
 				fmt.Printf("Cannot start: Game logic not connected\n")
