@@ -56,5 +56,5 @@ func TestTwoInstancesDifferentPort(t *testing.T) {
 	assert.NoError(t, err, "First instance could not be killed gently")
 
 	err = killNetorcaiGently(proc2, 1000)
-	assert.NoError(t, err, "First instance could not be killed gently")
+	assert.NoError(t, err, "Second instance could not be killed gently")
 }

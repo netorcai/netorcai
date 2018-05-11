@@ -18,7 +18,7 @@ func TestPromptStartNoClient(t *testing.T) {
 	assert.NoError(t, err, "Cannot read line")
 
 	err = killNetorcaiGently(proc, 1000)
-	assert.NoError(t, err, "First instance could not be killed gently")
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestPromptDoubleStart(t *testing.T) {
@@ -33,7 +33,7 @@ func TestPromptDoubleStart(t *testing.T) {
 	assert.NoError(t, err, "Cannot read line")
 
 	err = killNetorcaiGently(proc, 1000)
-	assert.NoError(t, err, "First instance could not be killed gently")
+	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
 func TestPromptQuitNoClient(t *testing.T) {
