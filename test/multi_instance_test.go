@@ -38,7 +38,7 @@ func TestTwoInstancesDifferentPort(t *testing.T) {
 	args := []string{"--port=5151"}
 	coverFile, _ := handleCoverage(t, 1)
 
-	proc1, err := runNetorcaiCover(coverFile, args)
+	proc1, err := runNetorcaiCover("", args) // never covered
 	assert.NoError(t, err, "Cannot start netorcai")
 	defer killallNetorcaiSIGKILL()
 
