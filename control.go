@@ -347,7 +347,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	doTurnAckMsg, err := readDoInitAckMessage(msg.content)
 	if err != nil {
 		Kick(glClient.client,
-			fmt.Sprintf("Invalid DO_INIT_ACK message. %v", msg.err.Error()))
+			fmt.Sprintf("Invalid DO_INIT_ACK message. %v", err.Error()))
 		onexit <- 1
 		return
 	}
