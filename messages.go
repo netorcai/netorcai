@@ -153,7 +153,8 @@ func readTurnAckMessage(data map[string]interface{}, expectedTurnNumber int) (
 	return readMessage, nil
 }
 
-func readDoInitAckMessage(data map[string]interface{}) (MessageDoInitAck, error) {
+func readDoInitAckMessage(data map[string]interface{}) (
+	MessageDoInitAck, error) {
 	var readMessage MessageDoInitAck
 
 	// Check message type
