@@ -71,9 +71,8 @@ func RunServer(port int, globalState *GlobalState, onexit,
 }
 
 func readClientMessages(client *Client) {
-	var msg ClientMessage
-
 	for {
+		var msg ClientMessage
 		// Receive message content size
 		contentSizeBuf := make([]byte, 2)
 		_, err := io.ReadFull(client.reader, contentSizeBuf)
@@ -95,6 +94,11 @@ func readClientMessages(client *Client) {
 			return
 		}
 
+		log.WithFields(log.Fields{
+			"remote address": client.Conn.RemoteAddr(),
+			"content size":   contentSize,
+			"content":        string(contentBuf),
+		}).Debug("New message received")
 		// Read message content
 		err = json.Unmarshal(contentBuf, &msg.content)
 		if err != nil {
