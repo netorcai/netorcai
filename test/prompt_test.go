@@ -2,11 +2,25 @@ package test
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"testing"
 )
+
+func promptReadValue(promptLine, variableName string) (string, error) {
+	re := regexp.MustCompile(`\A` + variableName + `=(\d+)\z`)
+
+	res := re.FindStringSubmatch(promptLine)
+	if res == nil {
+		return "", fmt.Errorf("No match")
+	} else {
+		strValue := res[1]
+		return strValue, nil
+	}
+}
 
 func TestPromptStartNoClient(t *testing.T) {
 	proc := runNetorcaiWaitListening(t)
@@ -60,6 +74,116 @@ func TestPromptQuitAllClient(t *testing.T) {
 	assert.NoError(t, err, "Cannot read line")
 
 	checkAllKicked(t, clients, regexp.MustCompile(`netorcai abort`), 1000)
+}
+
+func subtestPromptVariablePrintSet(t *testing.T, variableName,
+	invalidTypeValue, initialValue,
+	tooSmallValue, okValue, tooBigValue string) {
+	proc := runNetorcaiWaitListening(t)
+	currentValue := initialValue
+	defer killallNetorcaiSIGKILL()
+
+	// Set invalid value (bad type)
+	proc.inputControl <- "set " + variableName + "=" + invalidTypeValue
+	line, err := waitOutputTimeout(regexp.MustCompile(`Bad VALUE`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err,
+		"Cannot read prompt 'Bad VALUE' output (invalid type value)")
+
+	// Initial value must still be there
+	proc.inputControl <- "print " + variableName
+	line, err = waitOutputTimeout(regexp.MustCompile(variableName+"="),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read prompt 'print' output (initial value)")
+	value, err := promptReadValue(line, variableName)
+	assert.NoError(t, err,
+		"Cannot extract value from prompt print output (initial value)")
+	assert.Equal(t, currentValue, value,
+		"Unexpected value from prompt print output (initial value)")
+
+	// Set a valid value, then check that the printed value is the expected one
+	currentValue = okValue
+	proc.inputControl <- "set " + variableName + "=" + okValue
+	proc.inputControl <- "print " + variableName
+	line, err = waitOutputTimeout(regexp.MustCompile(variableName+"="),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read prompt 'print' output (ok value)")
+	value, err = promptReadValue(line, variableName)
+	assert.NoError(t, err,
+		"Cannot extract value from prompt print output (ok value)")
+	assert.Equal(t, currentValue, value,
+		"Unexpected value from prompt print output (ok value)")
+
+	// Set invalid value (too small)
+	proc.inputControl <- "set " + variableName + "=" + tooSmallValue
+	line, err = waitOutputTimeout(regexp.MustCompile(`Bad VALUE`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err,
+		"Cannot read prompt 'Bad VALUE' output (too small value)")
+
+	// Set invalid value (too big)
+	proc.inputControl <- "set " + variableName + "=" + tooBigValue
+	line, err = waitOutputTimeout(regexp.MustCompile(`Bad VALUE`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err,
+		"Cannot read prompt 'Bad VALUE' output (too big value)")
+
+	// Previous value must still be there
+	proc.inputControl <- "print " + variableName
+	line, err = waitOutputTimeout(regexp.MustCompile(variableName+"="),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read prompt 'print' output (at end)")
+	value, err = promptReadValue(line, variableName)
+	assert.NoError(t, err,
+		"Cannot extract value from prompt print output (at end)")
+	assert.Equal(t, currentValue, value,
+		"Unexpected value from prompt print output (at end)")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func subtestPromptIntVariablePrintSet(t *testing.T,
+	variableName, invalidTypeValue string,
+	initialValue, tooSmallValue, okValue, tooBigValue int) {
+	subtestPromptVariablePrintSet(t, variableName, invalidTypeValue,
+		strconv.Itoa(initialValue),
+		strconv.Itoa(tooSmallValue),
+		strconv.Itoa(okValue),
+		strconv.Itoa(tooBigValue))
+}
+
+func TestPromptNbTurnsMax(t *testing.T) {
+	subtestPromptIntVariablePrintSet(t, "nb-turns-max", "50.5", 100,
+		0, 42, 65536)
+}
+
+func TestPromptNbPlayersMax(t *testing.T) {
+	subtestPromptIntVariablePrintSet(t, "nb-players-max", "4.5", 4, 0, 2, 1025)
+}
+
+func TestPromptNbVisusMax(t *testing.T) {
+	subtestPromptIntVariablePrintSet(t, "nb-visus-max", "1.5", 1, -1, 10, 1025)
+}
+
+func subtestPromptFloatVariablePrintSet(t *testing.T,
+	variableName, invalidTypeValue string,
+	initialValue, tooSmallValue, okValue, tooBigValue float64) {
+	subtestPromptVariablePrintSet(t, variableName, invalidTypeValue,
+		strconv.FormatFloat(initialValue, 'f', -1, 64),
+		strconv.FormatFloat(tooSmallValue, 'f', -1, 64),
+		strconv.FormatFloat(okValue, 'f', -1, 64),
+		strconv.FormatFloat(tooBigValue, 'f', -1, 64))
+}
+
+func TestPromptDelayFirstTurn(t *testing.T) {
+	subtestPromptFloatVariablePrintSet(t, "delay-first-turn", "meh", 1000,
+		49.999, 500, 10000.001)
+}
+
+func TestPromptDelayTurns(t *testing.T) {
+	subtestPromptFloatVariablePrintSet(t, "delay-turns", "meh", 1000,
+		49.999, 500, 10000.001)
 }
 
 func TestControlProcessInputCatNoInut(t *testing.T) {
