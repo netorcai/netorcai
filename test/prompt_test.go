@@ -186,6 +186,36 @@ func TestPromptDelayTurns(t *testing.T) {
 		49.999, 500, 10000.001)
 }
 
+func TestPromptPrintAll(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+
+	proc.inputControl <- "print all"
+
+	_, err := waitOutputTimeout(regexp.MustCompile(`nb-turns-max=100`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read print nb-turns-max")
+
+	_, err = waitOutputTimeout(regexp.MustCompile(`nb-players-max=4`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read print nb-players-max")
+
+	_, err = waitOutputTimeout(regexp.MustCompile(`nb-visus-max=1`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read print nb-visus-max")
+
+	_, err = waitOutputTimeout(regexp.MustCompile(`delay-first-turn=1000`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read print delay-first-turn")
+
+	_, err = waitOutputTimeout(regexp.MustCompile(`delay-turns=1000`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read print delay-turns")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 func TestControlProcessInputCatNoInut(t *testing.T) {
 	cmd := exec.Command("cat")
 	cmd.Args = []string{"cat"}
