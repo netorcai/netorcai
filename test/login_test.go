@@ -197,7 +197,7 @@ func TestLoginPlayerAscii(t *testing.T) {
 
 	player, err := connectClient(t, "player", "player", 1000)
 	assert.NoError(t, err, "Cannot connect client")
-	defer player.Disconnect()
+	player.Disconnect()
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -209,7 +209,7 @@ func TestLoginPlayerArabic(t *testing.T) {
 
 	player, err := connectClient(t, "player", "لاعب", 1000)
 	assert.NoError(t, err, "Cannot connect client")
-	defer player.Disconnect()
+	player.Disconnect()
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -221,7 +221,7 @@ func TestLoginPlayerJapanese(t *testing.T) {
 
 	player, err := connectClient(t, "player", "プレーヤー", 1000)
 	assert.NoError(t, err, "Cannot connect client")
-	defer player.Disconnect()
+	player.Disconnect()
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
