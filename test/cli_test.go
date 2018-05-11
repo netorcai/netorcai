@@ -89,14 +89,13 @@ func TestCLIArgVerbose(t *testing.T) {
 
 func TestCLIArgQuiet(t *testing.T) {
 	args := []string{"--quiet"}
-	coverFile, expRetCode := handleCoverage(t, 1)
+	coverFile, expRetCode := handleCoverage(t, 0)
 
 	proc, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
 	defer killallNetorcaiSIGKILL()
 
-	killallNetorcai()
-
+	proc.inputControl <- "quit"
 	retCode, err := waitCompletionTimeout(proc.completion, 1000)
 	assert.NoError(t, err, "netorcai did not complete")
 	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
