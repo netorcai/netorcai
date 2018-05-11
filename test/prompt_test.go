@@ -216,6 +216,90 @@ func TestPromptPrintAll(t *testing.T) {
 	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
+func TestPromptPrintBadVariable(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+
+	proc.inputControl <- "print unknown-var"
+	_, err := waitOutputTimeout(regexp.MustCompile(`Bad VARIABLE=unknown-var`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read Bad VARIABLE")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestPromptSetBadVariable(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+
+	proc.inputControl <- "set unknown-var=3"
+	_, err := waitOutputTimeout(regexp.MustCompile(`Bad VARIABLE=unknown-var`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read Bad VARIABLE")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestPromptInvalidSyntaxPrint(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+	re := regexp.MustCompile(`expected syntax: print VARIABLE`)
+
+	proc.inputControl <- "print"
+	_, err := waitOutputTimeout(re, proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read 'expected syntax [...]' after print")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestPromptInvalidSyntaxQuit(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+	re := regexp.MustCompile(`expected syntax: quit`)
+
+	proc.inputControl <- "quit meh"
+	_, err := waitOutputTimeout(re, proc.outputControl, 1000, false)
+	assert.NoError(t, err,
+		"Cannot read 'expected syntax [...]' after quit meh")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestPromptInvalidSyntaxStart(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+	re := regexp.MustCompile(`expected syntax: start`)
+
+	proc.inputControl <- "start meh"
+	_, err := waitOutputTimeout(re, proc.outputControl, 1000, false)
+	assert.NoError(t, err,
+		"Cannot read 'expected syntax [...]' after start meh")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestPromptInvalidSyntaxSet(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+	re := regexp.MustCompile(`expected syntax: set VARIABLE=VALUE`)
+
+	proc.inputControl <- "set"
+	_, err := waitOutputTimeout(re, proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read 'expected syntax [...]' after set")
+
+	proc.inputControl <- "set nb-turns-max"
+	_, err = waitOutputTimeout(re, proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read 'expected syntax [...]' after set VAR")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 func TestControlProcessInputCatNoInut(t *testing.T) {
 	cmd := exec.Command("cat")
 	cmd.Args = []string{"cat"}
