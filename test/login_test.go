@@ -87,6 +87,26 @@ func TestLoginNoNickname(t *testing.T) {
 	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
+func TestLoginRoleNotString(t *testing.T) {
+	proc := runNetorcaiWaitListening(t)
+	defer killallNetorcaiSIGKILL()
+
+	var client Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":1, "nickname":"bot"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Non-string value for field 'role'"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 func TestLoginBadRole(t *testing.T) {
 	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
