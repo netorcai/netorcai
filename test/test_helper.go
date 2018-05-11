@@ -103,6 +103,11 @@ func handleCoverage(t *testing.T, expRetCode int) (coverFilename string,
 	return coverFilename, expectedReturnCode
 }
 
+func isTravis() bool {
+	_, exists := os.LookupEnv("TRAVIS")
+	return exists
+}
+
 // Client helpers
 func waitReadMessage(client *Client, timeoutMS int) (
 	msg map[string]interface{}, err error) {

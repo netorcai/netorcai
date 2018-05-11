@@ -309,6 +309,12 @@ func TestLoginMaxNbGameLogicSequential(t *testing.T) {
 
 func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
+	if isTravis() {
+		// Do not run this test on Travis
+		// Cclients would be too slow to react between KICK and socket close.
+		t.SkipNow()
+	}
+
 	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
 
