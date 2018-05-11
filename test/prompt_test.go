@@ -21,6 +21,21 @@ func TestPromptStartNoClient(t *testing.T) {
 	assert.NoError(t, err, "First instance could not be killed gently")
 }
 
+func TestPromptDoubleStart(t *testing.T) {
+	proc, _, _, _, _ := runNetorcaiAndAllClients(t, 1000)
+	defer killallNetorcaiSIGKILL()
+
+	proc.inputControl <- "start"
+	proc.inputControl <- "start"
+	_, err := waitOutputTimeout(
+		regexp.MustCompile(`Game has already been started`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read line")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "First instance could not be killed gently")
+}
+
 func TestPromptQuitNoClient(t *testing.T) {
 	proc := runNetorcaiWaitListening(t)
 	defer killallNetorcaiSIGKILL()
