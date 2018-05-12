@@ -89,9 +89,17 @@ This message type is sent from **netorcai** to **clients**.
 It tells the clients that the game is about to start.
 
 Fields:
-- `player_id`: (integral non-negative number or `null`):
+- `player_id`: (integral non-negative number or -1):
   The unique identifier of the client if its role is `player`,
-  `null` otherwise.
+  -1 otherwise.
+- `players_info`: (array of objects):
+  If this message is sent to a `player`, this array is empty.  
+  If this message is sent to a `visualization`, this array contains information
+  about each player:
+  - `player_id` (integral non-negative number): The unique player identifier.
+  - `nickname` (string): The player nickname.
+  - `remote_address` (string): The player network remote address.
+  - `is_connected` (bool): Whether the player is connected.
 - `nb_players` (integral positive number): The number of players of the game.
 - `nb_turns_max` (integral positive number):
   The maximum number of turns of the game.
@@ -104,6 +112,14 @@ Example:
 {
   "message_type": "GAME_STARTS",
   "player_id": 0,
+  "players_info": [
+    {
+      "player_id": 0,
+      "nickname": "jugador",
+      "remote_address": "127.0.0.1:59840",
+      "is_connected": true
+    }
+  ],
   "nb_players": 4,
   "nb_turns_max": 100,
   "milliseconds_before_first_turn": 1000,
@@ -118,9 +134,9 @@ It tells the clients that the game is finished.
 Clients can safely close the socket after receiving this message.
 
 Fields:
-- `winner_player_id` (integral non-negative number or null):
+- `winner_player_id` (integral non-negative number or -1):
   The unique identifier of the player that won the game.
-  Can be null if there is no winner.
+  Can be -1 if there is no winner.
 - `game_state` (object): Game-dependent content.
 
 Example:
@@ -142,13 +158,29 @@ Fields:
   The number of the current turn.
 - `game_state` (object): Game-dependent content that directly corresponds to
   the `game_state`field of a `DO_TURN_ACK` message.
+- `players_info`: (array of objects):
+  If this message is sent to a `player`, this array is empty.  
+  If this message is sent to a `visualization`, this array contains information
+  about each player:
+  - `player_id` (integral non-negative number): The unique player identifier.
+  - `nickname` (string): The player nickname.
+  - `remote_address` (string): The player network remote address.
+  - `is_connected` (bool): Whether the player is connected.
 
 Example:
 ```json
 {
   "message_type": "TURN",
   "turn_number": 0,
-  "game_state": {}
+  "game_state": {},
+  "players_info": [
+    {
+      "player_id": 0,
+      "nickname": "jugador",
+      "remote_address": "127.0.0.1:59840",
+      "is_connected": true
+    }
+  ]
 }
 ```
 
@@ -224,7 +256,7 @@ Game logic has finished its initialization.
 It sends initial information about the game, which is forwarded to the clients.
 
 Fields:
-- `game_state` (object): The initial game state, as it should be
+- `initial_game_state` (object): The initial game state, as it should be
   transmitted to clients.
   Only the `all_clients` key of this object is currently implemented, which
   means the associated game-dependent object will be transmitted to all the
@@ -233,7 +265,7 @@ Fields:
 Example:
 ```json
 {
-  "game_state": {
+  "initial_game_state": {
     "all_clients": {}
   }
 }
@@ -276,9 +308,9 @@ This message type is sent from **game logic** to **netorcai**.
 Game logic has computed a new turn and transmits its results.
 
 Fields:
-- `winner_player_id` (non-negative integral number or null):
+- `winner_player_id` (non-negative integral number or -1):
   The unique identifier of the player currently winning the game.
-  Can be null if there is no current winner.
+  Can be -1 if there is no current winner.
 - `game_state` (object): The current game state, as it should be
   transmitted to clients.
   Only the `all_clients` key of this object is currently implemented, which
