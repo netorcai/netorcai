@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"net"
+	"sort"
 	"sync"
 	"time"
 )
@@ -29,11 +30,12 @@ const (
 
 type PlayerOrVisuClient struct {
 	client     *Client
-	playerID   int // TODO: generate them when the game is started
+	playerID   int
 	isPlayer   bool
 	gameStarts chan MessageGameStarts
 	newTurn    chan MessageTurn
 	gameEnds   chan MessageGameEnds
+	playerInfo *PlayerInformation
 }
 
 type GameLogicClient struct {
@@ -310,10 +312,29 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	// Generate randomized player identifiers
 	globalState.Mutex.Lock()
+	initialNbPlayers := len(globalState.Players)
 	playerIDs := rand.Perm(len(globalState.Players))
 	for playerIndex, player := range globalState.Players {
 		player.playerID = playerIDs[playerIndex]
 	}
+
+	// Generate player information
+	playersInfo := []*PlayerInformation{}
+	for _, player := range globalState.Players {
+		info := &PlayerInformation{
+			playerID:      player.playerID,
+			nickname:      player.client.nickname,
+			remoteAddress: player.client.Conn.RemoteAddr().String(),
+			isConnected:   true,
+		}
+		player.playerInfo = info
+		playersInfo = append(playersInfo, info)
+	}
+
+	// Sort player information by player_id
+	sort.Slice(playersInfo, func(i, j int) bool {
+		return playersInfo[i].playerID < playersInfo[j].playerID
+	})
 
 	// Send DO_INIT
 	log.Debug("Sending DO_INIT to game logic")
@@ -354,10 +375,20 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	// Send GAME_STARTS to all clients
 	globalState.Mutex.Lock()
-	initialNbPlayers := len(globalState.Players)
 	for _, player := range globalState.Players {
 		player.gameStarts <- MessageGameStarts{
 			PlayerID:         player.playerID,
+			PlayersInfo:      []*PlayerInformation{},
+			NbPlayers:        initialNbPlayers,
+			NbTurnsMax:       globalState.NbTurnsMax,
+			DelayFirstTurn:   globalState.MillisecondsBeforeFirstTurn,
+			InitialGameState: doTurnAckMsg.InitialGameState,
+		}
+	}
+	for _, visu := range globalState.Visus {
+		visu.gameStarts <- MessageGameStarts{
+			PlayerID:         visu.playerID,
+			PlayersInfo:      playersInfo,
 			NbPlayers:        initialNbPlayers,
 			NbTurnsMax:       globalState.NbTurnsMax,
 			DelayFirstTurn:   globalState.MillisecondsBeforeFirstTurn,
@@ -421,14 +452,16 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			globalState.Mutex.Lock()
 			for _, player := range globalState.Players {
 				player.newTurn <- MessageTurn{
-					TurnNumber: turnNumber,
-					GameState:  doTurnAckMsg.GameState,
+					TurnNumber:  turnNumber,
+					GameState:   doTurnAckMsg.GameState,
+					PlayersInfo: []*PlayerInformation{},
 				}
 			}
 			for _, visu := range globalState.Visus {
 				visu.newTurn <- MessageTurn{
-					TurnNumber: turnNumber,
-					GameState:  doTurnAckMsg.GameState,
+					TurnNumber:  turnNumber,
+					GameState:   doTurnAckMsg.GameState,
+					PlayersInfo: playersInfo,
 				}
 			}
 			globalState.Mutex.Unlock()
@@ -446,6 +479,16 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 					playerActions = playerActions[:0]
 				}()
 			} else {
+				if doTurnAckMsg.WinnerPlayerID != -1 {
+					log.WithFields(log.Fields{
+						"winner player ID":      doTurnAckMsg.WinnerPlayerID,
+						"winner nickname":       playersInfo[doTurnAckMsg.WinnerPlayerID].nickname,
+						"winner remote address": playersInfo[doTurnAckMsg.WinnerPlayerID].remoteAddress,
+					}).Info("Game is finished")
+				} else {
+					log.Info("Game is finished (no winner!)")
+				}
+
 				// Send GAME_ENDS to all clients
 				globalState.Mutex.Lock()
 				for _, player := range globalState.Players {
@@ -462,6 +505,11 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				}
 
 				globalState.Mutex.Unlock()
+
+				// Leave the program
+				Kick(glClient.client, "Game is finished")
+				onexit <- 0
+				return
 			}
 		}
 	}

@@ -182,7 +182,9 @@ Options:
 		netorcai.Cleanup()
 		return guardExitCode
 	case gameLogicExitCode := <-gameLogicExit:
-		log.Warn("Game logic failed. Aborting.")
+		if gameLogicExitCode != 0 {
+			log.Warn("Game logic failed. Aborting.")
+		}
 		netorcai.Cleanup()
 		return gameLogicExitCode
 	case shellExitCode := <-shellExit:

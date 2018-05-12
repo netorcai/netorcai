@@ -14,12 +14,21 @@ type MessageLoginAck struct {
 	MessageType string `json:"message_type"`
 }
 
+// Quite an immutable PlayerOrVisuClient generated at game start
+type PlayerInformation struct {
+	playerID      int    `json:"player_id"`
+	nickname      string `json:"nickname"`
+	remoteAddress string `json:"remote_address"`
+	isConnected   bool   `json:"is_connected"`
+}
+
 type MessageGameStarts struct {
 	PlayerID         int                    `json:"player_id"`
 	NbPlayers        int                    `json:"nb_players"`
 	NbTurnsMax       int                    `json:"nb_turns_max"`
 	DelayFirstTurn   float64                `json:"milliseconds_before_first_turn"`
 	InitialGameState map[string]interface{} `json:"initial_game_state"`
+	PlayersInfo      []*PlayerInformation   `json:"players_info"`
 }
 
 type MessageGameEnds struct {
@@ -31,6 +40,7 @@ type MessageTurn struct {
 	MessageType string                 `json:"message_type"`
 	TurnNumber  int                    `json:"turn_number"`
 	GameState   map[string]interface{} `json:"game_state"`
+	PlayersInfo []*PlayerInformation   `json:"players_info"`
 }
 
 type MessageTurnAck struct {
@@ -195,10 +205,10 @@ func readDoTurnAckMessage(data map[string]interface{}, nbPlayers int) (
 	}
 
 	// Check player id
-	if readMessage.WinnerPlayerID < 0 ||
+	if readMessage.WinnerPlayerID < -1 ||
 		readMessage.WinnerPlayerID >= nbPlayers {
 		return readMessage, fmt.Errorf("Invalid winner_player_id: "+
-			"Not in [0, %v[", nbPlayers)
+			"Not in [-1, %v[", nbPlayers)
 	}
 
 	// Read game state
