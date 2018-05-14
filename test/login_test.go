@@ -352,6 +352,7 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 				assert.Regexp(t, kickReasonMatcher,
 					msg["kick_reason"].(string),
 					"Client kicked for an unexpected reason")
+				client.Disconnect()
 			default:
 				assert.Fail(t, "Unexpected message type %v", msgType)
 			}
