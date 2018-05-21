@@ -16,13 +16,15 @@ type NetorcaiProcess struct {
 	inputControl  chan string // user can send messages on this channel
 	outputControl chan string // user can receive messages on this channel
 	completion    chan int    // user can receive an exit code on this channel
+	printOutput   bool        // whether stdout lines should be printed
 }
 
 func runNetorcai(command string, arguments []string) (*NetorcaiProcess, error) {
 	proc := &NetorcaiProcess{
 		inputControl:  make(chan string),
-		outputControl: make(chan string),
+		outputControl: make(chan string, 64),
 		completion:    make(chan int),
+		printOutput:   false,
 	}
 	proc.cmd = exec.Command(command)
 	proc.cmd.Args = append([]string{command}, arguments...)
@@ -43,7 +45,8 @@ func runNetorcai(command string, arguments []string) (*NetorcaiProcess, error) {
 		return proc, fmt.Errorf("Cannot start process. %v", err)
 	}
 
-	go lineReader(bufio.NewReader(proc.stdoutPipe), proc.outputControl)
+	go lineReader(bufio.NewReader(proc.stdoutPipe), proc.outputControl,
+		&proc.printOutput)
 	go lineWriter(bufio.NewWriter(proc.stdinPipe), proc.inputControl)
 	go waitCompletion(proc.cmd, proc.completion)
 	return proc, nil
@@ -68,13 +71,17 @@ func runNetorcaiCover(coverFile string, arguments []string) (
 	}
 }
 
-func lineReader(reader *bufio.Reader, lineRead chan string) {
+func lineReader(reader *bufio.Reader, lineRead chan string, doPrint *bool) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			return
 		} else {
-			lineRead <- strings.TrimRight(line, "\n")
+			line = strings.TrimRight(line, "\n")
+			if *doPrint {
+				fmt.Printf("Netorcai output: %v\n", line)
+			}
+			lineRead <- line
 		}
 	}
 }
