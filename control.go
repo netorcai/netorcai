@@ -295,6 +295,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	// Wait for the game to start
 	select {
 	case <-glClient.start:
+		log.Info("Starting game")
 	case msg := <-glClient.client.incomingMessages:
 		globalState.Mutex.Lock()
 		if msg.err == nil {
@@ -337,7 +338,6 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	})
 
 	// Send DO_INIT
-	log.Debug("Sending DO_INIT to game logic")
 	err := sendDoInit(glClient, len(globalState.Players),
 		globalState.NbTurnsMax)
 	globalState.Mutex.Unlock()
@@ -398,6 +398,9 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	globalState.Mutex.Unlock()
 
 	// Wait before really starting the game
+	log.WithFields(log.Fields{
+		"duration (ms)": globalState.MillisecondsBeforeFirstTurn,
+	}).Debug("Sleeping before first turn")
 	time.Sleep(time.Duration(globalState.MillisecondsBeforeFirstTurn) *
 		time.Millisecond)
 
@@ -470,7 +473,11 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			if turnNumber < globalState.NbTurnsMax {
 				// Trigger a new DO_TURN in some time
 				go func() {
-					time.Sleep(time.Duration(globalState.MillisecondsBetweenTurns) *
+					log.WithFields(log.Fields{
+						"duration (ms)": globalState.MillisecondsBetweenTurns,
+					}).Debug("Sleeping before next turn")
+					time.Sleep(time.Duration(
+						globalState.MillisecondsBetweenTurns) *
 						time.Millisecond)
 
 					// Send current actions
@@ -636,6 +643,9 @@ func sendDoInit(client *GameLogicClient, nbPlayers, nbTurnsMax int) error {
 		}).Error("Cannot marshal JSON message")
 		return err
 	} else {
+		log.WithFields(log.Fields{
+			"content": string(content),
+		}).Debug("Sending DO_INIT to game logic")
 		err = sendMessage(client.client, content)
 		return err
 	}
@@ -655,6 +665,9 @@ func sendDoTurn(client *GameLogicClient,
 		}).Error("Cannot marshal JSON message")
 		return err
 	} else {
+		log.WithFields(log.Fields{
+			"content": string(content),
+		}).Debug("Sending DO_TURN to game logic")
 		err = sendMessage(client.client, content)
 		return err
 	}
