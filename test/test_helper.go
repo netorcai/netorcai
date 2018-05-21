@@ -278,6 +278,58 @@ func checkDoInit(t *testing.T, msg map[string]interface{},
 	}
 }
 
+func checkDoTurn(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedTurnNumber int) {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (DO_TURN)")
+
+	switch messageType {
+	case "DO_TURN":
+		playerActions, err := netorcai.ReadArray(msg, "player_actions")
+		assert.NoError(t, err, "Cannot read player_actions in DO_TURN message")
+		assert.Condition(t, func() bool {
+			return len(playerActions) <= expectedNbPlayers
+		}, "Invalid player_actions array in DO_TURN message: Size=%v while "+
+			"nb_players=%v", len(playerActions), expectedNbPlayers)
+
+		for playerIndex, pActions := range playerActions {
+			obj := pActions.(map[string]interface{})
+
+			playerID, err := netorcai.ReadInt(obj, "player_id")
+			assert.NoError(t, err, "Invalid player_actions in DO_TURN "+
+				"message: Cannot read player_id in array element %v",
+				playerIndex)
+			assert.Condition(t, func() bool {
+				return playerID >= 0 && playerID < expectedNbPlayers
+			}, "Invalid player_id=%v in player_actions[%v] in DO_TURN "+
+				"message: Should be in [0,%v[",
+				playerID, playerIndex, expectedNbPlayers)
+
+			turnNumber, err := netorcai.ReadInt(obj, "turn_number")
+			assert.NoError(t, err, "Invalid player_actions in DO_TURN "+
+				"message: Cannot read turn_number in array element %v",
+				playerIndex)
+			assert.Equal(t, expectedTurnNumber, turnNumber,
+				"Unexpected turn_number in DO_TURN player action %v",
+				playerIndex)
+
+			_, err = netorcai.ReadArray(obj, "actions")
+			assert.NoError(t, err, "Invalid player_actions in DO_TURN "+
+				"message: Cannot read the actions array in player action %v",
+				playerIndex)
+		}
+	case "KICK":
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.FailNow(t, "Expected DO_TURN, got KICK", kickReason)
+	default:
+		assert.FailNowf(t, "Expected DO_TURN, got another message type",
+			messageType)
+	}
+}
+
 func killNetorcaiGently(proc *NetorcaiProcess, timeoutMS int) error {
 	killallNetorcai()
 
