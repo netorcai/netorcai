@@ -11,7 +11,6 @@ func TestHelloGLOnly(t *testing.T) {
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
 			"--delay-turns=500", "--debug"}, 1000)
 	defer killallNetorcaiSIGKILL()
-	proc.printOutput = true
 
 	// Disconnect all players
 	for _, player := range players {
