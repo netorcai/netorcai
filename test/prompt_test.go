@@ -23,7 +23,7 @@ func promptReadValue(promptLine, variableName string) (string, error) {
 }
 
 func TestPromptStartNoClient(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "start"
@@ -36,7 +36,7 @@ func TestPromptStartNoClient(t *testing.T) {
 }
 
 func TestPromptDoubleStart(t *testing.T) {
-	proc, _, _, _, _ := runNetorcaiAndAllClients(t, 1000)
+	proc, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "start"
@@ -51,7 +51,7 @@ func TestPromptDoubleStart(t *testing.T) {
 }
 
 func TestPromptQuitNoClient(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "quit"
@@ -65,7 +65,7 @@ func TestPromptQuitNoClient(t *testing.T) {
 }
 
 func TestPromptQuitAllClient(t *testing.T) {
-	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, 1000)
+	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "quit"
@@ -79,7 +79,7 @@ func TestPromptQuitAllClient(t *testing.T) {
 func subtestPromptVariablePrintSet(t *testing.T, variableName,
 	invalidTypeValue, initialValue,
 	tooSmallValue, okValue, tooBigValue string) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	currentValue := initialValue
 	defer killallNetorcaiSIGKILL()
 
@@ -187,7 +187,7 @@ func TestPromptDelayTurns(t *testing.T) {
 }
 
 func TestPromptPrintAll(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "print all"
@@ -217,7 +217,7 @@ func TestPromptPrintAll(t *testing.T) {
 }
 
 func TestPromptPrintBadVariable(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "print unknown-var"
@@ -230,7 +230,7 @@ func TestPromptPrintBadVariable(t *testing.T) {
 }
 
 func TestPromptSetBadVariable(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "set unknown-var=3"
@@ -243,7 +243,7 @@ func TestPromptSetBadVariable(t *testing.T) {
 }
 
 func TestPromptInvalidSyntaxPrint(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 	re := regexp.MustCompile(`expected syntax: print VARIABLE`)
 
@@ -256,7 +256,7 @@ func TestPromptInvalidSyntaxPrint(t *testing.T) {
 }
 
 func TestPromptInvalidSyntaxQuit(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 	re := regexp.MustCompile(`expected syntax: quit`)
 
@@ -270,7 +270,7 @@ func TestPromptInvalidSyntaxQuit(t *testing.T) {
 }
 
 func TestPromptInvalidSyntaxStart(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 	re := regexp.MustCompile(`expected syntax: start`)
 
@@ -284,7 +284,7 @@ func TestPromptInvalidSyntaxStart(t *testing.T) {
 }
 
 func TestPromptInvalidSyntaxSet(t *testing.T) {
-	proc := runNetorcaiWaitListening(t)
+	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 	re := regexp.MustCompile(`expected syntax: set VARIABLE=VALUE`)
 

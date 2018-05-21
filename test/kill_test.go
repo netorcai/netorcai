@@ -7,7 +7,7 @@ import (
 )
 
 func TestKickallOnAbortKillSigterm(t *testing.T) {
-	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, 1000)
+	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	killallNetorcai()

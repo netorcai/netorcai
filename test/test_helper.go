@@ -12,11 +12,11 @@ import (
 )
 
 // Netorcai helpers
-func runNetorcaiWaitListening(t *testing.T) *NetorcaiProcess {
+func runNetorcaiWaitListening(t *testing.T,
+	arguments []string) *NetorcaiProcess {
 	coverFile, _ := handleCoverage(t, 0)
-	args := []string{}
 
-	proc, err := runNetorcaiCover(coverFile, args)
+	proc, err := runNetorcaiCover(coverFile, arguments)
 	assert.NoError(t, err, "Cannot start netorcai")
 
 	_, err = waitListening(proc.outputControl, 1000)
@@ -141,10 +141,11 @@ func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
 	return client, nil
 }
 
-func runNetorcaiAndAllClients(t *testing.T, timeoutMS int) (
+func runNetorcaiAndAllClients(t *testing.T, arguments []string,
+	timeoutMS int) (
 	proc *NetorcaiProcess, clients, playerClients, visuClients,
 	glClients []*Client) {
-	proc = runNetorcaiWaitListening(t)
+	proc = runNetorcaiWaitListening(t, arguments)
 
 	// 4 players
 	for i := 0; i < 4; i++ {
@@ -270,9 +271,9 @@ func checkDoInit(t *testing.T, msg map[string]interface{},
 		kickReason, err := netorcai.ReadString(msg, "kick_reason")
 		assert.NoError(t, err, "Cannot read kick_reason")
 
-		assert.FailNow(t, "Expected LOGIN_ACK, got KICK", kickReason)
+		assert.FailNow(t, "Expected DO_INIT, got KICK", kickReason)
 	default:
-		assert.FailNowf(t, "Expected LOGIN_ACK, got another message type",
+		assert.FailNowf(t, "Expected DO_INIT, got another message type",
 			messageType)
 	}
 }

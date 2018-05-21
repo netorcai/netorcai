@@ -8,7 +8,7 @@ import (
 
 func TestInvalidGlMessageBeforeStart(t *testing.T) {
 	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
-		t, 1000)
+		t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	glClients[0].SendString(`{}`)
@@ -32,7 +32,7 @@ func TestInvalidGlMessageBeforeStart(t *testing.T) {
 
 func TestInvalidGlNoDoInitAck(t *testing.T) {
 	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
-		t, 1000)
+		t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	go func(glClient *Client) {
@@ -64,7 +64,7 @@ func TestInvalidGlNoDoInitAck(t *testing.T) {
 func subtestBadDoInitAck(t *testing.T, doInitAckMessage string,
 	kickReasonMatcher *regexp.Regexp) {
 	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
-		t, 1000)
+		t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	go func(glClient *Client) {
