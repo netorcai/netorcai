@@ -38,3 +38,22 @@ func TestHelloGLOnly(t *testing.T) {
 		proc.outputControl, 5000, false)
 	waitCompletionTimeout(proc.completion, 1000)
 }
+
+func TestHelloGLIdleClients(t *testing.T) {
+	proc, _, _, _, gl := runNetorcaiAndAllClients(
+		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
+			"--delay-turns=500", "--debug"}, 1000)
+	defer killallNetorcaiSIGKILL()
+
+	// Run a game client
+	glExit := make(chan int)
+	go hello_game_logic(t, gl[0], 4, 2, glExit)
+
+	// Start the game
+	proc.inputControl <- "start"
+
+	// Wait for game end
+	waitOutputTimeout(regexp.MustCompile(`Game is finished`),
+		proc.outputControl, 5000, false)
+	waitCompletionTimeout(proc.completion, 1000)
+}
