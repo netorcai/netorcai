@@ -111,10 +111,12 @@ func handleClient(client *Client, globalState *GlobalState,
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := &PlayerOrVisuClient{
-					client:   client,
-					playerID: -1,
-					isPlayer: true,
-					newTurn:  make(chan MessageTurn),
+					client:     client,
+					playerID:   -1,
+					isPlayer:   true,
+					gameStarts: make(chan MessageGameStarts),
+					newTurn:    make(chan MessageTurn),
+					gameEnds:   make(chan MessageGameEnds),
 				}
 
 				globalState.Players = append(globalState.Players, pvClient)
@@ -142,10 +144,12 @@ func handleClient(client *Client, globalState *GlobalState,
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := &PlayerOrVisuClient{
-					client:   client,
-					playerID: -1,
-					isPlayer: false,
-					newTurn:  make(chan MessageTurn),
+					client:     client,
+					playerID:   -1,
+					isPlayer:   false,
+					gameStarts: make(chan MessageGameStarts),
+					newTurn:    make(chan MessageTurn),
+					gameEnds:   make(chan MessageGameEnds),
 				}
 
 				globalState.Visus = append(globalState.Visus, pvClient)
@@ -203,6 +207,22 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 	for {
 		select {
+		case gameStarts := <-pvClient.gameStarts:
+			// A game start has been received.
+			err := sendGameStarts(pvClient.client, gameStarts)
+			if err != nil {
+				KickLoggedPlayerOrVisu(pvClient, globalState,
+					fmt.Sprintf("Cannot send GAME_STARTS. %v", err.Error()))
+				return
+			}
+		case gameEnds := <-pvClient.gameEnds:
+			// A game end has been received.
+			err := sendGameEnds(pvClient.client, gameEnds)
+			if err != nil {
+				KickLoggedPlayerOrVisu(pvClient, globalState,
+					fmt.Sprintf("Cannot send GAME_ENDS. %v", err.Error()))
+				return
+			}
 		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
 			if pvClient.client.state == CLIENT_READY {
@@ -616,7 +636,33 @@ func sendLoginACK(client *Client) error {
 	}
 }
 
+func sendGameStarts(client *Client, msg MessageGameStarts) error {
+	content, err := json.Marshal(msg)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("Cannot marshal JSON message")
+		return err
+	} else {
+		err = sendMessage(client, content)
+		return err
+	}
+}
+
 func sendTurn(client *Client, msg MessageTurn) error {
+	content, err := json.Marshal(msg)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("Cannot marshal JSON message")
+		return err
+	} else {
+		err = sendMessage(client, content)
+		return err
+	}
+}
+
+func sendGameEnds(client *Client, msg MessageGameEnds) error {
 	content, err := json.Marshal(msg)
 	if err != nil {
 		log.WithFields(log.Fields{
