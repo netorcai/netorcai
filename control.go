@@ -479,26 +479,28 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				return
 			}
 
-			// Forward the TURN to the clients
-			globalState.Mutex.Lock()
-			for _, player := range globalState.Players {
-				player.newTurn <- MessageTurn{
-					TurnNumber:  turnNumber,
-					GameState:   doTurnAckMsg.GameState,
-					PlayersInfo: []*PlayerInformation{},
-				}
-			}
-			for _, visu := range globalState.Visus {
-				visu.newTurn <- MessageTurn{
-					TurnNumber:  turnNumber,
-					GameState:   doTurnAckMsg.GameState,
-					PlayersInfo: playersInfo,
-				}
-			}
-			globalState.Mutex.Unlock()
 			turnNumber = turnNumber + 1
-
 			if turnNumber < globalState.NbTurnsMax {
+				// Forward the TURN to the clients
+				globalState.Mutex.Lock()
+				for _, player := range globalState.Players {
+					player.newTurn <- MessageTurn{
+						MessageType: "TURN",
+						TurnNumber:  turnNumber,
+						GameState:   doTurnAckMsg.GameState,
+						PlayersInfo: []*PlayerInformation{},
+					}
+				}
+				for _, visu := range globalState.Visus {
+					visu.newTurn <- MessageTurn{
+						MessageType: "TURN",
+						TurnNumber:  turnNumber,
+						GameState:   doTurnAckMsg.GameState,
+						PlayersInfo: playersInfo,
+					}
+				}
+				globalState.Mutex.Unlock()
+
 				// Trigger a new DO_TURN in some time
 				go func() {
 					log.WithFields(log.Fields{
