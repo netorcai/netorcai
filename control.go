@@ -24,7 +24,6 @@ const (
 	CLIENT_LOGGED   = iota
 	CLIENT_READY    = iota
 	CLIENT_THINKING = iota
-	CLIENT_FINISHED = iota
 	CLIENT_KICKED   = iota
 )
 
