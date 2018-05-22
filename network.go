@@ -96,6 +96,7 @@ func readClientMessages(client *Client) {
 
 		log.WithFields(log.Fields{
 			"remote address": client.Conn.RemoteAddr(),
+			"nickname":       client.nickname,
 			"content size":   contentSize,
 			"content":        string(contentBuf),
 		}).Debug("New message received")

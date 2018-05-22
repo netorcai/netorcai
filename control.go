@@ -649,6 +649,11 @@ func sendGameStarts(client *Client, msg MessageGameStarts) error {
 		}).Error("Cannot marshal JSON message")
 		return err
 	} else {
+		log.WithFields(log.Fields{
+			"nickname":       client.nickname,
+			"remote address": client.Conn.RemoteAddr(),
+			"content":        string(content),
+		}).Debug("Sending GAME_STARTS to client")
 		err = sendMessage(client, content)
 		return err
 	}
@@ -662,6 +667,11 @@ func sendTurn(client *Client, msg MessageTurn) error {
 		}).Error("Cannot marshal JSON message")
 		return err
 	} else {
+		log.WithFields(log.Fields{
+			"nickname":       client.nickname,
+			"remote address": client.Conn.RemoteAddr(),
+			"content":        string(content),
+		}).Debug("Sending TURN to client")
 		err = sendMessage(client, content)
 		return err
 	}
@@ -675,6 +685,11 @@ func sendGameEnds(client *Client, msg MessageGameEnds) error {
 		}).Error("Cannot marshal JSON message")
 		return err
 	} else {
+		log.WithFields(log.Fields{
+			"nickname":       client.nickname,
+			"remote address": client.Conn.RemoteAddr(),
+			"content":        string(content),
+		}).Debug("Sending GAME_ENDS to client")
 		err = sendMessage(client, content)
 		return err
 	}
@@ -695,7 +710,9 @@ func sendDoInit(client *GameLogicClient, nbPlayers, nbTurnsMax int) error {
 		return err
 	} else {
 		log.WithFields(log.Fields{
-			"content": string(content),
+			"nickname":       client.client.nickname,
+			"remote address": client.client.Conn.RemoteAddr(),
+			"content":        string(content),
 		}).Debug("Sending DO_INIT to game logic")
 		err = sendMessage(client.client, content)
 		return err
@@ -717,7 +734,9 @@ func sendDoTurn(client *GameLogicClient,
 		return err
 	} else {
 		log.WithFields(log.Fields{
-			"content": string(content),
+			"nickname":       client.client.nickname,
+			"remote address": client.client.Conn.RemoteAddr(),
+			"content":        string(content),
 		}).Debug("Sending DO_TURN to game logic")
 		err = sendMessage(client.client, content)
 		return err
