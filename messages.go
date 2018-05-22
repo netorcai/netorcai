@@ -16,10 +16,10 @@ type MessageLoginAck struct {
 
 // Quite an immutable PlayerOrVisuClient generated at game start
 type PlayerInformation struct {
-	playerID      int    `json:"player_id"`
-	nickname      string `json:"nickname"`
-	remoteAddress string `json:"remote_address"`
-	isConnected   bool   `json:"is_connected"`
+	PlayerID      int    `json:"player_id"`
+	Nickname      string `json:"nickname"`
+	RemoteAddress string `json:"remote_address"`
+	IsConnected   bool   `json:"is_connected"`
 }
 
 type MessageGameStarts struct {

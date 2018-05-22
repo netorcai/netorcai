@@ -347,10 +347,10 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	playersInfo := []*PlayerInformation{}
 	for _, player := range globalState.Players {
 		info := &PlayerInformation{
-			playerID:      player.playerID,
-			nickname:      player.client.nickname,
-			remoteAddress: player.client.Conn.RemoteAddr().String(),
-			isConnected:   true,
+			PlayerID:      player.playerID,
+			Nickname:      player.client.nickname,
+			RemoteAddress: player.client.Conn.RemoteAddr().String(),
+			IsConnected:   true,
 		}
 		player.playerInfo = info
 		playersInfo = append(playersInfo, info)
@@ -358,7 +358,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	// Sort player information by player_id
 	sort.Slice(playersInfo, func(i, j int) bool {
-		return playersInfo[i].playerID < playersInfo[j].playerID
+		return playersInfo[i].PlayerID < playersInfo[j].PlayerID
 	})
 
 	// Send DO_INIT
@@ -411,6 +411,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			InitialGameState: doTurnAckMsg.InitialGameState,
 		}
 	}
+
 	for _, visu := range globalState.Visus {
 		visu.gameStarts <- MessageGameStarts{
 			MessageType:      "GAME_STARTS",
@@ -519,8 +520,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				if doTurnAckMsg.WinnerPlayerID != -1 {
 					log.WithFields(log.Fields{
 						"winner player ID":      doTurnAckMsg.WinnerPlayerID,
-						"winner nickname":       playersInfo[doTurnAckMsg.WinnerPlayerID].nickname,
-						"winner remote address": playersInfo[doTurnAckMsg.WinnerPlayerID].remoteAddress,
+						"winner nickname":       playersInfo[doTurnAckMsg.WinnerPlayerID].Nickname,
+						"winner remote address": playersInfo[doTurnAckMsg.WinnerPlayerID].RemoteAddress,
 					}).Info("Game is finished")
 				} else {
 					log.Info("Game is finished (no winner!)")
