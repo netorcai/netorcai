@@ -396,6 +396,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	globalState.Mutex.Lock()
 	for _, player := range globalState.Players {
 		player.gameStarts <- MessageGameStarts{
+			MessageType:      "GAME_STARTS",
 			PlayerID:         player.playerID,
 			PlayersInfo:      []*PlayerInformation{},
 			NbPlayers:        initialNbPlayers,
@@ -407,6 +408,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	}
 	for _, visu := range globalState.Visus {
 		visu.gameStarts <- MessageGameStarts{
+			MessageType:      "GAME_STARTS",
 			PlayerID:         visu.playerID,
 			PlayersInfo:      playersInfo,
 			NbPlayers:        initialNbPlayers,
@@ -521,12 +523,14 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				globalState.Mutex.Lock()
 				for _, player := range globalState.Players {
 					player.gameEnds <- MessageGameEnds{
+						MessageType:    "GAME_ENDS",
 						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
 						GameState:      doTurnAckMsg.GameState,
 					}
 				}
 				for _, visu := range globalState.Visus {
 					visu.gameEnds <- MessageGameEnds{
+						MessageType:    "GAME_ENDS",
 						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
 						GameState:      doTurnAckMsg.GameState,
 					}

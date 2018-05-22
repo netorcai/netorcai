@@ -23,6 +23,7 @@ type PlayerInformation struct {
 }
 
 type MessageGameStarts struct {
+	MessageType      string                 `json:"message_type"`
 	PlayerID         int                    `json:"player_id"`
 	NbPlayers        int                    `json:"nb_players"`
 	NbTurnsMax       int                    `json:"nb_turns_max"`
@@ -33,6 +34,7 @@ type MessageGameStarts struct {
 }
 
 type MessageGameEnds struct {
+	MessageType    string                 `json:"message_type"`
 	WinnerPlayerID int                    `json:"winner_player_id"`
 	GameState      map[string]interface{} `json:"game_state"`
 }
