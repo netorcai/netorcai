@@ -214,6 +214,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 					fmt.Sprintf("Cannot send GAME_STARTS. %v", err.Error()))
 				return
 			}
+			pvClient.client.state = CLIENT_READY
 		case gameEnds := <-pvClient.gameEnds:
 			// A game end has been received.
 			err := sendGameEnds(pvClient.client, gameEnds)
@@ -222,6 +223,10 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 					fmt.Sprintf("Cannot send GAME_ENDS. %v", err.Error()))
 				return
 			}
+
+			// Leave the client
+			Kick(pvClient.client, "Game is finished")
+			return
 		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
 			if pvClient.client.state == CLIENT_READY {
