@@ -11,6 +11,34 @@ import (
 	"time"
 )
 
+func readFloat(data map[string]interface{}, field string) (float64, error) {
+	value, exists := data[field]
+	if !exists {
+		return 0, fmt.Errorf("Field '%v' is missing", field)
+	}
+
+	switch value.(type) {
+	default:
+		return 0, fmt.Errorf("Non-float value for field '%v'", field)
+	case float64:
+		return value.(float64), nil
+	}
+}
+
+func readBool(data map[string]interface{}, field string) (bool, error) {
+	value, exists := data[field]
+	if !exists {
+		return false, fmt.Errorf("Field '%v' is missing", field)
+	}
+
+	switch value.(type) {
+	default:
+		return false, fmt.Errorf("Non-bool value for field '%v'", field)
+	case bool:
+		return value.(bool), nil
+	}
+}
+
 // Netorcai helpers
 func runNetorcaiWaitListening(t *testing.T,
 	arguments []string) *NetorcaiProcess {
@@ -326,6 +354,164 @@ func checkDoTurn(t *testing.T, msg map[string]interface{},
 		assert.FailNow(t, "Expected DO_TURN, got KICK", kickReason)
 	default:
 		assert.FailNowf(t, "Expected DO_TURN, got another message type",
+			messageType)
+	}
+}
+
+func checkPlayersInfo(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers int, isPlayer bool) {
+	playersInfo, err := netorcai.ReadArray(msg, "players_info")
+	assert.NoError(t, err, "Cannot read players_info in GAME_STARTS")
+	if isPlayer {
+		assert.Equal(t, 0, len(playersInfo),
+			"Unexpected players_info: Should be empty for players")
+	} else {
+		assert.Equal(t, expectedNbPlayers, len(playersInfo),
+			"Unexpected player_info array size: "+
+				"Should match number of players for visualization")
+		playerIDs := make([]int, 0)
+		for playerIndex, player := range playersInfo {
+			obj := player.(map[string]interface{})
+
+			pid, err := netorcai.ReadInt(obj, "player_id")
+			assert.NoError(t, err, "Cannot read player_id in "+
+				"players_info[%v] of GAME_STARTS message (as a visu)",
+				playerIndex)
+			playerIDs = append(playerIDs, pid)
+
+			_, err = netorcai.ReadString(obj, "nickname")
+			assert.NoError(t, err, "Cannot read nickname in "+
+				"players_info[%v] of GAME_STARTS message (as a visu)",
+				playerIndex)
+
+			_, err = netorcai.ReadString(obj, "remote_address")
+			assert.NoError(t, err, "Cannot read remote_address in "+
+				"players_info[%v] of GAME_STARTS message (as a visu)",
+				playerIndex)
+
+			_, err = readBool(obj, "is_connected")
+			assert.NoError(t, err, "Cannot read nickname in "+
+				"players_info[%v] of GAME_STARTS message (as a visu)",
+				playerIndex)
+		}
+
+		for i := 0; i < expectedNbPlayers; i++ {
+			assert.Contains(t, playerIDs, i,
+				"Invalid players_info in GAME_STARTS message (as a visu): "+
+					"No info for player_id=%v while there should be "+
+					"nb_players=%v", i, expectedNbPlayers)
+		}
+	}
+}
+
+func checkGameStarts(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedNbTurnsMax int,
+	expectedMsBeforeFirstTurn, expectedMsBetweenTurns float64, isPlayer bool) {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (GAME_STARTS)")
+
+	switch messageType {
+	case "GAME_STARTS":
+		nbPlayers, err := netorcai.ReadInt(msg, "nb_players")
+		assert.NoError(t, err, "Cannot read nb_players in GAME_STARTS")
+		assert.Equal(t, expectedNbPlayers, nbPlayers,
+			"Unexpected value for nb_players in received GAME_STARTS message")
+
+		nbTurnsMax, err := netorcai.ReadInt(msg, "nb_turns_max")
+		assert.NoError(t, err, "Cannot read nb_turns_max")
+		assert.Equal(t, expectedNbTurnsMax, nbTurnsMax,
+			"Unexpected value for nb_turns_max in GAME_STARTS message")
+
+		playerID, err := netorcai.ReadInt(msg, "player_id")
+		assert.NoError(t, err, "Cannot read player_id in GAME_STARTS")
+		if isPlayer {
+			assert.Condition(t, func() bool {
+				return playerID >= 0 && playerID < expectedNbPlayers
+			}, "Invalid player_id=%v in GAME_STARTS message: "+
+				"Should be in [0,%v[ for a player",
+				playerID, expectedNbPlayers)
+		} else {
+			assert.Equal(t, -1, playerID, "Invalid player_id=%v in "+
+				"GAME_STARTS message: Should be -1 for visualization",
+				playerID)
+		}
+
+		msBeforeFirstTurn, err := readFloat(msg,
+			"milliseconds_before_first_turn")
+		assert.NoError(t, err,
+			"Cannot read milliseconds_before_first_turn in GAME_STARTS")
+		assert.InEpsilon(t, expectedMsBeforeFirstTurn, msBeforeFirstTurn,
+			1e-3, "Unexpected value for milliseconds_before_first_turn "+
+				"in GAME_STARTS message")
+
+		msBetweenTurns, err := readFloat(msg,
+			"milliseconds_before_first_turn")
+		assert.NoError(t, err,
+			"Cannot read milliseconds_before_first_turn in GAME_STARTS")
+		assert.InEpsilon(t, expectedMsBetweenTurns, msBetweenTurns,
+			1e-3, "Unexpected value for milliseconds_before_first_turn "+
+				"in GAME_STARTS message")
+
+		checkPlayersInfo(t, msg, expectedNbPlayers, isPlayer)
+	case "KICK":
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.FailNow(t, "Expected GAME_STARTS, got KICK", kickReason)
+	default:
+		assert.FailNowf(t, "Expected GAME_STARTS, got another message type",
+			messageType)
+	}
+}
+
+func checkTurn(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (TURN)")
+
+	switch messageType {
+	case "TURN":
+		turnNumber, err := netorcai.ReadInt(msg, "turn_number")
+		assert.NoError(t, err, "Cannot read turn_number in TURN")
+		assert.Equal(t, expectedTurnNumber, turnNumber,
+			"Unexpected value for turn_number in received TURN message")
+
+		_, err = netorcai.ReadObject(msg, "game_state")
+		assert.NoError(t, err, "Cannot read game_state in TURN")
+
+		checkPlayersInfo(t, msg, expectedNbPlayers, isPlayer)
+	case "KICK":
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.FailNow(t, "Expected TURN, got KICK", kickReason)
+	default:
+		assert.FailNowf(t, "Expected TURN, got another message type",
+			messageType)
+	}
+}
+
+func checkGameEnds(t *testing.T, msg map[string]interface{}) {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (GAME_ENDS)")
+
+	switch messageType {
+	case "GAME_ENDS":
+		_, err := netorcai.ReadInt(msg, "winner_player_id")
+		assert.NoError(t, err, "Cannot read winner_player_id in GAME_ENDS")
+
+		_, err = netorcai.ReadObject(msg, "game_state")
+		assert.NoError(t, err, "Cannot read game_state in GAME_ENDS")
+	case "KICK":
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.FailNow(t, "Expected GAME_ENDS, got KICK", kickReason)
+	default:
+		assert.FailNowf(t, "Expected GAME_ENDS, got another message type",
 			messageType)
 	}
 }
