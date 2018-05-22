@@ -24,7 +24,7 @@ func helloGameLogic(t *testing.T, glClient *Client,
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_TURN) "+
 			"%v/%v", turn, nbTurns)
-		checkDoTurn(t, msg, nbPlayers, turn)
+		checkDoTurn(t, msg, nbPlayers, turn-1)
 
 		// Send DO_TURN_ACK
 		data = `{"message_type":"DO_TURN_ACK",
