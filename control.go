@@ -434,7 +434,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		time.Millisecond)
 
 	// Order the game logic to compute a TURN (without any action)
-	turnNumber := -1 // will be incremented to 0 on first turn
+	turnNumber := 0
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
 	sendDoTurn(glClient, playerActions)
 
@@ -481,13 +481,13 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			}
 
 			turnNumber = turnNumber + 1
-			if turnNumber < globalState.NbTurnsMax-1 {
+			if turnNumber < globalState.NbTurnsMax {
 				// Forward the TURN to the clients
 				globalState.Mutex.Lock()
 				for _, player := range globalState.Players {
 					player.newTurn <- MessageTurn{
 						MessageType: "TURN",
-						TurnNumber:  turnNumber,
+						TurnNumber:  turnNumber - 1,
 						GameState:   doTurnAckMsg.GameState,
 						PlayersInfo: []*PlayerInformation{},
 					}
@@ -495,7 +495,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				for _, visu := range globalState.Visus {
 					visu.newTurn <- MessageTurn{
 						MessageType: "TURN",
-						TurnNumber:  turnNumber,
+						TurnNumber:  turnNumber - 1,
 						GameState:   doTurnAckMsg.GameState,
 						PlayersInfo: playersInfo,
 					}
