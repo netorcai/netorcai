@@ -105,6 +105,8 @@ Fields:
   The maximum number of turns of the game.
 - `milliseconds_before_first_turn` (number): The number of milliseconds before
   the first game [TURN](#turn).
+- `milliseconds_between_turns` (number): The number of milliseconds between
+  the consecutive game [TURNs](#turn).
 - `initial_game_state` (object): Game-dependent content.
 
 Example:
@@ -123,6 +125,7 @@ Example:
   "nb_players": 4,
   "nb_turns_max": 100,
   "milliseconds_before_first_turn": 1000,
+  "milliseconds_between_turns": 1000,
   "initial_game_state": {}
 }
 ```

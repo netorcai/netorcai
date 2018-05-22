@@ -402,6 +402,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			NbPlayers:        initialNbPlayers,
 			NbTurnsMax:       globalState.NbTurnsMax,
 			DelayFirstTurn:   globalState.MillisecondsBeforeFirstTurn,
+			DelayTurns:       globalState.MillisecondsBetweenTurns,
 			InitialGameState: doTurnAckMsg.InitialGameState,
 		}
 	}
@@ -412,6 +413,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			NbPlayers:        initialNbPlayers,
 			NbTurnsMax:       globalState.NbTurnsMax,
 			DelayFirstTurn:   globalState.MillisecondsBeforeFirstTurn,
+			DelayTurns:       globalState.MillisecondsBetweenTurns,
 			InitialGameState: doTurnAckMsg.InitialGameState,
 		}
 	}

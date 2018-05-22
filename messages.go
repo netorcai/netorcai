@@ -27,6 +27,7 @@ type MessageGameStarts struct {
 	NbPlayers        int                    `json:"nb_players"`
 	NbTurnsMax       int                    `json:"nb_turns_max"`
 	DelayFirstTurn   float64                `json:"milliseconds_before_first_turn"`
+	DelayTurns       float64                `json:"milliseconds_between_turns"`
 	InitialGameState map[string]interface{} `json:"initial_game_state"`
 	PlayersInfo      []*PlayerInformation   `json:"players_info"`
 }
