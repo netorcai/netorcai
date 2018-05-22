@@ -201,7 +201,7 @@ func handleClient(client *Client, globalState *GlobalState,
 
 func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 	globalState *GlobalState) {
-	turnBuffer := make([]MessageTurn, 1)
+	turnBuffer := make([]MessageTurn, 0)
 	lastTurnNumberSent := -1
 
 	for {
