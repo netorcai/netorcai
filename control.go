@@ -242,7 +242,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			} else if pvClient.client.state == CLIENT_THINKING {
 				// The client is still computing something (its decisions for
 				// a player, or just updating its display for a visualization).
-				// The turn message therefore buffered.
+				// The turn message is therefore buffered.
 				if len(turnBuffer) > 0 {
 					// Update the turn buffer with the new message.
 					turnBuffer[0] = turn
