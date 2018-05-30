@@ -9,7 +9,9 @@ composed by two parts:
    terminated by an UTF-8 *Line Feed* character (U+000A).
 
 The content of each message must be a valid
-[JSON](https://www.json.org/) object.
+[JSON](https://www.json.org/) object.  
+Messages are [typed](#message-types) and clients must follow their
+[specified behaviour](#expected-client-behavior).
 
 Network entities (endpoints)
 ----------------------------
@@ -33,22 +35,23 @@ The other fields of the main JSON object depend on the message type.
 List of messages between **clients** and **netorcai**:
 - [LOGIN](#login)
 - [LOGIN_ACK](#login_ack)
+- [KICK](#kick)
 - [GAME_STARTS](#game_starts)
 - [GAME_ENDS](#game_ends)
 - [TURN](#turn)
 - [TURN_ACK](#turn_ack)
-- [KICK](#kick)
 
 List of messages between **netorcai** and **game logic**:
-- [LOGIN](#login)
-- [LOGIN_ACK](#login_ack)
+- ([LOGIN](#login))
+- ([LOGIN_ACK](#login_ack))
+- ([KICK](#kick))
 - [DO_INIT](#do_init)
 - [DO_INIT_ACK](#do_init_ack)
 - [DO_TURN](#do_turn)
 - [DO_TURN_ACK](#do_turn_ack)
 
 ### LOGIN
-This message type is sent from **clients** or **game logic** to **netorcai**.
+This message type is sent from (**clients** or **game logic**) to **netorcai**.
 
 This is the first message sent by clients and game logic.
 It allows them to indicate they want to participate in the game.
@@ -83,10 +86,39 @@ Example:
 }
 ```
 
+### KICK
+This message type is sent from **netorcai** to **clients** or **game logic**.
+
+It tells a client (or game logic) that it is about to be kicked out of a game.
+After sending this message, **netorcai** will no longer read incoming messages
+from the kicked client (or game logic).
+It also means that **netorcai** is about to close the socket.
+
+It can be sent for multiple reasons:
+- As a negative acknowledge to a [LOGIN](#login) message
+- If a message is invalid: Its content is not valid JSON, a message
+  field is missing or has an invalid value
+  (as specified in each [message type](#message-types)).
+- If a client does not follow its
+  [expected behavior](#expected_client_behavior).
+- If **netorcai** is about to terminate.
+
+Fields:
+- `kick_reason` (string): The reason why the client (or game logic) has been
+  kicked
+
+Example:
+```json
+{
+  "message_type": "KICK",
+  "kick_reason": "Invalid message: Content is not valid JSON"
+}
+```
+
 ### GAME_STARTS
 This message type is sent from **netorcai** to **clients**.
 
-It tells the clients that the game is about to start.
+It tells the client that the game is about to start.
 
 Fields:
 - `player_id`: (integral non-negative number or -1):
@@ -99,14 +131,16 @@ Fields:
   - `player_id` (integral non-negative number): The unique player identifier.
   - `nickname` (string): The player nickname.
   - `remote_address` (string): The player network remote address.
-  - `is_connected` (bool): Whether the player is connected.
+  - `is_connected` (bool): Whether the player is currently connected to
+    **netorcai**.
 - `nb_players` (integral positive number): The number of players of the game.
 - `nb_turns_max` (integral positive number):
   The maximum number of turns of the game.
-- `milliseconds_before_first_turn` (number): The number of milliseconds before
-  the first game [TURN](#turn).
-- `milliseconds_between_turns` (number): The number of milliseconds between
-  the consecutive game [TURNs](#turn).
+- `milliseconds_before_first_turn` (non-negative number):
+  The number of milliseconds before the first game [TURN](#turn).
+- `milliseconds_between_turns` (non-negative number):
+  The minimum number of milliseconds between two consecutive
+  game [TURNs](#turn).
 - `initial_game_state` (object): Game-dependent content.
 
 Example:
@@ -133,8 +167,8 @@ Example:
 ### GAME_ENDS
 This message type is sent from **netorcai** to **clients**.
 
-It tells the clients that the game is finished.
-Clients can safely close the socket after receiving this message.
+It tells the client that the game is finished.
+The client can safely close the socket after receiving this message.
 
 Fields:
 - `winner_player_id` (integral non-negative number or -1):
@@ -162,13 +196,14 @@ Fields:
 - `game_state` (object): Game-dependent content that directly corresponds to
   the `game_state`field of a `DO_TURN_ACK` message.
 - `players_info`: (array of objects):
-  If this message is sent to a `player`, this array is empty.  
-  If this message is sent to a `visualization`, this array contains information
+  If this message is sent to a `player`, the array is empty.  
+  If this message is sent to a `visualization`, the array contains information
   about each player:
   - `player_id` (integral non-negative number): The unique player identifier.
   - `nickname` (string): The player nickname.
   - `remote_address` (string): The player network remote address.
-  - `is_connected` (bool): Whether the player is connected.
+  - `is_connected` (bool): Whether the player is currently connected to
+    **netorcai**.
 
 Example:
 ```json
@@ -190,12 +225,14 @@ Example:
 ### TURN_ACK
 This message type is sent from **clients** to **netorcai**.
 
-It tells netorcai that the client managed a turn.
-For players, it contains the actions it wants to do.
+It tells netorcai that the client has managed a turn.
+For players, it contains the actions the player wants to do.
 
 Fields:
 - `turn_number` (non-negative integral number):
-  The number of the turn the client has managed.
+  The number of the turn that the client has managed.
+  Value must match the `turn_number` of the latest `TURN` received by
+  the client.
 - `actions` (array): Game-dependent content. Must be empty for visualizations.
 
 Example:
@@ -207,36 +244,11 @@ Example:
 }
 ```
 
-### KICK
-This message type is sent from **netorcai** to **clients**.
-
-Kicks a player from a game. After sending this message,
-**netorcai** will no longer read messages from the kicked client and is about
-to close the socket.
-
-It can be sent for multiple reasons:
-- As a negative acknowledge to a [LOGIN](#login) message
-- If a message is invalid: Its content is not valid JSON or a message
-  field is missing.
-- If a client does not follow its
-  [expected behavior](#expected_client_behavior).
-
-Fields:
-- `kick_reason` (string): The reason why the client has been kicked
-
-Example:
-```json
-{
-  "message_type": "KICK",
-  "kick_reason": "Invalid message: Content is not valid JSON"
-}
-```
-
 ### DO_INIT
 This message type is sent from **netorcai** to **game logic**.
 
-This message starts the sequence to start the game. Netorcai gives information
-to the game logic to initialize it.
+This message initiates the sequence to start the game.
+**netorcai** gives information to the game logic, such that the game logic can generate the game initial state.
 
 Fields:
 - `nb_players` (integral positive number): The number of players in the game.
@@ -255,7 +267,7 @@ Example:
 ### DO_INIT_ACK
 This message is sent from **game logic** to **netorcai**.
 
-Game logic has finished its initialization.
+It means that the game logic has finished its initialization.
 It sends initial information about the game, which is forwarded to the clients.
 
 Fields:
@@ -282,7 +294,7 @@ It tells the game logic to do a new turn.
 Fields:
 - `player_actions` (array): The actions decided by the players.
   There is at most one array element per player.
-  This array contains dictionaries that must be formatted in the following way:
+  This array contains objects that must contain the following fields:
     - `player_id` (non-negative integral number):
       The unique identifier of the player who decided the actions.
     - `turn_number` (non-negative integral number):
@@ -334,7 +346,8 @@ Example:
 ## Expected client behavior
 **netorcai** manages the clients by associating them with a state.
 In a given state, a client can only receive and send certain types of messages.
-If a client is kicked if it does not send an expected type of message.
+A client that sends an unexpected type of message is [kicked](#kick)
+by **netorcai**.
 
 The following figure summarizes the expected behavior of a client:
 - Each node is a client state.
