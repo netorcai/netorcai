@@ -181,9 +181,14 @@ func turnAckBadMsgType(turn int) string {
 		"turn_number": %v, "actions": []}`, turn)
 }
 
-func turnAckBadTurnNumber(turn int) string {
+func turnAckBadTurnNumberValue(turn int) string {
 	return fmt.Sprintf(`{"message_type": "TURN_ACK",
 		"turn_number": %v, "actions": []}`, turn+1)
+}
+
+func turnAckBadTurnNumberNotInt(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK",
+		"turn_number": "nope", "actions": []}`)
 }
 
 func turnAckBadActions(turn int) string {
@@ -215,9 +220,15 @@ func TestInvalidTurnAckBadMsgType(t *testing.T) {
 		DefaultHelloClientTurnAckGenerator)
 }
 
-func TestInvalidTurnAckBadTurnNumber(t *testing.T) {
+func TestInvalidTurnAckBadTurnNumberValue(t *testing.T) {
 	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
-		turnAckBadTurnNumber,
+		turnAckBadTurnNumberValue,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func TestInvalidTurnAckBadTurnNumberNotInt(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckBadTurnNumberNotInt,
 		DefaultHelloClientTurnAckGenerator)
 }
 
