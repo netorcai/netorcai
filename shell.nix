@@ -16,10 +16,6 @@ pkgs.stdenv.mkDerivation rec {
     ########
     # Test #
     ########
-    # Testsuite
-    pkgs.bats
-    # Client
-    pkgs.python36
     # Misc
     pkgs.psmisc
     pkgs.netcat-gnu
