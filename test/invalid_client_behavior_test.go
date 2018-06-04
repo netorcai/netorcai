@@ -30,6 +30,36 @@ func TestInvalidGlMessageBeforeStart(t *testing.T) {
 	checkAllKicked(t, visuClients, regexp.MustCompile(`netorcai abort`), 1000)
 }
 
+func TestInvalidPlayerMessageBeforeStart(t *testing.T) {
+	proc, _, playerClients, _, glClients := runNetorcaiAndClients(t,
+		[]string{}, 1000, 1, 0)
+	defer killallNetorcaiSIGKILL()
+
+	playerClients[0].SendString(`{"message_type": "TURN_ACK", ` +
+		`"turn_number": -1, "actions":[]}`)
+	checkAllKicked(t, playerClients, regexp.MustCompile(`Received a TURN_ACK `+
+		`but the client state is not THINKING`), 1000)
+
+	proc.inputControl <- `quit`
+	waitCompletionTimeout(proc.completion, 1000)
+	checkAllKicked(t, glClients, regexp.MustCompile(`netorcai abort`), 1000)
+}
+
+func TestInvalidVisuMessageBeforeStart(t *testing.T) {
+	proc, _, _, visuClients, glClients := runNetorcaiAndClients(t,
+		[]string{}, 1000, 0, 1)
+	defer killallNetorcaiSIGKILL()
+
+	visuClients[0].SendString(`{"message_type": "TURN_ACK", ` +
+		`"turn_number": -1, "actions":[]}`)
+	checkAllKicked(t, visuClients, regexp.MustCompile(`Received a TURN_ACK `+
+		`but the client state is not THINKING`), 1000)
+
+	proc.inputControl <- `quit`
+	waitCompletionTimeout(proc.completion, 1000)
+	checkAllKicked(t, glClients, regexp.MustCompile(`netorcai abort`), 1000)
+}
+
 func TestInvalidGlNoDoInitAck(t *testing.T) {
 	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
 		t, []string{}, 1000)
