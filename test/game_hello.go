@@ -29,7 +29,8 @@ func DefaultHelloGlDoTurnAck(turn int, actions []interface{}) string {
 
 func helloGameLogic(t *testing.T, glClient *Client,
 	nbPlayers, nbTurns int,
-	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc) {
+	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc,
+	kickReasonMatcher *regexp.Regexp) {
 	// Wait DO_INIT
 	msg, err := waitReadMessage(glClient, 1000)
 	assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
@@ -55,7 +56,7 @@ func helloGameLogic(t *testing.T, glClient *Client,
 
 	msg, err = waitReadMessage(glClient, 1000)
 	assert.NoError(t, err, "Could not read GLClient message (KICK)")
-	checkKick(t, msg, regexp.MustCompile(".*"))
+	checkKick(t, msg, kickReasonMatcher)
 
 	// Close socket
 	glClient.Disconnect()
