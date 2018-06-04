@@ -2,6 +2,7 @@ package test
 
 import (
 	//"github.com/stretchr/testify/assert"
+	"fmt"
 	"regexp"
 	"testing"
 )
@@ -159,5 +160,69 @@ func subtestHelloGlActiveClients(t *testing.T, nbPlayers, nbVisus int,
 func TestHelloGLActiveClients(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1, 3, 3, 3,
 		DefaultHelloClientTurnAckGenerator,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func turnAckNoMsgType(turn int) string {
+	return fmt.Sprintf(`{"turn_number": %v, "actions": []}`, turn)
+}
+
+func turnAckNoTurnNumber(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK", actions": []}`)
+}
+
+func turnAckNoActions(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK",
+		"turn_number": %v}`, turn)
+}
+
+func turnAckBadMsgType(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACKz",
+		"turn_number": %v, "actions": []}`, turn)
+}
+
+func turnAckBadTurnNumber(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK",
+		"turn_number": %v, "actions": []}`, turn+1)
+}
+
+func turnAckBadActions(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK",
+		"turn_number": %v, "actions": {}}`, turn)
+}
+
+func TestInvalidTurnAckNoMsgType(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckNoMsgType,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func TestInvalidTurnAckNoTurnNumber(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckNoTurnNumber,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func TestInvalidTurnAckNoActions(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckNoActions,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func TestInvalidTurnAckBadMsgType(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckBadMsgType,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func TestInvalidTurnAckBadTurnNumber(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckBadTurnNumber,
+		DefaultHelloClientTurnAckGenerator)
+}
+
+func TestInvalidTurnAckBadActions(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 0, 3, 2, 3,
+		turnAckBadActions,
 		DefaultHelloClientTurnAckGenerator)
 }
