@@ -74,7 +74,7 @@ func TestHelloGLActiveVisu(t *testing.T) {
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 0, 3, 500, 500, false,
+		go helloClient(t, visu, 0, 3, 500, 500, false, true,
 			DefaultHelloClientTurnAckGenerator)
 	}
 
@@ -97,7 +97,7 @@ func TestHelloGLActivePlayer(t *testing.T) {
 	go helloGameLogic(t, gl[0], 1, 3)
 
 	// Run an active player
-	go helloClient(t, players[0], 1, 3, 500, 500, true,
+	go helloClient(t, players[0], 1, 3, 500, 500, true, true,
 		DefaultHelloClientTurnAckGenerator)
 
 	// Disconnect other players
@@ -123,25 +123,25 @@ func TestHelloGLActivePlayer(t *testing.T) {
 	waitCompletionTimeout(proc.completion, 1000)
 }
 
-func TestHelloGLActiveClients(t *testing.T) {
+func subtestHelloGlActiveClients(t *testing.T, nbTurnsGL, nbTurnsPlayer, nbTurnsVisu int, playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc) {
 	proc, _, players, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
 			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], 4, 3)
+	go helloGameLogic(t, gl[0], 4, nbTurnsGL)
 
 	// Run player clients
 	for _, player := range players {
-		go helloClient(t, player, 4, 3, 500, 500, true,
-			DefaultHelloClientTurnAckGenerator)
+		go helloClient(t, player, 4, nbTurnsPlayer, 500, 500, true,
+			nbTurnsPlayer == nbTurnsGL, playerTurnAckFunc)
 	}
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 4, 3, 500, 500, false,
-			DefaultHelloClientTurnAckGenerator)
+		go helloClient(t, visu, 4, nbTurnsVisu, 500, 500, false,
+			nbTurnsPlayer == nbTurnsGL, visuTurnAckFunc)
 	}
 
 	// Start the game
@@ -151,4 +151,10 @@ func TestHelloGLActiveClients(t *testing.T) {
 	waitOutputTimeout(regexp.MustCompile(`Game is finished`),
 		proc.outputControl, 5000, false)
 	waitCompletionTimeout(proc.completion, 1000)
+}
+
+func TestHelloGLActiveClients(t *testing.T) {
+	subtestHelloGlActiveClients(t, 3, 3, 3,
+		DefaultHelloClientTurnAckGenerator,
+		DefaultHelloClientTurnAckGenerator)
 }
