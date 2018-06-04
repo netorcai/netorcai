@@ -168,7 +168,7 @@ func turnAckNoMsgType(turn int) string {
 }
 
 func turnAckNoTurnNumber(turn int) string {
-	return fmt.Sprintf(`{"message_type": "TURN_ACK", actions": []}`)
+	return fmt.Sprintf(`{"message_type": "TURN_ACK", "actions": []}`)
 }
 
 func turnAckNoActions(turn int) string {
