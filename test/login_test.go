@@ -476,3 +476,50 @@ func TestLoginMaxNbGameLogicParallel(t *testing.T) {
 	subtestLoginMaxNbClientParallel(t, "game logic", 100, 1,
 		regexp.MustCompile(`A game logic is already logged in`))
 }
+
+func subtestLoginGameAlreadyStarted(t *testing.T, loginRole string,
+	shouldConnect bool) {
+	proc, _, _, _, _ := runNetorcaiAndClients(t,
+		[]string{}, 1000, 0, 0)
+	defer killallNetorcaiSIGKILL()
+
+	waitOutputTimeout(regexp.MustCompile(`Game logic accepted`),
+		proc.outputControl, 1000, false)
+
+	proc.inputControl <- `start`
+	waitOutputTimeout(regexp.MustCompile(`Game started`), proc.outputControl,
+		1000, true)
+
+	client := &Client{}
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+
+	err = client.SendLogin(loginRole, "client")
+	assert.NoError(t, err, "Cannot send LOGIN")
+
+	if shouldConnect {
+		msg, err := waitReadMessage(client, 1000)
+		assert.NoError(t, err, "Cannot read client message (LOGIN_ACK)")
+		checkLoginAck(t, msg)
+	} else {
+		msg, err := waitReadMessage(client, 1000)
+		assert.NoError(t, err, "Cannot read client message (KICK)")
+		checkKick(t, msg,
+			regexp.MustCompile(`LOGIN denied: Game has been started`))
+	}
+
+	proc.inputControl <- `quit`
+	waitCompletionTimeout(proc.completion, 1000)
+}
+
+func TestLoginPlayerGameAlreadyStarted(t *testing.T) {
+	subtestLoginGameAlreadyStarted(t, "player", false)
+}
+
+func TestLoginVisuGameAlreadyStarted(t *testing.T) {
+	subtestLoginGameAlreadyStarted(t, "visualization", true)
+}
+
+func TestLoginGLGameAlreadyStarted(t *testing.T) {
+	subtestLoginGameAlreadyStarted(t, "game logic", false)
+}
