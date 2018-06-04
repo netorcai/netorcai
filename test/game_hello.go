@@ -63,7 +63,8 @@ func helloGameLogic(t *testing.T, glClient *Client,
 
 func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 	nbTurnsClient int, msBeforeFirstTurn, msBetweenTurns float64,
-	isPlayer, shouldBeValid bool, turnAckFunc ClientTurnAckFunc) {
+	isPlayer, shouldBeValid bool, turnAckFunc ClientTurnAckFunc,
+	kickReasonMatcher *regexp.Regexp) {
 	// Wait GAME_STARTS
 	msg, err := waitReadMessage(client, 1000)
 	assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
@@ -88,17 +89,12 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 		msg, err = waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Could not read client message (GAME_ENDS)")
 		checkGameEnds(t, msg)
-
-		// Wait Kick
-		msg, err = waitReadMessage(client, 1000)
-		assert.NoError(t, err, "Could not read client message (KICK)")
-		checkKick(t, msg, regexp.MustCompile(`Game is finished`))
-	} else {
-		// Wait Kick
-		msg, err = waitReadMessage(client, 1000)
-		assert.NoError(t, err, "Could not read client message (KICK)")
-		checkKick(t, msg, regexp.MustCompile(`.*`))
 	}
+
+	// Wait Kick
+	msg, err = waitReadMessage(client, 1000)
+	assert.NoError(t, err, "Could not read client message (KICK)")
+	checkKick(t, msg, kickReasonMatcher)
 
 	// Close socket
 	client.Disconnect()
