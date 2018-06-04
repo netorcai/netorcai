@@ -8,16 +8,35 @@ import (
 )
 
 type ClientTurnAckFunc func(int) string
+type GLDoInitAckFunc func(int, int) string
+type GLDoTurnAckFunc func(int, []interface{}) string
+
+func DefaultHelloClientTurnAck(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK",
+		"turn_number": %v,
+		"actions": []}`, turn)
+}
+
+func DefaultHelloGLDoInitAck(nbPlayers, nbTurns int) string {
+	return `{"message_type":"DO_INIT_ACK", "initial_game_state":{"all_clients":{}}}`
+}
+
+func DefaultHelloGlDoTurnAck(turn int, actions []interface{}) string {
+	return `{"message_type":"DO_TURN_ACK",
+		"winner_player_id":-1,
+		"game_state":{"all_clients":{}}}`
+}
 
 func helloGameLogic(t *testing.T, glClient *Client,
-	nbPlayers, nbTurns int) {
+	nbPlayers, nbTurns int,
+	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc) {
 	// Wait DO_INIT
 	msg, err := waitReadMessage(glClient, 1000)
 	assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
 	checkDoInit(t, msg, nbPlayers, nbTurns)
 
 	// Send DO_INIT_ACK
-	data := `{"message_type":"DO_INIT_ACK", "initial_game_state":{"all_clients":{}}}`
+	data := doInitAckFunc(nbPlayers, nbTurns)
 	err = glClient.SendString(data)
 	assert.NoError(t, err, "GLClient could not send DO_INIT_ACK")
 
@@ -26,12 +45,10 @@ func helloGameLogic(t *testing.T, glClient *Client,
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_TURN) "+
 			"%v/%v", turn, nbTurns)
-		checkDoTurn(t, msg, nbPlayers, turn-1)
+		actions := checkDoTurn(t, msg, nbPlayers, turn-1)
 
 		// Send DO_TURN_ACK
-		data = `{"message_type":"DO_TURN_ACK",
-			"winner_player_id":-1,
-			"game_state":{"all_clients":{}}}`
+		data = doTurnAckFunc(turn, actions)
 		err = glClient.SendString(data)
 		assert.NoError(t, err, "GLClient could not send DO_TURN_ACK")
 	}
@@ -42,12 +59,6 @@ func helloGameLogic(t *testing.T, glClient *Client,
 
 	// Close socket
 	glClient.Disconnect()
-}
-
-func DefaultHelloClientTurnAckGenerator(turn int) string {
-	return fmt.Sprintf(`{"message_type": "TURN_ACK",
-		"turn_number": %v,
-		"actions": []}`, turn)
 }
 
 func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
