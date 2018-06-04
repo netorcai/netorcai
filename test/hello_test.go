@@ -74,7 +74,8 @@ func TestHelloGLActiveVisu(t *testing.T) {
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 0, 3, 500, 500, false)
+		go helloClient(t, visu, 0, 3, 500, 500, false,
+			DefaultHelloClientTurnAckGenerator)
 	}
 
 	// Start the game
@@ -96,7 +97,8 @@ func TestHelloGLActivePlayer(t *testing.T) {
 	go helloGameLogic(t, gl[0], 1, 3)
 
 	// Run an active player
-	go helloClient(t, players[0], 1, 3, 500, 500, true)
+	go helloClient(t, players[0], 1, 3, 500, 500, true,
+		DefaultHelloClientTurnAckGenerator)
 
 	// Disconnect other players
 	for _, player := range players[1:] {
@@ -132,12 +134,14 @@ func TestHelloGLActiveClients(t *testing.T) {
 
 	// Run player clients
 	for _, player := range players {
-		go helloClient(t, player, 4, 3, 500, 500, true)
+		go helloClient(t, player, 4, 3, 500, 500, true,
+			DefaultHelloClientTurnAckGenerator)
 	}
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 4, 3, 500, 500, false)
+		go helloClient(t, visu, 4, 3, 500, 500, false,
+			DefaultHelloClientTurnAckGenerator)
 	}
 
 	// Start the game

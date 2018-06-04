@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+type ClientTurnAckFunc func(int) string
+
 func helloGameLogic(t *testing.T, glClient *Client,
 	nbPlayers, nbTurns int) {
 	// Wait DO_INIT
@@ -42,8 +44,15 @@ func helloGameLogic(t *testing.T, glClient *Client,
 	glClient.Disconnect()
 }
 
+func DefaultHelloClientTurnAckGenerator(turn int) string {
+	return fmt.Sprintf(`{"message_type": "TURN_ACK",
+		"turn_number": %v,
+		"actions": []}`, turn)
+}
+
 func helloClient(t *testing.T, client *Client, nbPlayers, nbTurns int,
-	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) {
+	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool,
+	turnAckFunc ClientTurnAckFunc) {
 	// Wait GAME_STARTS
 	msg, err := waitReadMessage(client, 1000)
 	assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
@@ -58,9 +67,7 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurns int,
 		checkTurn(t, msg, nbPlayers, turn, isPlayer)
 
 		// Send TURN_ACK
-		data := fmt.Sprintf(`{"message_type": "TURN_ACK",
-			"turn_number": %v,
-			"actions": []}`, turn)
+		data := turnAckFunc(turn)
 		err = client.SendString(data)
 		assert.NoError(t, err, "Client cannot send TURN_ACK")
 	}
