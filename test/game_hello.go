@@ -50,20 +50,20 @@ func DefaultHelloClientTurnAckGenerator(turn int) string {
 		"actions": []}`, turn)
 }
 
-func helloClient(t *testing.T, client *Client, nbPlayers, nbTurns int,
-	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool,
-	shouldBeValid bool, turnAckFunc ClientTurnAckFunc) {
+func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
+	nbTurnsClient int, msBeforeFirstTurn, msBetweenTurns float64,
+	isPlayer, shouldBeValid bool, turnAckFunc ClientTurnAckFunc) {
 	// Wait GAME_STARTS
 	msg, err := waitReadMessage(client, 1000)
 	assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
-	checkGameStarts(t, msg, nbPlayers, nbTurns, msBeforeFirstTurn,
+	checkGameStarts(t, msg, nbPlayers, nbTurnsGL, msBeforeFirstTurn,
 		msBetweenTurns, isPlayer)
 
-	for turn := 0; turn < nbTurns-1; turn++ {
+	for turn := 0; turn < nbTurnsClient-1; turn++ {
 		// Wait TURN
 		msg, err := waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Could not read client message (TURN) "+
-			"%v/%v", turn, nbTurns)
+			"%v/%v", turn, nbTurnsClient)
 		checkTurn(t, msg, nbPlayers, turn, isPlayer)
 
 		// Send TURN_ACK

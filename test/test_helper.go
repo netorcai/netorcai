@@ -169,14 +169,14 @@ func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
 	return client, nil
 }
 
-func runNetorcaiAndAllClients(t *testing.T, arguments []string,
-	timeoutMS int) (
+func runNetorcaiAndClients(t *testing.T, arguments []string,
+	timeoutMS int, nbPlayers, nbVisus int) (
 	proc *NetorcaiProcess, clients, playerClients, visuClients,
 	glClients []*Client) {
 	proc = runNetorcaiWaitListening(t, arguments)
 
-	// 4 players
-	for i := 0; i < 4; i++ {
+	// Players
+	for i := 0; i < nbPlayers; i++ {
 		player, err := connectClient(t, "player", "player", timeoutMS)
 		if err != nil {
 			killallNetorcai()
@@ -186,8 +186,8 @@ func runNetorcaiAndAllClients(t *testing.T, arguments []string,
 		playerClients = append(playerClients, player)
 	}
 
-	// 1 visu
-	for i := 0; i < 1; i++ {
+	// Visus
+	for i := 0; i < nbVisus; i++ {
 		visu, err := connectClient(t, "visualization", "visu", timeoutMS)
 		if err != nil {
 			killallNetorcai()
@@ -197,7 +197,7 @@ func runNetorcaiAndAllClients(t *testing.T, arguments []string,
 		visuClients = append(visuClients, visu)
 	}
 
-	// 1 game logic
+	// Game Logic
 	for i := 0; i < 1; i++ {
 		gl, err := connectClient(t, "game logic", "game_logic", timeoutMS)
 		if err != nil {
@@ -209,6 +209,13 @@ func runNetorcaiAndAllClients(t *testing.T, arguments []string,
 	}
 
 	return proc, clients, playerClients, visuClients, glClients
+}
+
+func runNetorcaiAndAllClients(t *testing.T, arguments []string,
+	timeoutMS int) (
+	proc *NetorcaiProcess, clients, playerClients, visuClients,
+	glClients []*Client) {
+	return runNetorcaiAndClients(t, arguments, timeoutMS, 4, 1)
 }
 
 func checkAllKicked(t *testing.T, clients []*Client,

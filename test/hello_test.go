@@ -74,7 +74,7 @@ func TestHelloGLActiveVisu(t *testing.T) {
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 0, 3, 500, 500, false, true,
+		go helloClient(t, visu, 0, 3, 3, 500, 500, false, true,
 			DefaultHelloClientTurnAckGenerator)
 	}
 
@@ -97,7 +97,7 @@ func TestHelloGLActivePlayer(t *testing.T) {
 	go helloGameLogic(t, gl[0], 1, 3)
 
 	// Run an active player
-	go helloClient(t, players[0], 1, 3, 500, 500, true, true,
+	go helloClient(t, players[0], 1, 3, 3, 500, 500, true, true,
 		DefaultHelloClientTurnAckGenerator)
 
 	// Disconnect other players
@@ -123,24 +123,27 @@ func TestHelloGLActivePlayer(t *testing.T) {
 	waitCompletionTimeout(proc.completion, 1000)
 }
 
-func subtestHelloGlActiveClients(t *testing.T, nbTurnsGL, nbTurnsPlayer, nbTurnsVisu int, playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+func subtestHelloGlActiveClients(t *testing.T, nbPlayers, nbVisus int,
+	nbTurnsGL, nbTurnsPlayer, nbTurnsVisu int,
+	playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc) {
+	proc, _, players, visus, gl := runNetorcaiAndClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
-			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
+			"--delay-turns=500", "--debug", "--json-logs"}, 1000, nbPlayers,
+		nbVisus)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], 4, nbTurnsGL)
+	go helloGameLogic(t, gl[0], nbPlayers, nbTurnsGL)
 
 	// Run player clients
 	for _, player := range players {
-		go helloClient(t, player, 4, nbTurnsPlayer, 500, 500, true,
+		go helloClient(t, player, nbPlayers, 3, nbTurnsPlayer, 500, 500, true,
 			nbTurnsPlayer == nbTurnsGL, playerTurnAckFunc)
 	}
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 4, nbTurnsVisu, 500, 500, false,
+		go helloClient(t, visu, nbPlayers, 3, nbTurnsVisu, 500, 500, false,
 			nbTurnsPlayer == nbTurnsGL, visuTurnAckFunc)
 	}
 
@@ -154,7 +157,7 @@ func subtestHelloGlActiveClients(t *testing.T, nbTurnsGL, nbTurnsPlayer, nbTurns
 }
 
 func TestHelloGLActiveClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, 3, 3, 3,
+	subtestHelloGlActiveClients(t, 4, 1, 3, 3, 3,
 		DefaultHelloClientTurnAckGenerator,
 		DefaultHelloClientTurnAckGenerator)
 }
