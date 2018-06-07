@@ -11,6 +11,9 @@ type ClientGameStartsCheckFunc func(*testing.T, map[string]interface{}, int,
 	int, float64, float64, bool)
 type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int,
 	bool)
+type ClientGameEndsCheckFunc func(*testing.T, map[string]interface{})
+type GLCheckDoTurnFunc func(*testing.T, map[string]interface{}, int,
+	int) []interface{}
 type ClientTurnAckFunc func(int) string
 type GLDoInitAckFunc func(int, int) string
 type GLDoTurnAckFunc func(int, []interface{}) string
@@ -25,6 +28,17 @@ func DefaultHelloClientCheckGameStarts(t *testing.T,
 func DefaultHelloClientCheckTurn(t *testing.T, msg map[string]interface{},
 	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
 	checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+}
+
+func DefaultHelloClientCheckGameEnds(t *testing.T,
+	msg map[string]interface{}) {
+	checkGameEnds(t, msg)
+}
+
+func DefaultHelloGLCheckDoTurn(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedTurnNumber int) []interface{} {
+	actions := checkDoTurn(t, msg, expectedNbPlayers, expectedTurnNumber)
+	return actions
 }
 
 func DefaultHelloClientTurnAck(turn int) string {
@@ -45,6 +59,7 @@ func DefaultHelloGlDoTurnAck(turn int, actions []interface{}) string {
 
 func helloGameLogic(t *testing.T, glClient *Client,
 	nbPlayers, nbTurnsNetorcai, nbTurns int,
+	checkDoTurnFunc GLCheckDoTurnFunc,
 	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc,
 	kickReasonMatcher *regexp.Regexp) {
 	// Wait DO_INIT
@@ -62,7 +77,7 @@ func helloGameLogic(t *testing.T, glClient *Client,
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_TURN) "+
 			"%v/%v", turn, nbTurns)
-		actions := checkDoTurn(t, msg, nbPlayers, turn-1)
+		actions := checkDoTurnFunc(t, msg, nbPlayers, turn-1)
 
 		// Send DO_TURN_ACK
 		data = doTurnAckFunc(turn, actions)
@@ -83,6 +98,7 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 	isPlayer, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
 	checkGameStartsFunc ClientGameStartsCheckFunc,
 	checkTurnFunc ClientTurnCheckFunc,
+	checkGameEndsFunc ClientGameEndsCheckFunc,
 	turnAckFunc ClientTurnAckFunc, kickReasonMatcher *regexp.Regexp) {
 	if shouldDoInitAckBeValid {
 		// Wait GAME_STARTS
@@ -108,7 +124,7 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 			// Wait GAME_ENDS
 			msg, err = waitReadMessage(client, 1000)
 			assert.NoError(t, err, "Could not read client message (GAME_ENDS)")
-			checkGameEnds(t, msg)
+			checkGameEndsFunc(t, msg)
 		}
 	}
 
