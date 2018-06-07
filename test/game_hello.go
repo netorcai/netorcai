@@ -7,9 +7,25 @@ import (
 	"testing"
 )
 
+type ClientGameStartsCheckFunc func(*testing.T, map[string]interface{}, int,
+	int, float64, float64, bool)
+type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int,
+	bool)
 type ClientTurnAckFunc func(int) string
 type GLDoInitAckFunc func(int, int) string
 type GLDoTurnAckFunc func(int, []interface{}) string
+
+func DefaultHelloClientCheckGameStarts(t *testing.T,
+	msg map[string]interface{}, nbPlayers, nbTurnsGL int,
+	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) {
+	checkGameStarts(t, msg, nbPlayers, nbTurnsGL, msBeforeFirstTurn,
+		msBetweenTurns, isPlayer)
+}
+
+func DefaultHelloClientCheckTurn(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
+	checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+}
 
 func DefaultHelloClientTurnAck(turn int) string {
 	return fmt.Sprintf(`{"message_type": "TURN_ACK",
@@ -65,12 +81,14 @@ func helloGameLogic(t *testing.T, glClient *Client,
 func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 	nbTurnsClient int, msBeforeFirstTurn, msBetweenTurns float64,
 	isPlayer, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
+	checkGameStartsFunc ClientGameStartsCheckFunc,
+	checkTurnFunc ClientTurnCheckFunc,
 	turnAckFunc ClientTurnAckFunc, kickReasonMatcher *regexp.Regexp) {
 	if shouldDoInitAckBeValid {
 		// Wait GAME_STARTS
 		msg, err := waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
-		checkGameStarts(t, msg, nbPlayers, nbTurnsGL, msBeforeFirstTurn,
+		checkGameStartsFunc(t, msg, nbPlayers, nbTurnsGL, msBeforeFirstTurn,
 			msBetweenTurns, isPlayer)
 
 		for turn := 0; turn < nbTurnsClient-1; turn++ {
@@ -78,7 +96,7 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 			msg, err := waitReadMessage(client, 1000)
 			assert.NoError(t, err, "Could not read client message (TURN) "+
 				"%v/%v", turn, nbTurnsClient)
-			checkTurn(t, msg, nbPlayers, turn, isPlayer)
+			checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
 
 			// Send TURN_ACK
 			data := turnAckFunc(turn)
