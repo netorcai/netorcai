@@ -451,6 +451,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				if act.PlayerID == action.PlayerID {
 					playerActions[len(playerActions)-1], playerActions[actionIndex] = playerActions[actionIndex], playerActions[len(playerActions)-1]
 					playerActions[len(playerActions)-1] = action
+					actionFound = true
 					break
 				}
 			}
