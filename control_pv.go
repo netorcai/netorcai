@@ -91,14 +91,6 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				return
 			}
 
-			// Check turnNumber value
-			if turnAckMsg.turnNumber != lastTurnNumberSent {
-				KickLoggedPlayerOrVisu(pvClient, globalState,
-					fmt.Sprintf("Invalid TURN_ACK received: "+
-						"Expected turn_number=%v, got %v", lastTurnNumberSent,
-						turnAckMsg.turnNumber))
-			}
-
 			if pvClient.isPlayer {
 				// Forward the player actions to the game logic
 				globalState.Mutex.Lock()
