@@ -114,6 +114,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 			// If a TURN is buffered, send it right now.
 			if len(turnBuffer) > 0 {
+				lastTurnNumberSent = turnBuffer[0].TurnNumber
 				err := sendTurn(pvClient.client, turnBuffer[0])
 				if err != nil {
 					KickLoggedPlayerOrVisu(pvClient, globalState,
