@@ -8,21 +8,22 @@ import (
 )
 
 type ClientGameStartsCheckFunc func(*testing.T, map[string]interface{}, int,
-	int, float64, float64, bool)
+	int, float64, float64, bool) int
 type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int,
 	bool)
 type ClientGameEndsCheckFunc func(*testing.T, map[string]interface{})
 type GLCheckDoTurnFunc func(*testing.T, map[string]interface{}, int,
 	int) []interface{}
-type ClientTurnAckFunc func(int) string
+type ClientTurnAckFunc func(int, int) string
 type GLDoInitAckFunc func(int, int) string
 type GLDoTurnAckFunc func(int, []interface{}) string
 
 func DefaultHelloClientCheckGameStarts(t *testing.T,
 	msg map[string]interface{}, nbPlayers, nbTurnsGL int,
-	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) {
-	checkGameStarts(t, msg, nbPlayers, nbTurnsGL, msBeforeFirstTurn,
-		msBetweenTurns, isPlayer)
+	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) int {
+	playerID := checkGameStarts(t, msg, nbPlayers, nbTurnsGL,
+		msBeforeFirstTurn, msBetweenTurns, isPlayer)
+	return playerID
 }
 
 func DefaultHelloClientCheckTurn(t *testing.T, msg map[string]interface{},
@@ -41,7 +42,7 @@ func DefaultHelloGLCheckDoTurn(t *testing.T, msg map[string]interface{},
 	return actions
 }
 
-func DefaultHelloClientTurnAck(turn int) string {
+func DefaultHelloClientTurnAck(turn, playerID int) string {
 	return fmt.Sprintf(`{"message_type": "TURN_ACK",
 		"turn_number": %v,
 		"actions": []}`, turn)
@@ -104,8 +105,8 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 		// Wait GAME_STARTS
 		msg, err := waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
-		checkGameStartsFunc(t, msg, nbPlayers, nbTurnsGL, msBeforeFirstTurn,
-			msBetweenTurns, isPlayer)
+		playerID := checkGameStartsFunc(t, msg, nbPlayers, nbTurnsGL,
+			msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
 		for turn := 0; turn < nbTurnsClient-1; turn++ {
 			// Wait TURN
@@ -115,7 +116,7 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 			checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
 
 			// Send TURN_ACK
-			data := turnAckFunc(turn)
+			data := turnAckFunc(turn, playerID)
 			err = client.SendString(data)
 			assert.NoError(t, err, "Client cannot send TURN_ACK")
 		}

@@ -349,12 +349,12 @@ func checkDoTurn(t *testing.T, msg map[string]interface{},
 				"Unexpected turn_number in DO_TURN player action %v",
 				playerIndex)
 
-			actions, err := netorcai.ReadArray(obj, "actions")
+			_, err = netorcai.ReadArray(obj, "actions")
 			assert.NoError(t, err, "Invalid player_actions in DO_TURN "+
 				"message: Cannot read the actions array in player action %v",
 				playerIndex)
 
-			return actions
+			return playerActions
 		}
 	case "KICK":
 		kickReason, err := netorcai.ReadString(msg, "kick_reason")
@@ -417,7 +417,8 @@ func checkPlayersInfo(t *testing.T, msg map[string]interface{},
 
 func checkGameStarts(t *testing.T, msg map[string]interface{},
 	expectedNbPlayers, expectedNbTurnsMax int,
-	expectedMsBeforeFirstTurn, expectedMsBetweenTurns float64, isPlayer bool) {
+	expectedMsBeforeFirstTurn, expectedMsBetweenTurns float64,
+	isPlayer bool) (playerID int) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
 	assert.NoError(t, err, "Cannot read 'message_type' field in "+
 		"received client message (GAME_STARTS)")
@@ -465,6 +466,7 @@ func checkGameStarts(t *testing.T, msg map[string]interface{},
 				"in GAME_STARTS message")
 
 		checkPlayersInfo(t, msg, expectedNbPlayers, isPlayer)
+		return playerID
 	case "KICK":
 		kickReason, err := netorcai.ReadString(msg, "kick_reason")
 		assert.NoError(t, err, "Cannot read kick_reason")
@@ -474,6 +476,7 @@ func checkGameStarts(t *testing.T, msg map[string]interface{},
 		assert.FailNowf(t, "Expected GAME_STARTS, got another message type",
 			messageType)
 	}
+	return -2
 }
 
 func checkTurn(t *testing.T, msg map[string]interface{},
