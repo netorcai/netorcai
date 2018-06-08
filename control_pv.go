@@ -115,7 +115,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				}
 
 				// Empty turn buffer
-				turnBuffer = turnBuffer[0:]
+				turnBuffer = turnBuffer[:0]
 				pvClient.client.state = CLIENT_THINKING
 			} else {
 				pvClient.client.state = CLIENT_READY
