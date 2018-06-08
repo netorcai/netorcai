@@ -10,7 +10,7 @@ import (
 type ClientGameStartsCheckFunc func(*testing.T, map[string]interface{}, int,
 	int, float64, float64, bool) int
 type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int,
-	bool)
+	bool) int
 type ClientGameEndsCheckFunc func(*testing.T, map[string]interface{})
 type GLCheckDoTurnFunc func(*testing.T, map[string]interface{}, int,
 	int) []interface{}
@@ -27,8 +27,8 @@ func DefaultHelloClientCheckGameStarts(t *testing.T,
 }
 
 func DefaultHelloClientCheckTurn(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
-	checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
+	return checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
 }
 
 func DefaultHelloClientCheckGameEnds(t *testing.T,
@@ -95,7 +95,7 @@ func helloGameLogic(t *testing.T, glClient *Client,
 }
 
 func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
-	nbTurnsClient int, msBeforeFirstTurn, msBetweenTurns float64,
+	nbTurnsClient, turnsToSkip int, msBeforeFirstTurn, msBetweenTurns float64,
 	isPlayer, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
 	checkGameStartsFunc ClientGameStartsCheckFunc,
 	checkTurnFunc ClientTurnCheckFunc,
@@ -108,15 +108,15 @@ func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
 		playerID := checkGameStartsFunc(t, msg, nbPlayers, nbTurnsGL,
 			msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
-		for turn := 0; turn < nbTurnsClient-1; turn++ {
+		for turn := 0; turn < nbTurnsClient-1; turn += 1 + turnsToSkip {
 			// Wait TURN
 			msg, err := waitReadMessage(client, 1000)
 			assert.NoError(t, err, "Could not read client message (TURN) "+
 				"%v/%v", turn, nbTurnsClient)
-			checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
+			turnReceived := checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
 
 			// Send TURN_ACK
-			data := turnAckFunc(turn, playerID)
+			data := turnAckFunc(turnReceived, playerID)
 			err = client.SendString(data)
 			assert.NoError(t, err, "Client cannot send TURN_ACK")
 		}

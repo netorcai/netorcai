@@ -480,7 +480,7 @@ func checkGameStarts(t *testing.T, msg map[string]interface{},
 }
 
 func checkTurn(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
+	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
 	messageType, err := netorcai.ReadString(msg, "message_type")
 	assert.NoError(t, err, "Cannot read 'message_type' field in "+
 		"received client message (TURN)")
@@ -496,6 +496,7 @@ func checkTurn(t *testing.T, msg map[string]interface{},
 		assert.NoError(t, err, "Cannot read game_state in TURN")
 
 		checkPlayersInfo(t, msg, expectedNbPlayers, isPlayer)
+		return turnNumber
 	case "KICK":
 		kickReason, err := netorcai.ReadString(msg, "kick_reason")
 		assert.NoError(t, err, "Cannot read kick_reason")
@@ -505,6 +506,7 @@ func checkTurn(t *testing.T, msg map[string]interface{},
 		assert.FailNowf(t, "Expected TURN, got another message type",
 			messageType)
 	}
+	return expectedTurnNumber
 }
 
 func checkGameEnds(t *testing.T, msg map[string]interface{}) {

@@ -155,6 +155,7 @@ func checkGameStartsNastyNested(t *testing.T,
 func TestForwardInitialGameStateFlattened(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1,
 		3, 3, 3, 3,
+		0, 0,
 		checkGameStartsFlattened, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
 		doInitAckFlattened, DefaultHelloGlDoTurnAck,
@@ -167,6 +168,7 @@ func TestForwardInitialGameStateFlattened(t *testing.T) {
 func TestForwardInitialGameStateNastyNested(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1,
 		3, 3, 3, 3,
+		0, 0,
 		checkGameStartsNastyNested, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
 		doInitAckNastyNested, DefaultHelloGlDoTurnAck,
@@ -248,17 +250,19 @@ func doTurnAckNastyNested(turn int, actions []interface{}) string {
 }
 
 func checkTurnFlattened(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
-	checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
+	turn := checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
 
 	gs, err := netorcai.ReadObject(msg, "game_state")
 	assert.NoError(t, err, "Cannot read 'game_state' in msg")
 	subCheckFlattenedObject(t, gs)
+
+	return turn
 }
 
 func checkTurnNastyNested(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) {
-	checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
+	turn := checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
 
 	gs, err := netorcai.ReadObject(msg, "game_state")
 	assert.NoError(t, err, "Cannot read 'game_state' in msg")
@@ -286,11 +290,14 @@ func checkTurnNastyNested(t *testing.T, msg map[string]interface{},
 		"nested_object")
 	assert.NoError(t, err, "Cannot read 'nested_object' in msg")
 	subCheckFlattenedObject(t, nestedObject2)
+
+	return turn
 }
 
 func TestForwardGameStateFlattened(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1,
 		3, 3, 3, 3,
+		0, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnFlattened,
 		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
 		DefaultHelloGLDoInitAck, doTurnAckFlattened,
@@ -303,6 +310,7 @@ func TestForwardGameStateFlattened(t *testing.T) {
 func TestForwardGameStateNastyNested(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1,
 		3, 3, 3, 3,
+		0, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnNastyNested,
 		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
 		DefaultHelloGLDoInitAck, doTurnAckNastyNested,
@@ -498,6 +506,7 @@ func checkDoTurnNastyNested(t *testing.T, msg map[string]interface{},
 func TestForwardActionsFlattened(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1,
 		3, 3, 3, 3,
+		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds, checkDoTurnFlattened,
 		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
@@ -510,6 +519,7 @@ func TestForwardActionsFlattened(t *testing.T) {
 func TestForwardActionsNastyNested(t *testing.T) {
 	subtestHelloGlActiveClients(t, 4, 1,
 		3, 3, 3, 3,
+		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds, checkDoTurnNastyNested,
 		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
