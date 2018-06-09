@@ -267,20 +267,15 @@ func sendDoInit(client *GameLogicClient, nbPlayers, nbTurnsMax int) error {
 	}
 
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-		return err
-	} else {
+	if err == nil {
 		log.WithFields(log.Fields{
 			"nickname":       client.client.nickname,
 			"remote address": client.client.Conn.RemoteAddr(),
 			"content":        string(content),
 		}).Debug("Sending DO_INIT to game logic")
 		err = sendMessage(client.client, content)
-		return err
 	}
+	return err
 }
 
 func sendDoTurn(client *GameLogicClient,
@@ -291,18 +286,13 @@ func sendDoTurn(client *GameLogicClient,
 	}
 
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-		return err
-	} else {
+	if err == nil {
 		log.WithFields(log.Fields{
 			"nickname":       client.client.nickname,
 			"remote address": client.client.Conn.RemoteAddr(),
 			"content":        string(content),
 		}).Debug("Sending DO_TURN to game logic")
 		err = sendMessage(client.client, content)
-		return err
 	}
+	return err
 }

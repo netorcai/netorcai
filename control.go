@@ -197,11 +197,7 @@ func Kick(client *Client, reason string) {
 	}
 
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-	} else {
+	if err == nil {
 		_ = sendMessage(client, content)
 		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
@@ -213,15 +209,10 @@ func sendLoginACK(client *Client) error {
 	}
 
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-		return err
-	} else {
+	if err == nil {
 		err = sendMessage(client, content)
-		return err
 	}
+	return err
 }
 
 func Cleanup() {

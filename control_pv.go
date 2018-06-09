@@ -175,54 +175,39 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 func sendGameStarts(client *Client, msg MessageGameStarts) error {
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-		return err
-	} else {
+	if err == nil {
 		log.WithFields(log.Fields{
 			"nickname":       client.nickname,
 			"remote address": client.Conn.RemoteAddr(),
 			"content":        string(content),
 		}).Debug("Sending GAME_STARTS to client")
 		err = sendMessage(client, content)
-		return err
 	}
+	return err
 }
 
 func sendTurn(client *Client, msg MessageTurn) error {
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-		return err
-	} else {
+	if err == nil {
 		log.WithFields(log.Fields{
 			"nickname":       client.nickname,
 			"remote address": client.Conn.RemoteAddr(),
 			"content":        string(content),
 		}).Debug("Sending TURN to client")
 		err = sendMessage(client, content)
-		return err
 	}
+	return err
 }
 
 func sendGameEnds(client *Client, msg MessageGameEnds) error {
 	content, err := json.Marshal(msg)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Error("Cannot marshal JSON message")
-		return err
-	} else {
+	if err == nil {
 		log.WithFields(log.Fields{
 			"nickname":       client.nickname,
 			"remote address": client.Conn.RemoteAddr(),
 			"content":        string(content),
 		}).Debug("Sending GAME_ENDS to client")
 		err = sendMessage(client, content)
-		return err
 	}
+	return err
 }
