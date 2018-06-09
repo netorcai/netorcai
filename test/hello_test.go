@@ -1,8 +1,9 @@
 package test
 
 import (
-	//"github.com/stretchr/testify/assert"
 	"fmt"
+	"github.com/mpoquet/netorcai"
+	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
 )
@@ -500,5 +501,33 @@ func TestInvalidTurnAckBadActions(t *testing.T) {
 		turnAckBadActions, DefaultHelloClientTurnAck,
 		regexp.MustCompile(`Game is finished`),
 		regexp.MustCompile(`Non-array value for field 'actions'`),
+		regexp.MustCompile(`Game is finished`))
+}
+
+// Winner
+func doTurnAckWinner(turn int, actions []interface{}) string {
+	return `{"message_type":"DO_TURN_ACK",
+		"winner_player_id":0,
+		"game_state":{"all_clients":{}}}`
+}
+
+func checkGameEndsWinner(t *testing.T, msg map[string]interface{}) {
+	checkGameEnds(t, msg)
+
+	winner, err := netorcai.ReadInt(msg, "winner_player_id")
+	assert.NoError(t, err, "Cannot read 'winner_player_id'")
+	assert.Equal(t, 0, winner, "Unexpected 'winner_player_id' value")
+}
+
+func TestHelloWinner(t *testing.T) {
+	subtestHelloGlActiveClients(t, 4, 1,
+		3, 3, 3, 3,
+		0, 0,
+		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
+		checkGameEndsWinner, DefaultHelloGLCheckDoTurn,
+		DefaultHelloGLDoInitAck, doTurnAckWinner,
+		DefaultHelloClientTurnAck, DefaultHelloClientTurnAck,
+		regexp.MustCompile(`Game is finished`),
+		regexp.MustCompile(`Game is finished`),
 		regexp.MustCompile(`Game is finished`))
 }
