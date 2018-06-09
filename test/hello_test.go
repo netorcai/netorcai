@@ -296,6 +296,11 @@ func doTurnAckNoMsgType(turn int, actions []interface{}) string {
 	return `{"winner_player_id":-1, "game_state":{"all_clients":{}}}`
 }
 
+func doTurnAckBadMsgType(turn int, actions []interface{}) string {
+	return `{"message_type":"DO_TURN_ACKz", "winner_player_id":-1,` +
+		`"game_state":{"all_clients":{}}}`
+}
+
 func doTurnAckNoWinner(turn int, actions []interface{}) string {
 	return `{"message_type":"DO_TURN_ACK", "game_state":{"all_clients":{}}}`
 }
@@ -323,6 +328,19 @@ func TestInvalidDoTurnAckNoMsgType(t *testing.T) {
 		DefaultHelloGLDoInitAck, doTurnAckNoMsgType,
 		turnAckNoMsgType, DefaultHelloClientTurnAck,
 		regexp.MustCompile(`Field 'message_type' is missing`),
+		regexp.MustCompile(`netorcai abort`),
+		regexp.MustCompile(`netorcai abort`))
+}
+
+func TestInvalidDoTurnAckBadMsgType(t *testing.T) {
+	subtestHelloGlActiveClients(t, 1, 1,
+		3, 1, 0, 0,
+		0, 0,
+		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
+		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
+		DefaultHelloGLDoInitAck, doTurnAckBadMsgType,
+		turnAckNoMsgType, DefaultHelloClientTurnAck,
+		regexp.MustCompile(`DO_TURN_ACK was expected`),
 		regexp.MustCompile(`netorcai abort`),
 		regexp.MustCompile(`netorcai abort`))
 }
