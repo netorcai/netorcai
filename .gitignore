@@ -5,3 +5,4 @@ test/__pycache__
 test/*-cover.bats
 test/coverage-report.txt
 test/coverage-report.html
+__pycache__

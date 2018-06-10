@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Handle a netorcai metaprotocol client."""
+"""A netorcai client library (python version)."""
 import json
 import socket
 import struct
@@ -58,3 +58,10 @@ class Client:
             "message_type":"LOGIN",
             "nickname": nickname,
             "role": role})
+
+    def send_turn_ack(self, turn_number, actions):
+        """Send a TURN_ACK message."""
+        self._send_json({
+            "message_type":"TURN_ACK",
+            "turn_number": turn_number,
+            "actions": actions})
