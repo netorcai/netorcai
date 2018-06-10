@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/mpoquet/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
@@ -65,7 +66,7 @@ func TestInvalidGlNoDoInitAck(t *testing.T) {
 		t, []string{}, 1000)
 	defer killallNetorcaiSIGKILL()
 
-	go func(glClient *Client) {
+	go func(glClient *client.Client) {
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
 		checkDoInit(t, msg, 4, 100)

@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/mpoquet/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
@@ -58,7 +59,7 @@ func DefaultHelloGlDoTurnAck(turn int, actions []interface{}) string {
 		"game_state":{"all_clients":{}}}`
 }
 
-func helloGameLogic(t *testing.T, glClient *Client,
+func helloGameLogic(t *testing.T, glClient *client.Client,
 	nbPlayers, nbTurnsNetorcai, nbTurns int,
 	checkDoTurnFunc GLCheckDoTurnFunc,
 	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc,
@@ -94,7 +95,7 @@ func helloGameLogic(t *testing.T, glClient *Client,
 	glClient.Disconnect()
 }
 
-func helloClient(t *testing.T, client *Client, nbPlayers, nbTurnsGL,
+func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
 	nbTurnsClient, turnsToSkip int, msBeforeFirstTurn, msBetweenTurns float64,
 	isPlayer, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
 	checkGameStartsFunc ClientGameStartsCheckFunc,

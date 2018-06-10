@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"github.com/mpoquet/netorcai"
+	"github.com/mpoquet/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"os/exec"
@@ -137,7 +138,7 @@ func isTravis() bool {
 }
 
 // Client helpers
-func waitReadMessage(client *Client, timeoutMS int) (
+func waitReadMessage(client *client.Client, timeoutMS int) (
 	msg map[string]interface{}, err error) {
 	msgChan := make(chan int)
 	go func() {
@@ -155,8 +156,8 @@ func waitReadMessage(client *Client, timeoutMS int) (
 }
 
 func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
-	*Client, error) {
-	client := &Client{}
+	*client.Client, error) {
+	client := &client.Client{}
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 
@@ -172,7 +173,7 @@ func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
 func runNetorcaiAndClients(t *testing.T, arguments []string,
 	timeoutMS int, nbPlayers, nbVisus int) (
 	proc *NetorcaiProcess, clients, playerClients, visuClients,
-	glClients []*Client) {
+	glClients []*client.Client) {
 	proc = runNetorcaiWaitListening(t, arguments)
 
 	// Players
@@ -214,11 +215,11 @@ func runNetorcaiAndClients(t *testing.T, arguments []string,
 func runNetorcaiAndAllClients(t *testing.T, arguments []string,
 	timeoutMS int) (
 	proc *NetorcaiProcess, clients, playerClients, visuClients,
-	glClients []*Client) {
+	glClients []*client.Client) {
 	return runNetorcaiAndClients(t, arguments, timeoutMS, 4, 1)
 }
 
-func checkAllKicked(t *testing.T, clients []*Client,
+func checkAllKicked(t *testing.T, clients []*client.Client,
 	reasonMatcher *regexp.Regexp, timeoutMS int) {
 	timeoutReached := make(chan int)
 	stopTimeout := make(chan int)
@@ -234,13 +235,13 @@ func checkAllKicked(t *testing.T, clients []*Client,
 
 	// All clients should receive a KICK
 	kickChan := make(chan int, len(clients))
-	for _, client := range clients {
-		go func(c *Client) {
+	for _, cli := range clients {
+		go func(c *client.Client) {
 			msg, err := waitReadMessage(c, timeoutMS)
 			assert.NoError(t, err, "Cannot read client message (KICK)")
 			checkKick(t, msg, reasonMatcher)
 			kickChan <- 0
-		}(client)
+		}(cli)
 	}
 
 	for _ = range clients {

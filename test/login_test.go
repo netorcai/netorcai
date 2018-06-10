@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/mpoquet/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
@@ -11,7 +12,7 @@ func TestLoginNotJson(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -31,7 +32,7 @@ func TestLoginNoMessageType(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -51,7 +52,7 @@ func TestLoginNoRole(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -71,7 +72,7 @@ func TestLoginNoNickname(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -91,7 +92,7 @@ func TestLoginRoleNotString(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -111,7 +112,7 @@ func TestLoginBadRole(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -131,7 +132,7 @@ func TestLoginBadNicknameShort(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -151,7 +152,7 @@ func TestLoginBadNicknameLong(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -171,7 +172,7 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	var client Client
+	var client client.Client
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 	defer client.Disconnect()
@@ -237,13 +238,13 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	defer killallNetorcaiSIGKILL()
 
 	// Do many player connections sequentially
-	var clients []*Client
+	var clients []*client.Client
 
 	assert.Condition(t, func() bool {
 		return expectedNbLogged <= nbConnections
 	})
 	for i := 0; i < nbConnections; i++ {
-		client := &Client{}
+		client := &client.Client{}
 		err := client.Connect("localhost", 4242)
 		assert.NoError(t, err, "Cannot connect")
 
@@ -319,7 +320,7 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 	defer killallNetorcaiSIGKILL()
 
 	// Do many client connections in parallel
-	var clients []*Client
+	var clients []*client.Client
 	nbLogged := 0
 	nbDisconnectSuccess := 0
 
@@ -327,14 +328,14 @@ func subtestLoginMaxNbClientParallel(t *testing.T, loginRole string,
 		return expectedNbLogged <= nbConnections
 	})
 
-	clientsChan := make(chan *Client, nbConnections)
+	clientsChan := make(chan *client.Client, nbConnections)
 	clientLogged := make(chan int, nbConnections)
 	defer close(clientsChan)
 	defer close(clientLogged)
 
 	for i := 0; i < nbConnections; i++ {
 		go func() {
-			client := &Client{}
+			client := &client.Client{}
 			err := client.Connect("localhost", 4242)
 			assert.NoError(t, err, "Client cannot connect")
 			clientsChan <- client
@@ -490,7 +491,7 @@ func subtestLoginGameAlreadyStarted(t *testing.T, loginRole string,
 	waitOutputTimeout(regexp.MustCompile(`Game started`), proc.outputControl,
 		1000, true)
 
-	client := &Client{}
+	client := &client.Client{}
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 
