@@ -125,7 +125,7 @@ Options:
 
 	netorcaiVersion := version
 	if netorcaiVersion == "" {
-		netorcaiVersion = "v0.1.0"
+		netorcaiVersion = "v1.0.0"
 	}
 
 	ret := -1
