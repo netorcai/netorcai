@@ -139,9 +139,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 			}
 		}
 
-		if playerIndex == -1 {
-			log.Error("Could not remove player: Did not find it")
-		} else {
+		if playerIndex != -1 {
 			// Remove the player by placing it at the end of the slice,
 			// then reducing the slice length
 			gs.Players[len(gs.Players)-1], gs.Players[playerIndex] = gs.Players[playerIndex], gs.Players[len(gs.Players)-1]
@@ -157,9 +155,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 			}
 		}
 
-		if visuIndex == -1 {
-			log.Error("Could not remove visu: Did not find it")
-		} else {
+		if visuIndex != -1 {
 			// Remove the visu by placing it at the end of the slice,
 			// then reducing the slice length
 			gs.Visus[len(gs.Visus)-1], gs.Visus[visuIndex] = gs.Visus[visuIndex], gs.Visus[len(gs.Visus)-1]
