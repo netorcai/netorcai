@@ -1,0 +1,11 @@
+{
+    "name": "netorcai-client",
+    "authors": [
+        "Millian Poquet"
+    ],
+    "description": "A netorcai client library",
+    "copyright": "Copyright © 2018, Millian Poquet",
+    "license": "GPL-3.0",
+    "homepage": "https://github.com/mpoquet/netorcai",
+    "targetType": "library"
+}
