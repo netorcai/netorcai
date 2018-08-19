@@ -3,27 +3,24 @@ import std.json, std.conv, std.format, std.algorithm, std.exception;
 /// Reads a boolean from a JSONValue (handling several ways to store it)
 bool getBool(in JSONValue v)
 {
+    bool value;
+
     if (v.type == JSON_TYPE.TRUE)
-        return true;
+        value = true;
     else if (v.type == JSON_TYPE.FALSE)
-        return false;
+        value = false;
     else if (v.type == JSON_TYPE.INTEGER)
     {
         enforce([0, 1].canFind(v.integer),
                 format!"Cannot deduce boolean value from integer %d"(v.integer));
-        return to!bool(v.integer);
-    }
-    else if (v.type == JSON_TYPE.UINTEGER)
-    {
-        enforce([0, 1].canFind(v.uinteger),
-                format!"Cannot deduce boolean value from uinteger %d"(v.uinteger));
-        return to!bool(v.uinteger);
+        value = to!bool(v.integer);
     }
     else
     {
         enforce(0, "Cannot read bool value from JSONValue " ~ v.toString);
-        return bool.init;
     }
+
+    return value;
 }
 
 unittest
@@ -50,15 +47,14 @@ unittest
 /// Reads an integer from a JSONValue (handling several ways to store it)
 int getInt(in JSONValue v)
 {
+    int value;
+
     if (v.type == JSON_TYPE.INTEGER)
-        return to!int(v.integer);
-    else if (v.type == JSON_TYPE.UINTEGER)
-        return to!int(v.uinteger);
+        value = to!int(v.integer);
     else
-    {
         enforce(0, "Cannot read int value from JSONValue " ~ v.toString);
-        return int.init;
-    }
+
+    return value;
 }
 
 unittest
@@ -85,17 +81,16 @@ unittest
 /// Reads a double from a JSONValue (handling several ways to store it)
 double getDouble(in JSONValue v)
 {
+    double value;
+
     if (v.type == JSON_TYPE.FLOAT)
-        return v.floating;
+        value = v.floating;
     else if (v.type == JSON_TYPE.INTEGER)
-        return to!double(v.integer);
-    else if (v.type == JSON_TYPE.UINTEGER)
-        return to!double(v.uinteger);
+        value = to!double(v.integer);
     else
-    {
         enforce(0, "Cannot read double value from JSONValue " ~ v.toString);
-        return double.init;
-    }
+
+    return value;
 }
 
 unittest

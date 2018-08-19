@@ -84,15 +84,7 @@ class Client
         switch (msg["message_type"].str)
         {
         case "GAME_STARTS":
-            GameStartsMessage m;
-            m.playerID = msg["player_id"].getInt;
-            m.nbPlayers = msg["nb_players"].getInt;
-            m.nbTurnsMax = msg["nb_turns_max"].getInt;
-            m.msBeforeFirstTurn = msg["milliseconds_before_first_turn"].getDouble;
-            m.msBetweenTurns = msg["milliseconds_between_turns"].getDouble;
-            m.initialGameState = msg["initial_game_state"].object;
-            m.playersInfo = msg["players_info"].array.parsePlayersInfo;
-            return m;
+            return parseGameStartsMessage(msg);
         case "KICK":
             throw new Exception(format!"Kicked from netorai. Reason: %s"(msg["kick_reason"]));
         default:
@@ -107,13 +99,24 @@ class Client
         switch (msg["message_type"].str)
         {
         case "TURN":
-            TurnMessage m;
-            m.turnNumber = msg["turn_number"].getInt;
-            m.gameState = msg["game_state"].object;
-            m.playersInfo = msg["players_info"].array.parsePlayersInfo;
-            return m;
+            return parseTurnMessage(msg);
         case "GAME_ENDS":
             throw new Exception("Game over!");
+        case "KICK":
+            throw new Exception(format!"Kicked from netorai. Reason: %s"(msg["kick_reason"]));
+        default:
+            throw new Exception(format!"Unexpected message received: %s"(msg["message_type"]));
+        }
+    }
+
+    /// Reads a GAME_ENDS message on the client socket. Throws Exception on error.
+    GameEndsMessage readGameEnds()
+    {
+        auto msg = recvJson;
+        switch (msg["message_type"].str)
+        {
+        case "GAME_ENDS":
+            return parseGameEndsMessage(msg);
         case "KICK":
             throw new Exception(format!"Kicked from netorai. Reason: %s"(msg["kick_reason"]));
         default:
