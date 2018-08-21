@@ -1,3 +1,5 @@
+module netorcai.client;
+
 import std.socket;
 import std.stdio;
 import std.utf;
@@ -6,8 +8,8 @@ import std.json;
 import std.format;
 import std.exception;
 
-import message_types;
-import json_utils;
+import netorcai.message;
+import netorcai.json_util;
 
 /// Netorcai metaprotocol client class (D version)
 class Client

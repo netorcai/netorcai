@@ -1,7 +1,9 @@
+module netorcai.message;
+
 import std.json;
 import std.exception;
 
-import json_utils;
+import netorcai.json_util;
 
 /// Stores information about one player
 struct PlayerInfo

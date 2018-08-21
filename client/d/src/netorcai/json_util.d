@@ -1,3 +1,5 @@
+module netorcai.json_util;
+
 import std.json, std.conv, std.format, std.algorithm, std.exception;
 
 /// Reads a boolean from a JSONValue (handling several ways to store it)
