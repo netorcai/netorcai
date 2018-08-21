@@ -1,0 +1,11 @@
+{
+    "name": "hello-player",
+    "authors": [ "Millian Poquet" ],
+    "description": "Player test program for netorcai-client",
+    "copyright": "Copyright © 2018, Millian Poquet",
+    "license": "GPL-3.0",
+
+    "dependencies": {
+        "netorcai-client": "~>0.0.1"
+    }
+}
