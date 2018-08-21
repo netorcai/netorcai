@@ -8,28 +8,33 @@ void main()
 {
     auto c = new Client;
     c.connect();
+    scope(exit) c.close();
 
-    write("Logging in as a player...");
+    write("Logging in as a player... "); stdout.flush();
     c.sendLogin("D-player", "player");
     c.readLoginAck();
-    writeln(" done");
+    writeln("done");
 
-    write("Waiting for GAME_STARTS...");
+    write("Waiting for GAME_STARTS... "); stdout.flush();
     auto gameStarts = c.readGameStarts();
-    writeln(" done");
+    writeln("done");
 
     try
     {
-        for (;;)
+        foreach (i; 1..gameStarts.nbTurnsMax)
         {
-            write("Waiting for TURN...");
+            write("Waiting for TURN... "); stdout.flush();
             auto turn = c.readTurn();
             c.sendTurnAck(turn.turnNumber, `[{"player": "D"}]`.parseJSON);
-            writeln(" done");
+            writeln("done");
         }
+
+        write("Waiting for GAME_ENDS..."); stdout.flush();
+        auto gameEnds = c.readGameEnds();
+        writeln("done");
     }
     catch(Exception e)
     {
-        writeln("Caught!", e);
+        writeln("Failure: ", e);
     }
 }
