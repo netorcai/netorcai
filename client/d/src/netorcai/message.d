@@ -25,7 +25,6 @@ PlayerInfo parsePlayerInfo(JSONValue o)
 
     return info;
 }
-
 unittest
 {
     string s = `{
@@ -55,7 +54,6 @@ PlayerInfo[] parsePlayersInfo(JSONValue[] array)
 
     return infos;
 }
-
 unittest
 {
     string s = `[
@@ -119,7 +117,6 @@ GameStartsMessage parseGameStartsMessage(JSONValue o)
 
     return m;
 }
-
 unittest
 {
     string s = `{
@@ -168,7 +165,6 @@ GameEndsMessage parseGameEndsMessage(JSONValue o)
 
     return m;
 }
-
 unittest
 {
     string s = `{
@@ -199,7 +195,6 @@ TurnMessage parseTurnMessage(JSONValue o)
 
     return m;
 }
-
 unittest
 {
     string s = `{
@@ -222,4 +217,109 @@ unittest
     assert(m.playersInfo == `[{"player_id":0,"nickname":"jugador",
         "remote_address":"127.0.0.1:59840",
         "is_connected":true}]`.parseJSON.array.parsePlayersInfo);
+}
+
+struct DoInitMessage
+{
+    int nbPlayers;
+    int nbTurnsMax;
+}
+
+DoInitMessage parseDoInitMessage(JSONValue o)
+{
+    DoInitMessage m;
+    m.nbPlayers = o["nb_players"].getInt;
+    m.nbTurnsMax = o["nb_turns_max"].getInt;
+
+    return m;
+}
+unittest
+{
+    string s = `{
+      "message_type": "DO_INIT",
+      "nb_players": 4,
+      "nb_turns_max": 100
+    }`;
+
+    DoInitMessage m = s.parseJSON.parseDoInitMessage;
+    assert(m.nbPlayers == 4);
+    assert(m.nbTurnsMax == 100);
+}
+
+struct PlayerActions
+{
+    int playerID;
+    int turnNumber;
+    JSONValue actions;
+}
+
+PlayerActions parsePlayerActions(JSONValue o)
+{
+    PlayerActions pa;
+    pa.playerID = o["player_id"].getInt;
+    pa.turnNumber = o["turn_number"].getInt;
+    pa.actions = o["actions"].array;
+
+    return pa;
+}
+unittest
+{
+    string s = `{
+      "player_id": 2,
+      "turn_number": 4,
+      "actions": []
+    }`;
+
+    PlayerActions pa = s.parseJSON.parsePlayerActions;
+    assert(pa.playerID == 2);
+    assert(pa.turnNumber == 4);
+    assert(pa.actions.array.length == 0);
+}
+
+struct DoTurnMessage
+{
+    PlayerActions[] playerActions;
+}
+
+DoTurnMessage parseDoTurnMessage(JSONValue v)
+{
+    DoTurnMessage m;
+
+    auto actions = v["player_actions"].array;
+    m.playerActions.length = actions.length;
+
+    foreach (i, o; actions)
+    {
+        m.playerActions[i] = o.parsePlayerActions;
+    }
+
+    return m;
+}
+unittest
+{
+    string s = `{
+      "message_type": "DO_TURN",
+      "player_actions": [
+        {
+          "player_id": 1,
+          "turn_number": 2,
+          "actions": []
+        },
+        {
+          "player_id": 0,
+          "turn_number": 3,
+          "actions": [ 4 ]
+        }
+      ]
+    }`;
+
+    DoTurnMessage m = s.parseJSON.parseDoTurnMessage;
+    assert(m.playerActions.length == 2);
+    assert(m.playerActions[0].playerID == 1);
+    assert(m.playerActions[0].turnNumber == 2);
+    assert(m.playerActions[0].actions.array.length == 0);
+    assert(m.playerActions[1].playerID == 0);
+    assert(m.playerActions[1].turnNumber == 3);
+    assert(m.playerActions[1].actions.array.length == 1);
+    assert(m.playerActions[1].actions.array[0].getInt == 4);
 }

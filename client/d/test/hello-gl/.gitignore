@@ -1,0 +1,11 @@
+.dub
+docs.json
+__dummy.html
+docs/
+hello-gl
+hello-gl-test-*
+*.exe
+*.o
+*.obj
+*.lst
+dub.selections.json
