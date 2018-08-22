@@ -18,5 +18,9 @@ script:
   # Run the tests in coverage mode
   - cd ${TRAVIS_BUILD_DIR}/test
   - make cover
+
+after_success:
   # Send coverage results to coveralls
   - goveralls -coverprofile=./merged.covout -service=travis-ci -repotoken ${COVERALLS_TOKEN}
+  # Send coverage results to codecov
+  - bash <(curl -s https://codecov.io/bash)
