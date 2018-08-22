@@ -7,8 +7,8 @@ import netorcai;
 void main()
 {
     auto c = new Client;
+    scope(exit) c.destroy();
     c.connect();
-    scope(exit) c.close();
 
     write("Logging in as a game logic... "); stdout.flush();
     c.sendLogin("D-gl", "game logic");
