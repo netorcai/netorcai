@@ -23,4 +23,6 @@ after_success:
   # Send coverage results to coveralls
   - goveralls -coverprofile=./merged.covout -service=travis-ci -repotoken ${COVERALLS_TOKEN}
   # Send coverage results to codecov
+  - cp merged.covout ${TRAVIS_BUILD_DIR}/coverage.txt
+  - cd ${TRAVIS_BUILD_DIR}
   - bash <(curl -s https://codecov.io/bash)
