@@ -1,6 +1,6 @@
 {
   pkgs ? import (
-    fetchTarball "https://github.com/NixOS/nixpkgs/archive/17.09.tar.gz") {},
+    fetchTarball "https://github.com/NixOS/nixpkgs/archive/18.09.tar.gz") {},
 }:
 
 pkgs.stdenv.mkDerivation rec {
