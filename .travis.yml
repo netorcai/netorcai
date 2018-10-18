@@ -4,7 +4,7 @@ nix: 2.1.1
 env:
   - GOPATH=${HOME}
   - PATH=${PATH}:${GOPATH}/bin
-  - TRAVIS_BUILD_DIR=${${GOPATH}/src/github.com/mpoquet/netorcai}
+  - TRAVIS_BUILD_DIR=${GOPATH}/src/github.com/mpoquet/netorcai}
 
 script:
   - echo "current dir: $(realpath .)"
