@@ -13,5 +13,5 @@ script:
   - cd ${DIR_IN_GOPATH}
 
   # Test
-  - nix-shell -p bash --command 'echo current dir: $(pwd)'
+  - nix-shell -p bash --command 'echo current dir: `pwd`'
   - nix-shell -p bash --command 'echo Hello from nix-shell!'
