@@ -1,11 +1,17 @@
 language: nix
 nix: 2.1.1
 
-env:
-  - GOPATH=${HOME}
-  - PATH=${PATH}:${GOPATH}/bin
-  - TRAVIS_BUILD_DIR=${GOPATH}/src/github.com/mpoquet/netorcai}
-
 script:
+  # Set some variables
+  - export GOPATH=${HOME}/go
+  - export PATH=${PATH}:${GOPATH}/bin
+  - export DIR_IN_GOPATH=${GOPATH}/src/github.com/mpoquet/netorcai}
+
+  # Move the build directory into GOPATH
+  - mkdir -p ${DIR_IN_GOPATH}/..
+  - (cd ~ && mv ${TRAVIS_BUILD_DIR} ${DIR_IN_GOPATH})
+  - cd ${DIR_IN_GOPATH}
+
+  # Test
   - echo "current dir: $(realpath .)"
   - nix-shell -p bash --command 'echo Hello from nix-shell!'
