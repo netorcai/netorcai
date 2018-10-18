@@ -1,35 +1,5 @@
-language: go
-
-go:
-  - "1.10.1"
+language: nix
+nix: 2.1.1
 
 script:
-  # Build and install the binaries
-  - make all
-  - export PATH="${PATH}:${TRAVIS_BUILD_DIR}"
-  # Run the tests
-  - cd ${TRAVIS_BUILD_DIR}/test
-  - make test
-  # Install coverage dependencies
-  - go get github.com/axw/gocov/gocov
-  - go get github.com/wadey/gocovmerge
-  - go get github.com/mattn/goveralls
-  - export PATH="${PATH}:${GOPATH:=${HOME}/go}/bin"
-  # Run the tests in coverage mode
-  - cd ${TRAVIS_BUILD_DIR}/test
-  - make cover
-  #################
-  # Clients tests #
-  #################
-  # D
-  - cd ${TRAVIS_BUILD_DIR}/client/d
-  # D's netorcai-client library unit tests
-  - dub test -b unittest-cov
-
-after_success:
-  # Send coverage results to coveralls
-  - goveralls -coverprofile=./merged.covout -service=travis-ci -repotoken ${COVERALLS_TOKEN}
-  # Send coverage results to codecov
-  - cp merged.covout ${TRAVIS_BUILD_DIR}/coverage.txt
-  - cd ${TRAVIS_BUILD_DIR}
-  - bash <(curl -s https://codecov.io/bash)
+  - nix-shell -p bash --command 'echo Hello from nix-shell!'
