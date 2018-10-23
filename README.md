@@ -1,5 +1,5 @@
-[![Build Status](https://img.shields.io/travis/mpoquet/netorcai/master.png)](https://travis-ci.org/mpoquet/netorcai)
-[![Coverage Status](https://img.shields.io/coveralls/github/mpoquet/netorcai/master.png)](https://coveralls.io/github/mpoquet/netorcai?branch=master)
+[![Build Status](https://img.shields.io/travis/netorcai/netorcai/master.png)](https://travis-ci.org/netorcai/netorcai)
+[![Coverage Status](https://img.shields.io/coveralls/github/netorcai/netorcai/master.png)](https://coveralls.io/github/netorcai/netorcai?branch=master)
 
 A network orchestrator for artificial intelligence games.
 
