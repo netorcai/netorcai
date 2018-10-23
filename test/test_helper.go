@@ -2,8 +2,8 @@ package test
 
 import (
 	"fmt"
-	"github.com/mpoquet/netorcai"
-	"github.com/mpoquet/netorcai/client/go"
+	"github.com/netorcai/netorcai"
+	"github.com/netorcai/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"os/exec"

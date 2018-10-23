@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"github.com/mpoquet/netorcai"
+	"github.com/netorcai/netorcai"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"

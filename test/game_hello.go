@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"github.com/mpoquet/netorcai/client/go"
+	"github.com/netorcai/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"

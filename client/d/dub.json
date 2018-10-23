@@ -6,7 +6,7 @@
     "description": "A netorcai client library",
     "copyright": "Copyright © 2018, Millian Poquet",
     "license": "GPL-3.0",
-    "homepage": "https://github.com/mpoquet/netorcai",
+    "homepage": "https://github.com/netorcai/netorcai",
     "targetType": "library",
     "version": "0.0.1"
 }

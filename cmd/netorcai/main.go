@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	docopt "github.com/docopt/docopt-go"
-	"github.com/mpoquet/netorcai"
+	"github.com/netorcai/netorcai"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
