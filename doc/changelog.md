@@ -11,6 +11,11 @@ Its public API includes:
 ## [Unreleased]
 
 [//]: =========================================================================
+## [1.0.1] - 2018-10-23
+### Changed
+- The repository has moved to https://github.com/netorcai/netorcai.
+
+[//]: =========================================================================
 ## [1.0.0] - 2018-06-11
 ### Added (program):
 - The metaprotocol is now fully implemented.  
@@ -52,5 +57,6 @@ Its public API includes:
 [changelog]: http://keepachangelog.com/en/1.0.0/
 [semver]: http://semver.org/spec/v2.0.0.html
 
-[Unreleased]: https://github.com/netorcai/netorcai/compare/v1.0.0...master
+[Unreleased]: https://github.com/netorcai/netorcai/compare/v1.0.1...master
+[1.0.1]: https://github.com/netorcai/netorcai/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/netorcai/netorcai/compare/v0.1.0...v1.0.0
