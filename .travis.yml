@@ -18,13 +18,6 @@ script:
   # Run the tests in coverage mode
   - cd ${TRAVIS_BUILD_DIR}/test
   - make cover
-  #################
-  # Clients tests #
-  #################
-  # D
-  - cd ${TRAVIS_BUILD_DIR}/client/d
-  # D's netorcai-client library unit tests
-  - dub test -b unittest-cov
 
 after_success:
   # Send coverage results to coveralls
