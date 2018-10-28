@@ -5,6 +5,7 @@ import (
 	docopt "github.com/docopt/docopt-go"
 	"github.com/netorcai/netorcai"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"os/signal"
 	"syscall"
@@ -118,6 +119,7 @@ Options:
                             [default: 1000]
   --delay-turns=<ms>		The amount of time (in milliseconds) between two
   							consecutive TURNs. [default: 1000]
+  --simple-prompt			Always use a simple prompt.
   --quiet                   Only print critical information.
   --verbose                 Print information. Default verbosity mode.
   --debug                   Print debug information.
@@ -172,7 +174,15 @@ Options:
 
 	setupGuards(globalState, guardExit)
 	go netorcai.RunServer(int(port), globalState, serverExit, gameLogicExit)
-	go netorcai.RunPrompt(globalState, shellExit)
+
+	interactivePrompt := true
+	if arguments["--simple-prompt"] == true {
+		interactivePrompt = false
+	} else {
+		interactivePrompt = terminal.IsTerminal(int(os.Stdout.Fd()))
+	}
+
+	go netorcai.RunPrompt(globalState, shellExit, interactivePrompt)
 
 	select {
 	case serverExitCode := <-serverExit:

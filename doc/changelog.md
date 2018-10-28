@@ -9,6 +9,8 @@ Its public API includes:
 
 [//]: =========================================================================
 ## [Unreleased]
+### Added
+- New CLI command `--simple-prompt`, that forces the use of the basic prompt.
 
 [//]: =========================================================================
 ## [1.0.1] - 2018-10-23

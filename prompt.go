@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/mpoquet/go-prompt"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"regexp"
 	"strconv"
@@ -223,11 +222,11 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 }
 
-func RunPrompt(gs *GlobalState, onexit chan int) {
+func RunPrompt(gs *GlobalState, onexit chan int, interactive bool) {
 	globalGS = gs
 	globalShellExit = onexit
 
-	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+	if interactive {
 		interactivePrompt(onexit)
 	} else {
 		nonInteractivePrompt(onexit)
