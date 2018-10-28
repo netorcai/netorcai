@@ -104,6 +104,7 @@ Usage:
            [--nb-visus-max=<nbv>]
            [--delay-first-turn=<ms>]
            [--delay-turns=<ms>]
+           [--simple-prompt]
            [(--verbose | --quiet | --debug)] [--json-logs]
   netorcai -h | --help
   netorcai --version
@@ -119,7 +120,7 @@ Options:
                             [default: 1000]
   --delay-turns=<ms>		The amount of time (in milliseconds) between two
   							consecutive TURNs. [default: 1000]
-  --simple-prompt			Always use a simple prompt.
+  --simple-prompt           Always use a simple prompt.
   --quiet                   Only print critical information.
   --verbose                 Print information. Default verbosity mode.
   --debug                   Print debug information.
