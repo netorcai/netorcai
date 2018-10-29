@@ -9,6 +9,9 @@ Its public API includes:
 
 [//]: =========================================================================
 ## [Unreleased]
+
+[//]: =========================================================================
+## [1.1.0] - 2018-10-29
 ### Added
 - New CLI command `--simple-prompt`, that forces the use of the basic prompt.
 
@@ -59,6 +62,7 @@ Its public API includes:
 [changelog]: http://keepachangelog.com/en/1.0.0/
 [semver]: http://semver.org/spec/v2.0.0.html
 
-[Unreleased]: https://github.com/netorcai/netorcai/compare/v1.0.1...master
+[Unreleased]: https://github.com/netorcai/netorcai/compare/v1.1.0...master
+[1.1.0]: https://github.com/netorcai/netorcai/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/netorcai/netorcai/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/netorcai/netorcai/compare/v0.1.0...v1.0.0
