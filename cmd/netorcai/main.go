@@ -68,11 +68,14 @@ func initializeGlobalState(arguments map[string]interface{}) (
 		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
+	autostart := arguments["--autostart"].(bool)
+
 	gs := &netorcai.GlobalState{
 		GameState:                   netorcai.GAME_NOT_RUNNING,
 		NbPlayersMax:                nbPlayersMax,
 		NbVisusMax:                  nbVisusMax,
 		NbTurnsMax:                  nbTurnsMax,
+		Autostart:                   autostart,
 		MillisecondsBeforeFirstTurn: msBeforeFirstTurn,
 		MillisecondsBetweenTurns:    msBetweenTurns,
 	}
@@ -104,6 +107,7 @@ Usage:
            [--nb-visus-max=<nbv>]
            [--delay-first-turn=<ms>]
            [--delay-turns=<ms>]
+           [--autostart]
            [--simple-prompt]
            [(--verbose | --quiet | --debug)] [--json-logs]
   netorcai -h | --help
@@ -120,6 +124,8 @@ Options:
                             [default: 1000]
   --delay-turns=<ms>		The amount of time (in milliseconds) between two
   							consecutive TURNs. [default: 1000]
+  --autostart               Start game when all clients are connnected.
+  							Set --nb-{players,visus}-max accordingly.
   --simple-prompt           Always use a simple prompt.
   --quiet                   Only print critical information.
   --verbose                 Print information. Default verbosity mode.

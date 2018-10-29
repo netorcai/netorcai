@@ -39,8 +39,23 @@ type GlobalState struct {
 	NbPlayersMax                int
 	NbVisusMax                  int
 	NbTurnsMax                  int
+	Autostart                   bool
 	MillisecondsBeforeFirstTurn float64
 	MillisecondsBetweenTurns    float64
+}
+
+func areAllExpectedClientsConnected(gs *GlobalState) bool {
+	return (len(gs.Players) == gs.NbPlayersMax) &&
+		(len(gs.Visus) == gs.NbVisusMax) &&
+		(len(gs.GameLogic) == 1)
+}
+
+func autostart(gs *GlobalState) {
+	if gs.Autostart && areAllExpectedClientsConnected(gs) {
+		log.Info("Automatic starting conditions are met")
+		gs.GameState = GAME_RUNNING
+		gs.GameLogic[0].start <- 1
+	}
 }
 
 func handleClient(client *Client, globalState *GlobalState,
@@ -108,6 +123,9 @@ func handleClient(client *Client, globalState *GlobalState,
 
 				globalState.Mutex.Unlock()
 
+				// Automatically start the game if conditions are met
+				autostart(globalState)
+
 				// Player behavior is handled in dedicated function.
 				handlePlayerOrVisu(pvClient, globalState)
 			}
@@ -141,6 +159,9 @@ func handleClient(client *Client, globalState *GlobalState,
 
 				globalState.Mutex.Unlock()
 
+				// Automatically start the game if conditions are met
+				autostart(globalState)
+
 				// Visu behavior is handled in dedicated function.
 				handlePlayerOrVisu(pvClient, globalState)
 			}
@@ -173,6 +194,10 @@ func handleClient(client *Client, globalState *GlobalState,
 
 				globalState.Mutex.Unlock()
 
+				// Automatically start the game if conditions are met
+				autostart(globalState)
+
+				// Game logic behavior is handled in dedicated function
 				handleGameLogic(glClient, globalState, gameLogicExit)
 			}
 		}

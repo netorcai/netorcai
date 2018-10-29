@@ -9,6 +9,9 @@ Its public API includes:
 
 [//]: =========================================================================
 ## [Unreleased]
+- New CLI command `--autostart`, that automatically starts the game when all
+  clients are connected. The expected clients are the those defined by
+  `--nb-players-max` and `--nb-visus-max` — and 1 game logic.
 
 [//]: =========================================================================
 ## [1.1.0] - 2018-10-29
