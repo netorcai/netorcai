@@ -40,6 +40,17 @@ These two components (and the player and visualization clients) are
 instantiated as processes and communicate thanks to a
 [metaprotocol][metaprotocol].
 
+Frequent questions / issues
+===========================
+
+Running netorcai in my scripts gives an ioctl error
+---------------------------------------------------
+Try using the `--simple-prompt` option.
+
+Running netorcai in background does not work in my scripts
+----------------------------------------------------------
+Try launching netorcai via `nohup`.
+
 [//]: =========================================================================
 [challenge lionel martin]: https://www.univ-orleans.fr/iut-orleans/informatique/intra/concours/
 [aquar.iom]: https://github.com/mpoquet/aquar.iom
