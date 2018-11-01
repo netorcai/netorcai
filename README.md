@@ -36,8 +36,8 @@ in `${GOPATH}/bin` (if the `GOPATH` environment variable is unset,
 it should default to `${HOME}/go` or `%USERPROFILE%\go`).
 
 ```bash
-    go get github.com/netorcai/netorcai/cmd/netorcai
-    ${GOPATH:-${HOME}/go}/bin/netorcai --help
+go get github.com/netorcai/netorcai/cmd/netorcai
+${GOPATH:-${HOME}/go}/bin/netorcai --help
 ```
 
 Frequent questions / issues
