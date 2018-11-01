@@ -1,44 +1,44 @@
 [![Build Status](https://img.shields.io/travis/netorcai/netorcai/master.png)](https://travis-ci.org/netorcai/netorcai)
 [![Coverage Status](https://img.shields.io/coveralls/github/netorcai/netorcai/master.png)](https://coveralls.io/github/netorcai/netorcai?branch=master)
 
-A network orchestrator for artificial intelligence games.
+netorcai
+========
+
+![netorcai architecture](./doc/archi.svg "netorcai architecture")
+
+netorcai is a network orchestrator for artificial intelligence games.
+It splits a classical game server process into two processes, allowing to
+develop various games in any language without having to manage all
+network-related issues about the clients.
+This is done thanks to a [metaprotocol](./doc/metaprotocol.md).
 
 Why?
 ====
 In the context of [Lionel Martin's challenge][challenge lionel martin],
 I have been involved in the implementation of multiagent network
 games meant to be played by bots.
-This was very interesting, as such projects gather multiple tasks
-such as game design, network protocol design, game server and visualization
-implementation.
 
-I however came to the following conclusions after implementing multiple games
-([2014][spaceships], [2016][aquar.iom]).  
-First, implementing the network server is tough.
-Handling the clients correctly
-(errors, fairness, not punishing slow clients too much...)
-mostly means that you will spend most of your time in the
-network part of the game server.  
-Second, in this context we want fair turn-based games that can be displayed
-easily on a projector.
-The game and network protocol design is therefore limited.
-Reimplementing the network part for each new game could therefore be avoided.
+After implementing several games ([2014][spaceships], [2016][aquar.iom]) I
+came to the following conclusions.
+- Implenting the network server is tough.
+- Handling the clients correctly (errors, fairness, not flooding slow clients...) mostly means that most of the development time is in the network game server, not in the game itself.
+- The games in this context are quite specific (fair, turn-based,
+visualizable, no big performance constraint), which means the development
+effort can be shared regarding the network server.
 
-Main idea
-=========
-Netorcai proposes to separate a classical game server into two components:
-- Game logic:
-  - How to apply clients' actions
-  - How to compute a turn
-  - What to send to the clients
-- Network orchestration:
-  - Manage calls to the game logic
-  - Manage communications with the clients
-  - Manage the state of each client
+Installation
+============
+As netorcai is implemented in Go, it can be built with the `go` command.
 
-These two components (and the player and visualization clients) are
-instantiated as processes and communicate thanks to a
-[metaprotocol][metaprotocol].
+Install a recent Go version then run
+`go get github.com/netorcai/netorcai/cmd/netorcai` to retrieve the executable
+in `${GOPATH}/bin` (if the `GOPATH` environment variable is unset,
+it should default to `${HOME}/go` or `%USERPROFILE%\go`).
+
+```bash
+    go get github.com/netorcai/netorcai/cmd/netorcai
+    ${GOPATH:-${HOME}/go}/bin/netorcai --help
+```
 
 Frequent questions / issues
 ===========================
