@@ -147,7 +147,7 @@ Example:
 ```json
 {
   "message_type": "GAME_STARTS",
-  "player_id": 0,
+  "player_id": -1,
   "players_info": [
     {
       "player_id": 0,
