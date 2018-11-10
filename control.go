@@ -182,7 +182,7 @@ func handleClient(client *Client, globalState *GlobalState,
 				glClient := &GameLogicClient{
 					client:       client,
 					playerAction: make(chan MessageDoTurnPlayerAction),
-					start:        make(chan int),
+					start:        make(chan int, 1),
 				}
 
 				globalState.GameLogic = append(globalState.GameLogic, glClient)
