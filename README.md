@@ -5,7 +5,7 @@
 netorcai
 ========
 
-![netorcai architecture](./docs/archi.png "netorcai architecture")
+![netorcai architecture](./docs/img/archi.png "netorcai architecture")
 
 netorcai is a network orchestrator for artificial intelligence games.
 It splits a classical game server process into two processes, allowing to
