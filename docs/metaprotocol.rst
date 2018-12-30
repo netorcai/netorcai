@@ -1,3 +1,5 @@
+.. _metaprotocol:
+
 Network metaprotocol
 ====================
 
