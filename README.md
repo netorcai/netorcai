@@ -4,13 +4,13 @@
 netorcai
 ========
 
-![netorcai architecture](./doc/archi.png "netorcai architecture")
+![netorcai architecture](./docs/archi.png "netorcai architecture")
 
 netorcai is a network orchestrator for artificial intelligence games.
 It splits a classical game server process into two processes, allowing to
 develop various games in any language without having to manage all
 network-related issues about the clients.
-This is done thanks to a [metaprotocol](./doc/metaprotocol.md).
+This is done thanks to a [metaprotocol](./docs/metaprotocol.md).
 
 Why?
 ====
@@ -55,4 +55,4 @@ Try launching netorcai via `nohup`.
 [challenge lionel martin]: https://www.univ-orleans.fr/iut-orleans/informatique/intra/concours/
 [aquar.iom]: https://github.com/mpoquet/aquar.iom
 [spaceships]: https://github.com/mpoquet/concoursiuto2015
-[metaprotocol]: ./doc/metaprotocol.md
+[metaprotocol]: ./docs/metaprotocol.md
