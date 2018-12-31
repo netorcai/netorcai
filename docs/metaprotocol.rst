@@ -35,6 +35,7 @@ This metaprotocol allows multiple entities to communicate.
 .. todo::
     Make a non-ugly entities figure.
 
+.. _proto_message_types:
 
 Message types
 -------------

@@ -13,6 +13,8 @@ Installation steps are as follows.
    (if the ``GOPATH`` environment variable is unset,
    it should default to ``${HOME}/go`` or ``%USERPROFILE%\go``).
 
+In brief.
+
 .. code:: bash
 
     go get github.com/netorcai/netorcai/cmd/netorcai
