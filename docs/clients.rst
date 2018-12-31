@@ -90,22 +90,25 @@ respective repository. Please refer to them for more examples.
 Getting the libraries
 ~~~~~~~~~~~~~~~~~~~~~
 
-The most straightforward way to get the up-to-date version of each library is to
-clone its git repository and to build and install it from source.
+Getting the latest released version is easy for languages that have a standard package index.
+
+- D: Add the :code:`netorcai-client` dependency in your project (`netorcai-client package on DUB`_).
+- Java: Not uploaded on the maven repository yet 😽.
+- Python: :code:`pip install netorcai` (`netorcai package on PyPI`_)
+
+Otherwise, getting the library from its git repository is pretty straightforward.
 Building and installation instructions are in the README of each repository.
 
-Some of them are also available in the package registry of their language.
-
-- D: `netorcai-client package on DUB`_
-- Python: `netorcai package on PyPI`_
-
-Some of them are packaged in Nix_ in the netorcaipkgs_ package repository.
+Alternatively, some of these libraries are packaged in Nix_ in the netorcaipkgs_ package repository.
+Here are some commands to install the libraries.
 
 .. code:: bash
 
     # Install the C++ client library.
-    nix-env -f https://github.com/netorcai/netorcaipkgs/archive/master.tar.gz -iA netorcai_client_cpp # latest release
-    nix-env -f https://github.com/netorcai/netorcaipkgs/archive/master.tar.gz -iA netorcai_client_cpp_dev # up-to-date
+    # Latest release
+    nix-env -f https://github.com/netorcai/netorcaipkgs/archive/master.tar.gz -iA netorcai_client_cpp
+    # Up-to-date (latest commit)
+    nix-env -f https://github.com/netorcai/netorcaipkgs/archive/master.tar.gz -iA netorcai_client_cpp_dev
 
 .. _netorcai organization github repository: https://github.com/netorcai/
 .. _netorcaipkgs: https://github.com/netorcai/pkgs
