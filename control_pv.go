@@ -130,6 +130,9 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 	gs.Mutex.Lock()
 
 	if pvClient.isPlayer {
+		// Mark the player as disconnected
+		pvClient.playerInfo.IsConnected = false
+
 		// Locate the player in the array
 		playerIndex := -1
 		for index, player := range gs.Players {
