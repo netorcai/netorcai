@@ -79,7 +79,7 @@ is accepted, or by a KICK_ message otherwise.
 Fields.
 
 - ``nickname`` (string): The name the clients wants to have.
-  Must respect the ``\A\S{1,10}\z`` regular expression (go syntax).
+  Must respect the ``\A\S{1,10}\z`` (in `go regular expression syntax`_).
 - ``role`` (string). Must be ``player``, ``visualization`` or ``game logic``.
 
 Example.
@@ -459,3 +459,4 @@ Its expected behavior is described in the following figure.
     Make a non-ugly logic behavior figure.
 
 .. _json: https://www.json.org/
+.. _go regular expression syntax: https://golang.org/pkg/regexp/syntax/
