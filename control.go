@@ -111,6 +111,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					gameStarts: make(chan MessageGameStarts),
 					newTurn:    make(chan MessageTurn),
 					gameEnds:   make(chan MessageGameEnds),
+					playerInfo: nil,
 				}
 
 				globalState.Players = append(globalState.Players, pvClient)

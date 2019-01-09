@@ -131,7 +131,9 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 	if pvClient.isPlayer {
 		// Mark the player as disconnected
-		pvClient.playerInfo.IsConnected = false
+		if pvClient.playerInfo != nil {
+			pvClient.playerInfo.IsConnected = false
+		}
 
 		// Locate the player in the array
 		playerIndex := -1
