@@ -13,7 +13,14 @@ netorcai adheres to `Semantic Versioning`_ and its public API includes the follo
 Unreleased
 ----------
 
-- `Commits since v1.1.0 <https://github.com/netorcai/netorcai/compare/v1.1.0...master>`_
+- `Commits since v1.2.0 <https://github.com/netorcai/netorcai/compare/v1.2.0...master>`_
+
+........................................................................................................................
+
+v1.2.0
+------
+
+- `Commits since v1.1.0 <https://github.com/netorcai/netorcai/compare/v1.1.0...v1.2.0>`_
 
 Added
 ~~~~~
