@@ -22,6 +22,18 @@ Added
   that automatically starts the game when all clients (and one game logic) are connected.
   The expected clients are those defined by ``--nb-players-max`` and ``--nb-visus-max``.
 
+Changed
+~~~~~~~
+
+- Client libraries are now hosted on `netorcai's organization github repository`_.
+- Documentation is now on `netorcai's readthedocs`_.
+
+Fixed
+~~~~~
+
+- All players always remained connected in the ``players_info`` array of :ref:`proto_GAME_STARTS` and :ref:`proto_TURN` messages.
+  Now, the ``is_connected`` field of disconnected players should be set to ``false``.
+
 ........................................................................................................................
 
 v1.1.0
@@ -113,3 +125,5 @@ v0.1.0
 
 .. _Keep a Changelog: http://keepachangelog.com/en/1.0.0/
 .. _Semantic Versioning: http://semver.org/spec/v2.0.0.html
+.. _netorcai's organization github repository: https://github.com/netorcai
+.. _netorcai's readthedocs: https://netorcai.readthedocs.io
