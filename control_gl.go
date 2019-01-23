@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -139,6 +140,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	// Order the game logic to compute a TURN (without any action)
 	turnNumber := 0
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
+	var playerActionsMutex sync.Mutex
 	sendDoTurn(glClient, playerActions)
 
 	for {
@@ -149,6 +151,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			// and place it at the end of the array.
 			// This may happen if the client was late in a previous turn but
 			// catched up in current turn by sending two TURN_ACK.
+			playerActionsMutex.Lock()
 			actionFound := false
 			for actionIndex, act := range playerActions {
 				if act.PlayerID == action.PlayerID {
@@ -163,6 +166,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				// Append the action into the actions array
 				playerActions = append(playerActions, action)
 			}
+
+			playerActionsMutex.Unlock()
 
 		case msg := <-glClient.client.incomingMessages:
 			// New message received from the game logic
@@ -215,10 +220,12 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 						globalState.MillisecondsBetweenTurns) *
 						time.Millisecond)
 
+					playerActionsMutex.Lock()
 					// Send current actions
 					sendDoTurn(glClient, playerActions)
 					// Clear actions array
 					playerActions = playerActions[:0]
+					playerActionsMutex.Unlock()
 				}()
 			} else {
 				if doTurnAckMsg.WinnerPlayerID != -1 {
