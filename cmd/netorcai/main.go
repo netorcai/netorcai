@@ -122,10 +122,10 @@ Options:
   --delay-first-turn=<ms>   The amount of time (in milliseconds) between the
                             GAME_STARTS message and the first TURN message.
                             [default: 1000]
-  --delay-turns=<ms>		The amount of time (in milliseconds) between two
-  							consecutive TURNs. [default: 1000]
+  --delay-turns=<ms>        The amount of time (in milliseconds) between two
+                            consecutive TURNs. [default: 1000]
   --autostart               Start game when all clients are connnected.
-  							Set --nb-{players,visus}-max accordingly.
+                            Set --nb-{players,visus}-max accordingly.
   --simple-prompt           Always use a simple prompt.
   --quiet                   Only print critical information.
   --verbose                 Print information. Default verbosity mode.
