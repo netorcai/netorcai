@@ -69,6 +69,7 @@ func initializeGlobalState(arguments map[string]interface{}) (
 	}
 
 	autostart := arguments["--autostart"].(bool)
+	fast := arguments["--fast"].(bool)
 
 	gs := &netorcai.GlobalState{
 		GameState:                   netorcai.GAME_NOT_RUNNING,
@@ -76,6 +77,7 @@ func initializeGlobalState(arguments map[string]interface{}) (
 		NbVisusMax:                  nbVisusMax,
 		NbTurnsMax:                  nbTurnsMax,
 		Autostart:                   autostart,
+		Fast:                        fast,
 		MillisecondsBeforeFirstTurn: msBeforeFirstTurn,
 		MillisecondsBetweenTurns:    msBetweenTurns,
 	}
@@ -108,6 +110,7 @@ Usage:
            [--delay-first-turn=<ms>]
            [--delay-turns=<ms>]
            [--autostart]
+           [--fast]
            [--simple-prompt]
            [(--verbose | --quiet | --debug)] [--json-logs]
   netorcai -h | --help
@@ -126,6 +129,9 @@ Options:
                             consecutive TURNs. [default: 1000]
   --autostart               Start game when all clients are connnected.
                             Set --nb-{players,visus}-max accordingly.
+  --fast                    Do not rely on timers to manage turns.
+                            Send DO_TURN as soon as all players have played.
+                            This assumes players play/crash in finite time.
   --simple-prompt           Always use a simple prompt.
   --quiet                   Only print critical information.
   --verbose                 Print information. Default verbosity mode.

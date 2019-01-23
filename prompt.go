@@ -42,7 +42,7 @@ func executor(line string) {
 	acceptedPrintVariables := append(acceptedSetVariables, "all")
 
 	if rStart.MatchString(line) {
-		globalGS.Mutex.Lock()
+		LockGlobalStateMutex(globalGS, "got start command", "Prompt")
 		if globalGS.GameState == GAME_NOT_RUNNING {
 			if len(globalGS.GameLogic) == 1 {
 				globalGS.GameState = GAME_RUNNING
@@ -53,7 +53,7 @@ func executor(line string) {
 		} else {
 			fmt.Printf("Game has already been started\n")
 		}
-		globalGS.Mutex.Unlock()
+		UnlockGlobalStateMutex(globalGS, "got start command", "Prompt")
 	} else if rQuit.MatchString(line) {
 		globalShellExit <- 0
 	} else if rPrint.MatchString(line) {

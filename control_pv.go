@@ -93,7 +93,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 			if pvClient.isPlayer {
 				// Forward the player actions to the game logic
-				globalState.Mutex.Lock()
+				LockGlobalStateMutex(globalState, "Send TURN_ACK to GL", "player")
 				if len(globalState.GameLogic) == 1 {
 					globalState.GameLogic[0].playerAction <- MessageDoTurnPlayerAction{
 						PlayerID:   pvClient.playerID,
@@ -101,7 +101,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 						Actions:    turnAckMsg.actions,
 					}
 				}
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "Send TURN_ACK to GL", "player")
 			}
 
 			// If a TURN is buffered, send it right now.
@@ -127,7 +127,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 	gs *GlobalState, reason string) {
 	// Remove the client from the global state
-	gs.Mutex.Lock()
+	LockGlobalStateMutex(gs, "Kick player or visu", "player/visu")
 
 	if pvClient.isPlayer {
 		// Mark the player as disconnected
@@ -142,6 +142,10 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 				playerIndex = index
 				break
 			}
+		}
+
+		if gs.GameState == GAME_RUNNING && gs.Fast {
+			gs.GameLogic[0].playerDisconnected <- 1
 		}
 
 		if playerIndex != -1 {
@@ -168,7 +172,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 		}
 	}
 
-	gs.Mutex.Unlock()
+	UnlockGlobalStateMutex(gs, "Kick player or visu", "player/visu")
 
 	// Kick the client
 	Kick(pvClient.client, reason)

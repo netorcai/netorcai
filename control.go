@@ -40,8 +40,40 @@ type GlobalState struct {
 	NbVisusMax                  int
 	NbTurnsMax                  int
 	Autostart                   bool
+	Fast                        bool
 	MillisecondsBeforeFirstTurn float64
 	MillisecondsBetweenTurns    float64
+}
+
+// Debugging helpers
+const (
+	debugGlobalStateMutex = false
+)
+
+func LockGlobalStateMutex(gs *GlobalState, reason, who string) {
+	if debugGlobalStateMutex {
+		log.WithFields(log.Fields{
+			"reason": reason,
+			"who":    who,
+		}).Debug("Desire global state mutex")
+	}
+	gs.Mutex.Lock()
+	if debugGlobalStateMutex {
+		log.WithFields(log.Fields{
+			"reason": reason,
+			"who":    who,
+		}).Debug("Got global state mutex")
+	}
+}
+
+func UnlockGlobalStateMutex(gs *GlobalState, reason, who string) {
+	if debugGlobalStateMutex {
+		log.WithFields(log.Fields{
+			"reason": reason,
+			"who":    who,
+		}).Debug("Release global state mutex")
+	}
+	gs.Mutex.Unlock()
 }
 
 func areAllExpectedClientsConnected(gs *GlobalState) bool {
@@ -89,19 +121,19 @@ func handleClient(client *Client, globalState *GlobalState,
 	}
 	client.nickname = loginMessage.nickname
 
-	globalState.Mutex.Lock()
+	LockGlobalStateMutex(globalState, "New client", "Login manager")
 	switch loginMessage.role {
 	case "player":
 		if globalState.GameState != GAME_NOT_RUNNING {
-			globalState.Mutex.Unlock()
+			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: Game has been started")
 		} else if len(globalState.Players) >= globalState.NbPlayersMax {
-			globalState.Mutex.Unlock()
+			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: Maximum number of players reached")
 		} else {
 			err = sendLoginACK(client)
 			if err != nil {
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := &PlayerOrVisuClient{
@@ -122,7 +154,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"player count":   len(globalState.Players),
 				}).Info("New player accepted")
 
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
 				// Automatically start the game if conditions are met
 				autostart(globalState)
@@ -133,12 +165,12 @@ func handleClient(client *Client, globalState *GlobalState,
 		}
 	case "visualization":
 		if len(globalState.Visus) >= globalState.NbVisusMax {
-			globalState.Mutex.Unlock()
+			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: Maximum number of visus reached")
 		} else {
 			err = sendLoginACK(client)
 			if err != nil {
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := &PlayerOrVisuClient{
@@ -158,7 +190,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"visu count":     len(globalState.Visus),
 				}).Info("New visualization accepted")
 
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
 				// Automatically start the game if conditions are met
 				autostart(globalState)
@@ -169,21 +201,22 @@ func handleClient(client *Client, globalState *GlobalState,
 		}
 	case "game logic":
 		if globalState.GameState != GAME_NOT_RUNNING {
-			globalState.Mutex.Unlock()
+			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: Game has been started")
 		} else if len(globalState.GameLogic) >= 1 {
-			globalState.Mutex.Unlock()
+			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: A game logic is already logged in")
 		} else {
 			err = sendLoginACK(client)
 			if err != nil {
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				glClient := &GameLogicClient{
-					client:       client,
-					playerAction: make(chan MessageDoTurnPlayerAction),
-					start:        make(chan int, 1),
+					client:             client,
+					playerAction:       make(chan MessageDoTurnPlayerAction, 1),
+					playerDisconnected: make(chan int, 1),
+					start:              make(chan int, 1),
 				}
 
 				globalState.GameLogic = append(globalState.GameLogic, glClient)
@@ -193,7 +226,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"remote address": client.Conn.RemoteAddr(),
 				}).Info("Game logic accepted")
 
-				globalState.Mutex.Unlock()
+				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
 				// Automatically start the game if conditions are met
 				autostart(globalState)
@@ -242,7 +275,7 @@ func sendLoginACK(client *Client) error {
 }
 
 func Cleanup() {
-	globalGS.Mutex.Lock()
+	LockGlobalStateMutex(globalGS, "Cleanup", "Main")
 	log.Warn("Closing listening socket.")
 	globalGS.Listener.Close()
 
@@ -277,5 +310,5 @@ func Cleanup() {
 		}
 	}
 
-	globalGS.Mutex.Unlock()
+	UnlockGlobalStateMutex(globalGS, "Cleanup", "Main")
 }
