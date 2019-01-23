@@ -139,6 +139,7 @@ func TestHelloGLActivePlayer(t *testing.T) {
 }
 
 func subtestHelloGlActiveClients(t *testing.T,
+	netorcaiAdditionalArgs []string,
 	nbPlayers, nbVisus int,
 	nbTurnsNetorcai, nbTurnsGL, nbTurnsPlayer, nbTurnsVisu int,
 	nbTurnsToSkipPlayer, nbTurnsToSkipVisu int,
@@ -151,10 +152,11 @@ func subtestHelloGlActiveClients(t *testing.T,
 	glKickReasonMatcher, playerKickReasonMatcher,
 	visuKickReasonMatcher *regexp.Regexp) {
 	proc, _, players, visus, gl := runNetorcaiAndClients(
-		t, []string{"--delay-first-turn=500",
+		t, append([]string{"--delay-first-turn=500",
 			fmt.Sprintf("--nb-turns-max=%v", nbTurnsNetorcai),
-			"--delay-turns=500", "--debug", "--json-logs"}, 1000, nbPlayers,
-		nbVisus)
+			"--delay-turns=500", "--debug", "--json-logs"},
+			netorcaiAdditionalArgs...),
+		1000, nbPlayers, nbVisus)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
@@ -190,7 +192,7 @@ func subtestHelloGlActiveClients(t *testing.T,
 }
 
 func TestHelloGLActiveClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -225,7 +227,7 @@ func doInitAckBadInitialGameStateNoAllClients(nbPlayers, nbTurns int) string {
 }
 
 func TestInvalidDoInitAckNoMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 0, 1, 1,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -239,7 +241,7 @@ func TestInvalidDoInitAckNoMsgType(t *testing.T) {
 }
 
 func TestInvalidDoInitAckNoInitialGameState(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 0, 1, 1,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -253,7 +255,7 @@ func TestInvalidDoInitAckNoInitialGameState(t *testing.T) {
 }
 
 func TestInvalidDoInitAckBadMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 0, 1, 1,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -266,7 +268,7 @@ func TestInvalidDoInitAckBadMsgType(t *testing.T) {
 }
 
 func TestInvalidDoInitAckBadInitialGameStateNotObject(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 0, 1, 1,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -279,7 +281,7 @@ func TestInvalidDoInitAckBadInitialGameStateNotObject(t *testing.T) {
 }
 
 func TestInvalidDoInitAckBadInitialGameStateNoAllClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 0, 1, 1,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -320,7 +322,7 @@ func doTurnAckBadWinner(turn int, actions []interface{}) string {
 }
 
 func TestInvalidDoTurnAckNoMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 1, 0, 0,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -333,7 +335,7 @@ func TestInvalidDoTurnAckNoMsgType(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckBadMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 1, 0, 0,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -346,7 +348,7 @@ func TestInvalidDoTurnAckBadMsgType(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckNoWinner(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 1, 0, 0,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -359,7 +361,7 @@ func TestInvalidDoTurnAckNoWinner(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckNoGameState(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 1, 0, 0,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -372,7 +374,7 @@ func TestInvalidDoTurnAckNoGameState(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckNoAllClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 1, 0, 0,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -385,7 +387,7 @@ func TestInvalidDoTurnAckNoAllClients(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckBadWinner(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 1, 0, 0,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -432,7 +434,7 @@ func turnAckBadActions(turn, playerID int) string {
 }
 
 func TestInvalidTurnAckNoMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -445,7 +447,7 @@ func TestInvalidTurnAckNoMsgType(t *testing.T) {
 }
 
 func TestInvalidTurnAckNoTurnNumber(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -458,7 +460,7 @@ func TestInvalidTurnAckNoTurnNumber(t *testing.T) {
 }
 
 func TestInvalidTurnAckNoActions(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -471,7 +473,7 @@ func TestInvalidTurnAckNoActions(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -484,7 +486,7 @@ func TestInvalidTurnAckBadMsgType(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadTurnNumberValue(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -497,7 +499,7 @@ func TestInvalidTurnAckBadTurnNumberValue(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadTurnNumberNotInt(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -510,7 +512,7 @@ func TestInvalidTurnAckBadTurnNumberNotInt(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadActions(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 1,
 		3, 3, 2, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -538,7 +540,7 @@ func checkGameEndsWinner(t *testing.T, msg map[string]interface{}) {
 }
 
 func TestHelloWinner(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,

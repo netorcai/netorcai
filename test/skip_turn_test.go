@@ -46,7 +46,7 @@ func checkDoTurnSkipOneTurnOverTwo(t *testing.T, msg map[string]interface{},
 }
 
 func TestSkipOneTurnOverTwo(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 0,
+	subtestHelloGlActiveClients(t, nil, 1, 0,
 		7, 7, 7, 7,
 		1, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnSkipOneTurnOverTwo,
@@ -96,7 +96,7 @@ func checkDoTurnSkipFirstTurn(t *testing.T, msg map[string]interface{},
 }
 
 func TestSkipFirstTurn(t *testing.T) {
-	subtestHelloGlActiveClients(t, 1, 0,
+	subtestHelloGlActiveClients(t, nil, 1, 0,
 		4, 4, 4, 4,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnSkipFirstTurn,
@@ -237,7 +237,7 @@ func checkDoTurnSkipOneTurnMultiClient(t *testing.T,
 }
 
 func TestSkipOneTurnMultiClient(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 0,
+	subtestHelloGlActiveClients(t, nil, 4, 0,
 		7, 7, 7, 7,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnSkipOneTurnMultiClient,

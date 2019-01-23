@@ -153,7 +153,7 @@ func checkGameStartsNastyNested(t *testing.T,
 }
 
 func TestForwardInitialGameStateFlattened(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		checkGameStartsFlattened, DefaultHelloClientCheckTurn,
@@ -166,7 +166,7 @@ func TestForwardInitialGameStateFlattened(t *testing.T) {
 }
 
 func TestForwardInitialGameStateNastyNested(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		checkGameStartsNastyNested, DefaultHelloClientCheckTurn,
@@ -295,7 +295,7 @@ func checkTurnNastyNested(t *testing.T, msg map[string]interface{},
 }
 
 func TestForwardGameStateFlattened(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnFlattened,
@@ -308,7 +308,7 @@ func TestForwardGameStateFlattened(t *testing.T) {
 }
 
 func TestForwardGameStateNastyNested(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, checkTurnNastyNested,
@@ -504,7 +504,7 @@ func checkDoTurnNastyNested(t *testing.T, msg map[string]interface{},
 }
 
 func TestForwardActionsFlattened(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
@@ -517,7 +517,7 @@ func TestForwardActionsFlattened(t *testing.T) {
 }
 
 func TestForwardActionsNastyNested(t *testing.T) {
-	subtestHelloGlActiveClients(t, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 1,
 		3, 3, 3, 3,
 		0, 0,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
