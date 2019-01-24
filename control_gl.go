@@ -230,6 +230,12 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 						PlayersInfo: playersInfo,
 					}
 				}
+
+				// Trigger a new TURN if there is no player anymore
+				if globalState.Fast && len(playerActions) == 0 {
+					sendDoTurnToGL <- 1
+				}
+
 				UnlockGlobalStateMutex(globalState, "Send TURN", "GL")
 
 				if !globalState.Fast {
