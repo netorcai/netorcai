@@ -15,6 +15,12 @@ Unreleased
 
 - `Commits since v1.2.0 <https://github.com/netorcai/netorcai/compare/v1.2.0...master>`_
 
+Added
+~~~~~
+
+- New CLI command ``--fast``, which allows to start a new turn as soon as
+  all players have decided what to do — instead of relying on a timer.
+
 ........................................................................................................................
 
 v1.2.0
