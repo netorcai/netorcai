@@ -16,6 +16,19 @@ type PlayerOrVisuClient struct {
 	playerInfo *PlayerInformation
 }
 
+func waitPlayerOrVisuFinition(pvClient *PlayerOrVisuClient) {
+	for {
+		select {
+		case <-pvClient.client.canTerminate:
+			return
+		case <-pvClient.gameStarts:
+		case <-pvClient.gameEnds:
+		case <-pvClient.newTurn:
+		case <-pvClient.client.incomingMessages:
+		}
+	}
+}
+
 func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 	globalState *GlobalState) {
 	turnBuffer := make([]MessageTurn, 0)
@@ -24,12 +37,15 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 	for {
 		select {
+		case <-pvClient.client.canTerminate:
+			return
 		case gameStarts := <-pvClient.gameStarts:
 			// A game start has been received.
 			err := sendGameStarts(pvClient.client, gameStarts)
 			if err != nil {
 				KickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Cannot send GAME_STARTS. %v", err.Error()))
+				waitPlayerOrVisuFinition(pvClient)
 				return
 			}
 			pvClient.client.state = CLIENT_READY
@@ -44,11 +60,13 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			if err != nil {
 				KickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Cannot send GAME_ENDS. %v", err.Error()))
+				waitPlayerOrVisuFinition(pvClient)
 				return
 			}
 
 			// Leave the client
 			Kick(pvClient.client, "Game is finished")
+			waitPlayerOrVisuFinition(pvClient)
 			return
 		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
@@ -59,6 +77,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				if err != nil {
 					KickLoggedPlayerOrVisu(pvClient, globalState,
 						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
+					waitPlayerOrVisuFinition(pvClient)
 					return
 				}
 				pvClient.client.state = CLIENT_THINKING
@@ -79,6 +98,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			if msg.err != nil {
 				KickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Cannot read TURN_ACK. %v", msg.err.Error()))
+				waitPlayerOrVisuFinition(pvClient)
 				return
 			}
 			turnAckMsg, err := readTurnAckMessage(msg.content,
@@ -87,6 +107,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				KickLoggedPlayerOrVisu(pvClient, globalState,
 					fmt.Sprintf("Invalid TURN_ACK received. %v",
 						err.Error()))
+				waitPlayerOrVisuFinition(pvClient)
 				return
 			}
 
@@ -94,6 +115,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			if pvClient.client.state != CLIENT_THINKING {
 				KickLoggedPlayerOrVisu(pvClient, globalState,
 					"Received a TURN_ACK but the client state is not THINKING")
+				waitPlayerOrVisuFinition(pvClient)
 				return
 			}
 
@@ -113,6 +135,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				if err != nil {
 					KickLoggedPlayerOrVisu(pvClient, globalState,
 						fmt.Sprintf("Cannot send TURN. %v", err.Error()))
+					waitPlayerOrVisuFinition(pvClient)
 					return
 				}
 

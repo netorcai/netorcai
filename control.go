@@ -286,6 +286,7 @@ func Cleanup() {
 		kickChan := make(chan int)
 		for _, client := range append(globalGS.Players, globalGS.Visus...) {
 			go func(c *Client) {
+				c.canTerminate <- 1
 				Kick(c, "netorcai abort")
 				kickChan <- 0
 			}(client.client)
