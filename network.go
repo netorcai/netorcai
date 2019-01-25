@@ -18,6 +18,7 @@ type Client struct {
 	reader           *bufio.Reader
 	writer           *bufio.Writer
 	incomingMessages chan ClientMessage
+	canTerminate     chan int
 }
 
 type ClientMessage struct {
@@ -64,6 +65,7 @@ func RunServer(port int, globalState *GlobalState, onexit,
 			client.writer = bufio.NewWriter(client.Conn)
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
+			client.canTerminate = make(chan int)
 
 			go handleClient(client, globalState, gameLogicExit)
 		}

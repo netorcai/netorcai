@@ -18,12 +18,29 @@ type GameLogicClient struct {
 	playerDisconnected chan int
 }
 
+func waitGameLogicFinition(glClient *GameLogicClient) {
+	// As the GL coroutine is central, it does not finish directly.
+	// It waits for the main coroutine to be OK with it first.
+	// (making sure that all other clients have been kicked first).
+	for {
+		select {
+		case <-glClient.client.canTerminate:
+			return
+		case <-glClient.playerAction:
+		case <-glClient.playerDisconnected:
+		case <-glClient.client.incomingMessages:
+		}
+	}
+}
+
 func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	onexit chan int) {
 	// Wait for the game to start
 	select {
 	case <-glClient.start:
 		log.Info("Starting game")
+	case <-glClient.client.canTerminate:
+		return
 	case msg := <-glClient.client.incomingMessages:
 		LockGlobalStateMutex(globalState, "GL first message", "GL")
 		if msg.err == nil {
@@ -36,6 +53,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		globalState.GameLogic = globalState.GameLogic[:0]
 		UnlockGlobalStateMutex(globalState, "GL first message", "GL")
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
@@ -74,22 +92,27 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		Kick(glClient.client, fmt.Sprintf("Cannot send DO_INIT. %v",
 			err.Error()))
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
 	// Wait for first turn (DO_INIT_ACK)
 	var msg ClientMessage
 	select {
+	case <-glClient.client.canTerminate:
+		return
 	case msg = <-glClient.client.incomingMessages:
 		if msg.err != nil {
 			Kick(glClient.client,
 				fmt.Sprintf("Cannot read DO_INIT_ACK. %v", msg.err.Error()))
 			onexit <- 1
+			waitGameLogicFinition(glClient)
 			return
 		}
 	case <-time.After(3 * time.Second):
 		Kick(glClient.client, "Did not receive DO_INIT_ACK after 3 seconds.")
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
@@ -98,6 +121,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		Kick(glClient.client,
 			fmt.Sprintf("Invalid DO_INIT_ACK message. %v", err.Error()))
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
@@ -147,6 +171,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	for {
 		select {
+		case <-glClient.client.canTerminate:
+			return
 		case <-sendDoTurnToGL:
 			// Send current actions
 			sendDoTurn(glClient, playerActions)
@@ -197,6 +223,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 					fmt.Sprintf("Cannot read DO_TURN_ACK. %v",
 						msg.err.Error()))
 				onexit <- 1
+				waitGameLogicFinition(glClient)
 				return
 			}
 
@@ -207,6 +234,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 					fmt.Sprintf("Invalid DO_TURN_ACK message. %v",
 						err.Error()))
 				onexit <- 1
+				waitGameLogicFinition(glClient)
 				return
 			}
 
@@ -283,6 +311,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				// Leave the program
 				Kick(glClient.client, "Game is finished")
 				onexit <- 0
+				waitGameLogicFinition(glClient)
 				return
 			}
 		}

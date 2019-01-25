@@ -292,6 +292,7 @@ func Cleanup() {
 		}
 		for _, client := range globalGS.GameLogic {
 			go func(c *Client) {
+				c.canTerminate <- 1
 				Kick(c, "netorcai abort")
 				kickChan <- 0
 			}(client.client)

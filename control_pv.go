@@ -20,6 +20,7 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 	globalState *GlobalState) {
 	turnBuffer := make([]MessageTurn, 0)
 	lastTurnNumberSent := -1
+	var glClient *GameLogicClient
 
 	for {
 		select {
@@ -32,6 +33,11 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				return
 			}
 			pvClient.client.state = CLIENT_READY
+
+			// Set glClient from the global state now
+			LockGlobalStateMutex(globalState, "Local copy of GL pointer", "client")
+			glClient = globalState.GameLogic[0]
+			UnlockGlobalStateMutex(globalState, "Local copy of GL pointer", "client")
 		case gameEnds := <-pvClient.gameEnds:
 			// A game end has been received.
 			err := sendGameEnds(pvClient.client, gameEnds)
@@ -93,15 +99,11 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 
 			if pvClient.isPlayer {
 				// Forward the player actions to the game logic
-				LockGlobalStateMutex(globalState, "Send TURN_ACK to GL", "player")
-				if len(globalState.GameLogic) == 1 {
-					globalState.GameLogic[0].playerAction <- MessageDoTurnPlayerAction{
-						PlayerID:   pvClient.playerID,
-						TurnNumber: turnAckMsg.turnNumber,
-						Actions:    turnAckMsg.actions,
-					}
+				glClient.playerAction <- MessageDoTurnPlayerAction{
+					PlayerID:   pvClient.playerID,
+					TurnNumber: turnAckMsg.turnNumber,
+					Actions:    turnAckMsg.actions,
 				}
-				UnlockGlobalStateMutex(globalState, "Send TURN_ACK to GL", "player")
 			}
 
 			// If a TURN is buffered, send it right now.
