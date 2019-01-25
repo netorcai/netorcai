@@ -55,14 +55,14 @@ func LockGlobalStateMutex(gs *GlobalState, reason, who string) {
 		log.WithFields(log.Fields{
 			"reason": reason,
 			"who":    who,
-		}).Debug("Desire global state mutex")
+		}).Info("Desire global state mutex")
 	}
 	gs.Mutex.Lock()
 	if debugGlobalStateMutex {
 		log.WithFields(log.Fields{
 			"reason": reason,
 			"who":    who,
-		}).Debug("Got global state mutex")
+		}).Info("Got global state mutex")
 	}
 }
 
@@ -71,7 +71,7 @@ func UnlockGlobalStateMutex(gs *GlobalState, reason, who string) {
 		log.WithFields(log.Fields{
 			"reason": reason,
 			"who":    who,
-		}).Debug("Release global state mutex")
+		}).Info("Release global state mutex")
 	}
 	gs.Mutex.Unlock()
 }
