@@ -170,18 +170,12 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	// Order the game logic to compute a TURN (without any action)
 	turnNumber := 0
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
-	sendDoTurnToGL := make(chan int, 1)
 	sendDoTurn(glClient, playerActions)
 
 	for {
 		select {
 		case <-glClient.client.canTerminate:
 			return
-		case <-sendDoTurnToGL:
-			// Send current actions
-			sendDoTurn(glClient, playerActions)
-			// Clear actions array
-			playerActions = playerActions[:0]
 		case action := <-glClient.playerAction:
 			// A client sent its actions.
 			// Replace the current message from this player if it exists,
@@ -206,7 +200,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			if fast {
 				// Trigger a new TURN if all players have played
 				if len(playerActions) >= nbConnectedPlayers {
-					sendDoTurnToGL <- 1
+					sendDoTurn(glClient, playerActions)
+					playerActions = playerActions[:0]
 				}
 			}
 		case <-glClient.playerDisconnected:
@@ -214,7 +209,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			if fast {
 				// Trigger a new TURN if all players have played
 				if len(playerActions) >= nbConnectedPlayers {
-					sendDoTurnToGL <- 1
+					sendDoTurn(glClient, playerActions)
+					playerActions = playerActions[:0]
 				}
 			}
 		case msg := <-glClient.client.incomingMessages:
@@ -261,7 +257,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 				// Trigger a new TURN if there is no player anymore
 				if fast && len(playerActions) == 0 {
-					sendDoTurnToGL <- 1
+					sendDoTurn(glClient, playerActions)
+					playerActions = playerActions[:0]
 				}
 
 				if !fast {
@@ -272,7 +269,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 						}).Debug("Sleeping before next turn")
 						time.Sleep(time.Duration(msBetweenTurns) * time.Millisecond)
 
-						sendDoTurnToGL <- 1
+						sendDoTurn(glClient, playerActions)
+						playerActions = playerActions[:0]
 					}()
 				}
 			} else {
