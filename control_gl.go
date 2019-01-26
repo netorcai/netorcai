@@ -221,9 +221,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		case msg := <-glClient.client.incomingMessages:
 			// New message received from the game logic
 			if msg.err != nil {
-				Kick(glClient.client,
-					fmt.Sprintf("Cannot read DO_TURN_ACK. %v",
-						msg.err.Error()))
+				Kick(glClient.client, fmt.Sprintf("Cannot read DO_TURN_ACK. %v", msg.err.Error()))
 				onexit <- 1
 				waitGameLogicFinition(glClient)
 				return
