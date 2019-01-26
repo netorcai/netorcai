@@ -153,6 +153,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"remote address": client.Conn.RemoteAddr(),
 					"player count":   len(globalState.Players),
 				}).Info("New player accepted")
+				client.state = CLIENT_LOGGED
 
 				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
@@ -189,6 +190,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"remote address": client.Conn.RemoteAddr(),
 					"visu count":     len(globalState.Visus),
 				}).Info("New visualization accepted")
+				client.state = CLIENT_LOGGED
 
 				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
