@@ -18,12 +18,29 @@ type GameLogicClient struct {
 	playerDisconnected chan int
 }
 
+func waitGameLogicFinition(glClient *GameLogicClient) {
+	// As the GL coroutine is central, it does not finish directly.
+	// It waits for the main coroutine to be OK with it first.
+	// (making sure that all other clients have been kicked first).
+	for {
+		select {
+		case <-glClient.client.canTerminate:
+			return
+		case <-glClient.playerAction:
+		case <-glClient.playerDisconnected:
+		case <-glClient.client.incomingMessages:
+		}
+	}
+}
+
 func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	onexit chan int) {
 	// Wait for the game to start
 	select {
 	case <-glClient.start:
 		log.Info("Starting game")
+	case <-glClient.client.canTerminate:
+		return
 	case msg := <-glClient.client.incomingMessages:
 		LockGlobalStateMutex(globalState, "GL first message", "GL")
 		if msg.err == nil {
@@ -36,20 +53,30 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		globalState.GameLogic = globalState.GameLogic[:0]
 		UnlockGlobalStateMutex(globalState, "GL first message", "GL")
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
-	LockGlobalStateMutex(globalState, "Init + send DO_INIT", "GL")
+	LockGlobalStateMutex(globalState, "Game init: copy players/visus and game parameters", "GL")
+	players := append([]*PlayerOrVisuClient(nil), globalState.Players...)
+	visus := append([]*PlayerOrVisuClient(nil), globalState.Visus...)
+	nbTurnsMax := globalState.NbTurnsMax
+	msBeforeFirstTurn := globalState.MillisecondsBeforeFirstTurn
+	msBetweenTurns := globalState.MillisecondsBetweenTurns
+	fast := globalState.Fast
+	UnlockGlobalStateMutex(globalState, "Game init: copy players/visus and game parameters", "GL")
+
 	// Generate randomized player identifiers
-	initialNbPlayers := len(globalState.Players)
-	playerIDs := rand.Perm(len(globalState.Players))
-	for playerIndex, player := range globalState.Players {
+	initialNbPlayers := len(players)
+	nbConnectedPlayers := initialNbPlayers
+	playerIDs := rand.Perm(len(players))
+	for playerIndex, player := range players {
 		player.playerID = playerIDs[playerIndex]
 	}
 
 	// Generate player information
 	playersInfo := []*PlayerInformation{}
-	for _, player := range globalState.Players {
+	for _, player := range players {
 		info := &PlayerInformation{
 			PlayerID:      player.playerID,
 			Nickname:      player.client.nickname,
@@ -66,30 +93,33 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	})
 
 	// Send DO_INIT
-	err := sendDoInit(glClient, len(globalState.Players),
-		globalState.NbTurnsMax)
-	UnlockGlobalStateMutex(globalState, "Init + send DO_INIT", "GL")
+	err := sendDoInit(glClient, initialNbPlayers, nbTurnsMax)
 
 	if err != nil {
 		Kick(glClient.client, fmt.Sprintf("Cannot send DO_INIT. %v",
 			err.Error()))
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
 	// Wait for first turn (DO_INIT_ACK)
 	var msg ClientMessage
 	select {
+	case <-glClient.client.canTerminate:
+		return
 	case msg = <-glClient.client.incomingMessages:
 		if msg.err != nil {
 			Kick(glClient.client,
 				fmt.Sprintf("Cannot read DO_INIT_ACK. %v", msg.err.Error()))
 			onexit <- 1
+			waitGameLogicFinition(glClient)
 			return
 		}
 	case <-time.After(3 * time.Second):
 		Kick(glClient.client, "Did not receive DO_INIT_ACK after 3 seconds.")
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
@@ -98,60 +128,54 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		Kick(glClient.client,
 			fmt.Sprintf("Invalid DO_INIT_ACK message. %v", err.Error()))
 		onexit <- 1
+		waitGameLogicFinition(glClient)
 		return
 	}
 
 	// Send GAME_STARTS to all clients
-	LockGlobalStateMutex(globalState, "Send GAME_STARTS", "GL")
-	for _, player := range globalState.Players {
+	for _, player := range players {
 		player.gameStarts <- MessageGameStarts{
 			MessageType:      "GAME_STARTS",
 			PlayerID:         player.playerID,
 			PlayersInfo:      []*PlayerInformation{},
 			NbPlayers:        initialNbPlayers,
-			NbTurnsMax:       globalState.NbTurnsMax,
-			DelayFirstTurn:   globalState.MillisecondsBeforeFirstTurn,
-			DelayTurns:       globalState.MillisecondsBetweenTurns,
+			NbTurnsMax:       nbTurnsMax,
+			DelayFirstTurn:   msBeforeFirstTurn,
+			DelayTurns:       msBetweenTurns,
 			InitialGameState: doTurnAckMsg.InitialGameState,
 		}
 	}
 
-	for _, visu := range globalState.Visus {
+	for _, visu := range visus {
 		visu.gameStarts <- MessageGameStarts{
 			MessageType:      "GAME_STARTS",
 			PlayerID:         visu.playerID,
 			PlayersInfo:      playersInfo,
 			NbPlayers:        initialNbPlayers,
-			NbTurnsMax:       globalState.NbTurnsMax,
-			DelayFirstTurn:   globalState.MillisecondsBeforeFirstTurn,
-			DelayTurns:       globalState.MillisecondsBetweenTurns,
+			NbTurnsMax:       nbTurnsMax,
+			DelayFirstTurn:   msBeforeFirstTurn,
+			DelayTurns:       msBetweenTurns,
 			InitialGameState: doTurnAckMsg.InitialGameState,
 		}
 	}
-	UnlockGlobalStateMutex(globalState, "Send GAME_STARTS", "GL")
 
-	if !globalState.Fast {
+	if !fast {
 		// Wait before really starting the game
 		log.WithFields(log.Fields{
-			"duration (ms)": globalState.MillisecondsBeforeFirstTurn,
+			"duration (ms)": msBeforeFirstTurn,
 		}).Debug("Sleeping before first turn")
-		time.Sleep(time.Duration(globalState.MillisecondsBeforeFirstTurn) *
-			time.Millisecond)
+		time.Sleep(time.Duration(msBeforeFirstTurn) * time.Millisecond)
 	}
 
 	// Order the game logic to compute a TURN (without any action)
 	turnNumber := 0
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
-	sendDoTurnToGL := make(chan int, 1)
 	sendDoTurn(glClient, playerActions)
 
 	for {
 		select {
-		case <-sendDoTurnToGL:
-			// Send current actions
-			sendDoTurn(glClient, playerActions)
-			// Clear actions array
-			playerActions = playerActions[:0]
+		case <-glClient.client.canTerminate:
+			return
 		case action := <-glClient.playerAction:
 			// A client sent its actions.
 			// Replace the current message from this player if it exists,
@@ -173,30 +197,33 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				playerActions = append(playerActions, action)
 			}
 
-			if globalState.Fast {
-				LockGlobalStateMutex(globalState, "Check player count", "GL")
+			log.WithFields(log.Fields{
+				"len(playerActions)": len(playerActions),
+				"nbConnectedPlayers": nbConnectedPlayers,
+			}).Debug("GL received a player action (from player goroutine)")
+
+			if fast {
 				// Trigger a new TURN if all players have played
-				if len(playerActions) == len(globalState.Players) {
-					sendDoTurnToGL <- 1
+				if len(playerActions) >= nbConnectedPlayers {
+					sendDoTurn(glClient, playerActions)
+					playerActions = playerActions[:0]
 				}
-				UnlockGlobalStateMutex(globalState, "Check player count", "GL")
 			}
 		case <-glClient.playerDisconnected:
-			if globalState.Fast {
-				LockGlobalStateMutex(globalState, "Check player count", "GL")
+			nbConnectedPlayers -= 1
+			if fast {
 				// Trigger a new TURN if all players have played
-				if len(playerActions) == len(globalState.Players) {
-					sendDoTurnToGL <- 1
+				if len(playerActions) >= nbConnectedPlayers {
+					sendDoTurn(glClient, playerActions)
+					playerActions = playerActions[:0]
 				}
-				UnlockGlobalStateMutex(globalState, "Check player count", "GL")
 			}
 		case msg := <-glClient.client.incomingMessages:
 			// New message received from the game logic
 			if msg.err != nil {
-				Kick(glClient.client,
-					fmt.Sprintf("Cannot read DO_TURN_ACK. %v",
-						msg.err.Error()))
+				Kick(glClient.client, fmt.Sprintf("Cannot read DO_TURN_ACK. %v", msg.err.Error()))
 				onexit <- 1
+				waitGameLogicFinition(glClient)
 				return
 			}
 
@@ -207,14 +234,15 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 					fmt.Sprintf("Invalid DO_TURN_ACK message. %v",
 						err.Error()))
 				onexit <- 1
+				waitGameLogicFinition(glClient)
 				return
 			}
+			log.Debug("GL received a new DO_TURN_ACK (from socket)")
 
 			turnNumber = turnNumber + 1
-			if turnNumber < globalState.NbTurnsMax {
+			if turnNumber < nbTurnsMax {
 				// Forward the TURN to the clients
-				LockGlobalStateMutex(globalState, "Send TURN", "GL")
-				for _, player := range globalState.Players {
+				for _, player := range players {
 					player.newTurn <- MessageTurn{
 						MessageType: "TURN",
 						TurnNumber:  turnNumber - 1,
@@ -222,7 +250,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 						PlayersInfo: []*PlayerInformation{},
 					}
 				}
-				for _, visu := range globalState.Visus {
+				for _, visu := range visus {
 					visu.newTurn <- MessageTurn{
 						MessageType: "TURN",
 						TurnNumber:  turnNumber - 1,
@@ -232,23 +260,21 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				}
 
 				// Trigger a new TURN if there is no player anymore
-				if globalState.Fast && len(playerActions) == 0 {
-					sendDoTurnToGL <- 1
+				if fast && nbConnectedPlayers == 0 {
+					sendDoTurn(glClient, playerActions)
+					playerActions = playerActions[:0]
 				}
 
-				UnlockGlobalStateMutex(globalState, "Send TURN", "GL")
-
-				if !globalState.Fast {
+				if !fast {
 					// Trigger a new DO_TURN in some time
 					go func() {
 						log.WithFields(log.Fields{
-							"duration (ms)": globalState.MillisecondsBetweenTurns,
+							"duration (ms)": msBetweenTurns,
 						}).Debug("Sleeping before next turn")
-						time.Sleep(time.Duration(
-							globalState.MillisecondsBetweenTurns) *
-							time.Millisecond)
+						time.Sleep(time.Duration(msBetweenTurns) * time.Millisecond)
 
-						sendDoTurnToGL <- 1
+						sendDoTurn(glClient, playerActions)
+						playerActions = playerActions[:0]
 					}()
 				}
 			} else {
@@ -263,26 +289,25 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				}
 
 				// Send GAME_ENDS to all clients
-				LockGlobalStateMutex(globalState, "Send GAME_ENDS", "GL")
-				for _, player := range globalState.Players {
+				for _, player := range players {
 					player.gameEnds <- MessageGameEnds{
 						MessageType:    "GAME_ENDS",
 						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
 						GameState:      doTurnAckMsg.GameState,
 					}
 				}
-				for _, visu := range globalState.Visus {
+				for _, visu := range visus {
 					visu.gameEnds <- MessageGameEnds{
 						MessageType:    "GAME_ENDS",
 						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
 						GameState:      doTurnAckMsg.GameState,
 					}
 				}
-				UnlockGlobalStateMutex(globalState, "Send GAME_ENDS", "GL")
 
 				// Leave the program
 				Kick(glClient.client, "Game is finished")
 				onexit <- 0
+				waitGameLogicFinition(glClient)
 				return
 			}
 		}

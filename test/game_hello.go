@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/netorcai/netorcai"
 	"github.com/netorcai/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
@@ -97,7 +98,7 @@ func helloGameLogic(t *testing.T, glClient *client.Client,
 
 func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
 	nbTurnsClient, turnsToSkip int, msBeforeFirstTurn, msBetweenTurns float64,
-	isPlayer, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
+	isPlayer, allowTurnSkip, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
 	checkGameStartsFunc ClientGameStartsCheckFunc,
 	checkTurnFunc ClientTurnCheckFunc,
 	checkGameEndsFunc ClientGameEndsCheckFunc,
@@ -109,24 +110,38 @@ func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
 		playerID := checkGameStartsFunc(t, msg, nbPlayers, nbTurnsGL,
 			msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
-		for turn := 0; turn < nbTurnsClient-1; turn += 1 + turnsToSkip {
-			// Wait TURN
-			msg, err := waitReadMessage(client, 1000)
-			assert.NoError(t, err, "Could not read client message (TURN) "+
-				"%v/%v", turn, nbTurnsClient)
-			turnReceived := checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
+		if !allowTurnSkip {
+			for turn := 0; turn < nbTurnsClient-1; turn += 1 + turnsToSkip {
+				// Wait TURN
+				msg, err := waitReadMessage(client, 1000)
+				assert.NoError(t, err, "Could not read client message (TURN) "+
+					"%v/%v", turn, nbTurnsClient)
+				turnReceived := checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
 
-			// Send TURN_ACK
-			data := turnAckFunc(turnReceived, playerID)
-			err = client.SendString(data)
-			assert.NoError(t, err, "Client cannot send TURN_ACK")
-		}
+				// Send TURN_ACK
+				data := turnAckFunc(turnReceived, playerID)
+				err = client.SendString(data)
+				assert.NoError(t, err, "Client cannot send TURN_ACK")
+			}
 
-		if shouldTurnAckBeValid {
-			// Wait GAME_ENDS
-			msg, err = waitReadMessage(client, 1000)
-			assert.NoError(t, err, "Could not read client message (GAME_ENDS)")
-			checkGameEndsFunc(t, msg)
+			if shouldTurnAckBeValid {
+				// Wait GAME_ENDS
+				msg, err = waitReadMessage(client, 1000)
+				assert.NoError(t, err, "Could not read client message (GAME_ENDS)")
+				checkGameEndsFunc(t, msg)
+			}
+		} else {
+			for turn := 0; turn < nbTurnsClient-1; turn += 1 {
+				msg, err := waitReadMessage(client, 1000)
+				assert.NoError(t, err, "Could not read client message (TURN or GAME_ENDS) "+
+					"%v/%v", turn, nbTurnsClient)
+				turn = checkTurnPotentialTurnsSkipped(t, msg, nbPlayers, turn, isPlayer)
+
+				messageType, err := netorcai.ReadString(msg, "message_type")
+				if err == nil && messageType == "GAME_ENDS" {
+					break
+				}
+			}
 		}
 	}
 

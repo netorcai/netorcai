@@ -55,14 +55,14 @@ func LockGlobalStateMutex(gs *GlobalState, reason, who string) {
 		log.WithFields(log.Fields{
 			"reason": reason,
 			"who":    who,
-		}).Debug("Desire global state mutex")
+		}).Info("Desire global state mutex")
 	}
 	gs.Mutex.Lock()
 	if debugGlobalStateMutex {
 		log.WithFields(log.Fields{
 			"reason": reason,
 			"who":    who,
-		}).Debug("Got global state mutex")
+		}).Info("Got global state mutex")
 	}
 }
 
@@ -71,7 +71,7 @@ func UnlockGlobalStateMutex(gs *GlobalState, reason, who string) {
 		log.WithFields(log.Fields{
 			"reason": reason,
 			"who":    who,
-		}).Debug("Release global state mutex")
+		}).Info("Release global state mutex")
 	}
 	gs.Mutex.Unlock()
 }
@@ -153,6 +153,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"remote address": client.Conn.RemoteAddr(),
 					"player count":   len(globalState.Players),
 				}).Info("New player accepted")
+				client.state = CLIENT_LOGGED
 
 				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
@@ -189,6 +190,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					"remote address": client.Conn.RemoteAddr(),
 					"visu count":     len(globalState.Visus),
 				}).Info("New visualization accepted")
+				client.state = CLIENT_LOGGED
 
 				UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 
@@ -287,12 +289,14 @@ func Cleanup() {
 		for _, client := range append(globalGS.Players, globalGS.Visus...) {
 			go func(c *Client) {
 				Kick(c, "netorcai abort")
+				c.canTerminate <- 1
 				kickChan <- 0
 			}(client.client)
 		}
 		for _, client := range globalGS.GameLogic {
 			go func(c *Client) {
 				Kick(c, "netorcai abort")
+				c.canTerminate <- 1
 				kickChan <- 0
 			}(client.client)
 		}

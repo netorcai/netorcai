@@ -510,6 +510,43 @@ func checkTurn(t *testing.T, msg map[string]interface{},
 	return expectedTurnNumber
 }
 
+func checkTurnPotentialTurnsSkipped(t *testing.T, msg map[string]interface{},
+	expectedNbPlayers, expectedMinimalTurnNumber int, isPlayer bool) int {
+	messageType, err := netorcai.ReadString(msg, "message_type")
+	assert.NoError(t, err, "Cannot read 'message_type' field in "+
+		"received client message (TURN or GAME_ENDS)")
+
+	switch messageType {
+	case "TURN":
+		turnNumber, err := netorcai.ReadInt(msg, "turn_number")
+		assert.NoError(t, err, "Cannot read turn_number in TURN")
+		assert.Condition(t, func() bool {
+			return turnNumber >= expectedMinimalTurnNumber
+		})
+
+		_, err = netorcai.ReadObject(msg, "game_state")
+		assert.NoError(t, err, "Cannot read game_state in TURN")
+
+		checkPlayersInfo(t, msg, expectedNbPlayers, isPlayer)
+		return turnNumber
+	case "GAME_ENDS":
+		_, err := netorcai.ReadInt(msg, "winner_player_id")
+		assert.NoError(t, err, "Cannot read winner_player_id in GAME_ENDS")
+
+		_, err = netorcai.ReadObject(msg, "game_state")
+		assert.NoError(t, err, "Cannot read game_state in GAME_ENDS")
+	case "KICK":
+		kickReason, err := netorcai.ReadString(msg, "kick_reason")
+		assert.NoError(t, err, "Cannot read kick_reason")
+
+		assert.FailNow(t, "Expected (TURN or GAME_ENDS), got KICK", kickReason)
+	default:
+		assert.FailNowf(t, "Expected (TURN or GAME_ENDS), got another message type",
+			messageType)
+	}
+	return expectedMinimalTurnNumber
+}
+
 func checkGameEnds(t *testing.T, msg map[string]interface{}) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
 	assert.NoError(t, err, "Cannot read 'message_type' field in "+
