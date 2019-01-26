@@ -256,7 +256,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				}
 
 				// Trigger a new TURN if there is no player anymore
-				if fast && len(playerActions) == 0 {
+				if fast && nbConnectedPlayers == 0 {
 					sendDoTurn(glClient, playerActions)
 					playerActions = playerActions[:0]
 				}
