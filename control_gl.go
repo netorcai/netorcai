@@ -68,6 +68,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	// Generate randomized player identifiers
 	initialNbPlayers := len(players)
+	nbConnectedPlayers := initialNbPlayers
 	playerIDs := rand.Perm(len(players))
 	for playerIndex, player := range players {
 		player.playerID = playerIDs[playerIndex]
@@ -203,21 +204,18 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			}
 
 			if fast {
-				LockGlobalStateMutex(globalState, "Check player count", "GL")
 				// Trigger a new TURN if all players have played
-				if len(playerActions) == len(globalState.Players) {
+				if len(playerActions) >= nbConnectedPlayers {
 					sendDoTurnToGL <- 1
 				}
-				UnlockGlobalStateMutex(globalState, "Check player count", "GL")
 			}
 		case <-glClient.playerDisconnected:
+			nbConnectedPlayers -= 1
 			if fast {
-				LockGlobalStateMutex(globalState, "Check player count", "GL")
 				// Trigger a new TURN if all players have played
-				if len(playerActions) == len(globalState.Players) {
+				if len(playerActions) >= nbConnectedPlayers {
 					sendDoTurnToGL <- 1
 				}
-				UnlockGlobalStateMutex(globalState, "Check player count", "GL")
 			}
 		case msg := <-glClient.client.incomingMessages:
 			// New message received from the game logic
