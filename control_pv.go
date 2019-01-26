@@ -70,6 +70,10 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 			return
 		case turn := <-pvClient.newTurn:
 			// A new turn has been received.
+			log.WithFields(log.Fields{
+				"playerID": pvClient.playerID,
+			}).Debug("Client received a new TURN (from GL goroutine)")
+
 			if pvClient.client.state == CLIENT_READY {
 				// The client is ready, the message can be sent right now.
 				lastTurnNumberSent = turn.TurnNumber
@@ -110,6 +114,10 @@ func handlePlayerOrVisu(pvClient *PlayerOrVisuClient,
 				waitPlayerOrVisuFinition(pvClient)
 				return
 			}
+
+			log.WithFields(log.Fields{
+				"playerID": pvClient.playerID,
+			}).Debug("Client received a TURN_ACK (from socket)")
 
 			// Check client state
 			if pvClient.client.state != CLIENT_THINKING {

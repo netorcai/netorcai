@@ -197,6 +197,11 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				playerActions = append(playerActions, action)
 			}
 
+			log.WithFields(log.Fields{
+				"len(playerActions)": len(playerActions),
+				"nbConnectedPlayers": nbConnectedPlayers,
+			}).Debug("GL received a player action (from player goroutine)")
+
 			if fast {
 				// Trigger a new TURN if all players have played
 				if len(playerActions) >= nbConnectedPlayers {
@@ -234,6 +239,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				waitGameLogicFinition(glClient)
 				return
 			}
+			log.Debug("GL received a new DO_TURN_ACK (from socket)")
 
 			turnNumber = turnNumber + 1
 			if turnNumber < nbTurnsMax {
