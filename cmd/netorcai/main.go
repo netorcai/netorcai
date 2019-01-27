@@ -45,6 +45,12 @@ func initializeGlobalState(arguments map[string]interface{}) (
 		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}
 
+	nbSpecialPlayersMax, err := netorcai.ReadIntInString(arguments,
+		"--nb-splayers-max", 64, 0, 1024)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
+	}
+
 	nbVisusMax, err := netorcai.ReadIntInString(arguments,
 		"--nb-visus-max", 64, 0, 1024)
 	if err != nil {
@@ -74,6 +80,7 @@ func initializeGlobalState(arguments map[string]interface{}) (
 	gs := &netorcai.GlobalState{
 		GameState:                   netorcai.GAME_NOT_RUNNING,
 		NbPlayersMax:                nbPlayersMax,
+		NbSpecialPlayersMax:         nbSpecialPlayersMax,
 		NbVisusMax:                  nbVisusMax,
 		NbTurnsMax:                  nbTurnsMax,
 		Autostart:                   autostart,
@@ -106,6 +113,7 @@ Usage:
   netorcai [--port=<port-number>]
            [--nb-turns-max=<nbt>]
            [--nb-players-max=<nbp>]
+           [--nb-splayers-max=<nbsp>]
            [--nb-visus-max=<nbv>]
            [--delay-first-turn=<ms>]
            [--delay-turns=<ms>]
@@ -121,6 +129,7 @@ Options:
                             [default: 4242]
   --nb-turns-max=<nbt>      The maximum number of turns. [default: 100]
   --nb-players-max=<nbp>    The maximum number of players. [default: 4]
+  --nb-splayers-max=<nbsp>  The maximum number of special players. [default: 0]
   --nb-visus-max=<nbv>      The maximum number of visualizations. [default: 1]
   --delay-first-turn=<ms>   The amount of time (in milliseconds) between the
                             GAME_STARTS message and the first TURN message.
@@ -128,7 +137,7 @@ Options:
   --delay-turns=<ms>        The amount of time (in milliseconds) between two
                             consecutive TURNs. [default: 1000]
   --autostart               Start game when all clients are connnected.
-                            Set --nb-{players,visus}-max accordingly.
+                            Set --nb-{players,splayers,visus}-max accordingly.
   --fast                    Do not rely on timers to manage turns.
                             Send DO_TURN as soon as all players have played.
                             This assumes players play/crash in finite time.

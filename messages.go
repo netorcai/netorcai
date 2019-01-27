@@ -26,6 +26,7 @@ type MessageGameStarts struct {
 	MessageType      string                 `json:"message_type"`
 	PlayerID         int                    `json:"player_id"`
 	NbPlayers        int                    `json:"nb_players"`
+	NbSpecialPlayers int                    `json:"nb_special_players"`
 	NbTurnsMax       int                    `json:"nb_turns_max"`
 	DelayFirstTurn   float64                `json:"milliseconds_before_first_turn"`
 	DelayTurns       float64                `json:"milliseconds_between_turns"`
@@ -52,9 +53,10 @@ type MessageTurnAck struct {
 }
 
 type MessageDoInit struct {
-	MessageType string `json:"message_type"`
-	NbPlayers   int    `json:"nb_players"`
-	NbTurnsMax  int    `json:"nb_turns_max"`
+	MessageType      string `json:"message_type"`
+	NbPlayers        int    `json:"nb_players"`
+	NbSpecialPlayers int    `json:"nb_special_players"`
+	NbTurnsMax       int    `json:"nb_turns_max"`
 }
 
 type MessageDoInitAck struct {
@@ -125,7 +127,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 
 	// Check role
 	switch readMessage.role {
-	case "player",
+	case "player", "special player",
 		"visualization",
 		"game logic":
 		return readMessage, nil

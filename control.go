@@ -32,11 +32,13 @@ type GlobalState struct {
 
 	GameState int
 
-	GameLogic []*GameLogicClient
-	Players   []*PlayerOrVisuClient
-	Visus     []*PlayerOrVisuClient
+	GameLogic      []*GameLogicClient
+	Players        []*PlayerOrVisuClient
+	SpecialPlayers []*PlayerOrVisuClient
+	Visus          []*PlayerOrVisuClient
 
 	NbPlayersMax                int
+	NbSpecialPlayersMax         int
 	NbVisusMax                  int
 	NbTurnsMax                  int
 	Autostart                   bool
@@ -78,6 +80,7 @@ func UnlockGlobalStateMutex(gs *GlobalState, reason, who string) {
 
 func areAllExpectedClientsConnected(gs *GlobalState) bool {
 	return (len(gs.Players) == gs.NbPlayersMax) &&
+		(len(gs.SpecialPlayers) == gs.NbSpecialPlayersMax) &&
 		(len(gs.Visus) == gs.NbVisusMax) &&
 		(len(gs.GameLogic) == 1)
 }
@@ -123,13 +126,17 @@ func handleClient(client *Client, globalState *GlobalState,
 
 	LockGlobalStateMutex(globalState, "New client", "Login manager")
 	switch loginMessage.role {
-	case "player":
+	case "player", "special player":
+		isSpecial := loginMessage.role == "special player"
 		if globalState.GameState != GAME_NOT_RUNNING {
 			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: Game has been started")
-		} else if len(globalState.Players) >= globalState.NbPlayersMax {
+		} else if !isSpecial && len(globalState.Players) >= globalState.NbPlayersMax {
 			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
 			Kick(client, "LOGIN denied: Maximum number of players reached")
+		} else if isSpecial && len(globalState.SpecialPlayers) >= globalState.NbSpecialPlayersMax {
+			UnlockGlobalStateMutex(globalState, "New client", "Login manager")
+			Kick(client, "LOGIN denied: Maximum number of special players reached")
 		} else {
 			err = sendLoginACK(client)
 			if err != nil {
@@ -137,21 +144,28 @@ func handleClient(client *Client, globalState *GlobalState,
 				Kick(client, "LOGIN denied: Could not send LOGIN_ACK")
 			} else {
 				pvClient := &PlayerOrVisuClient{
-					client:     client,
-					playerID:   -1,
-					isPlayer:   true,
-					gameStarts: make(chan MessageGameStarts),
-					newTurn:    make(chan MessageTurn),
-					gameEnds:   make(chan MessageGameEnds),
-					playerInfo: nil,
+					client:          client,
+					playerID:        -1,
+					isPlayer:        true,
+					isSpecialPlayer: isSpecial,
+					gameStarts:      make(chan MessageGameStarts),
+					newTurn:         make(chan MessageTurn),
+					gameEnds:        make(chan MessageGameEnds),
+					playerInfo:      nil,
 				}
 
-				globalState.Players = append(globalState.Players, pvClient)
+				if !isSpecial {
+					globalState.Players = append(globalState.Players, pvClient)
+				} else {
+					globalState.SpecialPlayers = append(globalState.SpecialPlayers, pvClient)
+				}
 
 				log.WithFields(log.Fields{
-					"nickname":       client.nickname,
-					"remote address": client.Conn.RemoteAddr(),
-					"player count":   len(globalState.Players),
+					"nickname":             client.nickname,
+					"remote address":       client.Conn.RemoteAddr(),
+					"player count":         len(globalState.Players),
+					"special player count": len(globalState.SpecialPlayers),
+					"special":              isSpecial,
 				}).Info("New player accepted")
 				client.state = CLIENT_LOGGED
 

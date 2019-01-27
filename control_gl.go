@@ -59,6 +59,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	LockGlobalStateMutex(globalState, "Game init: copy players/visus and game parameters", "GL")
 	players := append([]*PlayerOrVisuClient(nil), globalState.Players...)
+	specialPlayers := append([]*PlayerOrVisuClient(nil), globalState.SpecialPlayers...)
+	allPlayers := append(players, specialPlayers...)
 	visus := append([]*PlayerOrVisuClient(nil), globalState.Visus...)
 	nbTurnsMax := globalState.NbTurnsMax
 	msBeforeFirstTurn := globalState.MillisecondsBeforeFirstTurn
@@ -68,15 +70,19 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	// Generate randomized player identifiers
 	initialNbPlayers := len(players)
-	nbConnectedPlayers := initialNbPlayers
+	initialNbSpecialPlayers := len(specialPlayers)
+	nbConnectedPlayers := initialNbPlayers + initialNbSpecialPlayers
 	playerIDs := rand.Perm(len(players))
+	for splayerIndex, splayer := range specialPlayers {
+		splayer.playerID = splayerIndex
+	}
 	for playerIndex, player := range players {
-		player.playerID = playerIDs[playerIndex]
+		player.playerID = playerIDs[playerIndex] + initialNbSpecialPlayers
 	}
 
 	// Generate player information
 	playersInfo := []*PlayerInformation{}
-	for _, player := range players {
+	for _, player := range allPlayers {
 		info := &PlayerInformation{
 			PlayerID:      player.playerID,
 			Nickname:      player.client.nickname,
@@ -93,7 +99,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	})
 
 	// Send DO_INIT
-	err := sendDoInit(glClient, initialNbPlayers, nbTurnsMax)
+	err := sendDoInit(glClient, initialNbPlayers, initialNbSpecialPlayers, nbTurnsMax)
 
 	if err != nil {
 		Kick(glClient.client, fmt.Sprintf("Cannot send DO_INIT. %v",
@@ -133,12 +139,13 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	}
 
 	// Send GAME_STARTS to all clients
-	for _, player := range players {
+	for _, player := range allPlayers {
 		player.gameStarts <- MessageGameStarts{
 			MessageType:      "GAME_STARTS",
 			PlayerID:         player.playerID,
 			PlayersInfo:      []*PlayerInformation{},
 			NbPlayers:        initialNbPlayers,
+			NbSpecialPlayers: initialNbSpecialPlayers,
 			NbTurnsMax:       nbTurnsMax,
 			DelayFirstTurn:   msBeforeFirstTurn,
 			DelayTurns:       msBetweenTurns,
@@ -152,6 +159,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			PlayerID:         visu.playerID,
 			PlayersInfo:      playersInfo,
 			NbPlayers:        initialNbPlayers,
+			NbSpecialPlayers: initialNbSpecialPlayers,
 			NbTurnsMax:       nbTurnsMax,
 			DelayFirstTurn:   msBeforeFirstTurn,
 			DelayTurns:       msBetweenTurns,
@@ -228,7 +236,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			}
 
 			doTurnAckMsg, err := readDoTurnAckMessage(msg.content,
-				initialNbPlayers)
+				initialNbPlayers+initialNbSpecialPlayers)
 			if err != nil {
 				Kick(glClient.client,
 					fmt.Sprintf("Invalid DO_TURN_ACK message. %v",
@@ -242,7 +250,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			turnNumber = turnNumber + 1
 			if turnNumber < nbTurnsMax {
 				// Forward the TURN to the clients
-				for _, player := range players {
+				for _, player := range allPlayers {
 					player.newTurn <- MessageTurn{
 						MessageType: "TURN",
 						TurnNumber:  turnNumber - 1,
@@ -289,7 +297,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				}
 
 				// Send GAME_ENDS to all clients
-				for _, player := range players {
+				for _, player := range allPlayers {
 					player.gameEnds <- MessageGameEnds{
 						MessageType:    "GAME_ENDS",
 						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
@@ -314,11 +322,12 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	}
 }
 
-func sendDoInit(client *GameLogicClient, nbPlayers, nbTurnsMax int) error {
+func sendDoInit(client *GameLogicClient, nbPlayers, nbSpecialPlayers, nbTurnsMax int) error {
 	msg := MessageDoInit{
-		MessageType: "DO_INIT",
-		NbPlayers:   nbPlayers,
-		NbTurnsMax:  nbTurnsMax,
+		MessageType:      "DO_INIT",
+		NbPlayers:        nbPlayers,
+		NbSpecialPlayers: nbSpecialPlayers,
+		NbTurnsMax:       nbTurnsMax,
 	}
 
 	content, err := json.Marshal(msg)

@@ -200,6 +200,10 @@ func TestPromptPrintAll(t *testing.T) {
 		proc.outputControl, 1000, true)
 	assert.NoError(t, err, "Cannot read print nb-players-max")
 
+	_, err = waitOutputTimeout(regexp.MustCompile(`nb-splayers-max=0`),
+		proc.outputControl, 1000, true)
+	assert.NoError(t, err, "Cannot read print nb-splayers-max")
+
 	_, err = waitOutputTimeout(regexp.MustCompile(`nb-visus-max=1`),
 		proc.outputControl, 1000, true)
 	assert.NoError(t, err, "Cannot read print nb-visus-max")
