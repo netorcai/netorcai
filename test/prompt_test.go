@@ -50,6 +50,21 @@ func TestPromptDoubleStart(t *testing.T) {
 	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
+func TestPromptDoubleStartSpecial(t *testing.T) {
+	proc, _, _, _, _, _ := runNetorcaiAndAllClients(t, []string{"--nb-splayers-max=1"}, 1000, 1)
+	defer killallNetorcaiSIGKILL()
+
+	proc.inputControl <- "start"
+	proc.inputControl <- "start"
+	_, err := waitOutputTimeout(
+		regexp.MustCompile(`Game has already been started`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read line")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 func TestPromptQuitNoClient(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
@@ -66,6 +81,18 @@ func TestPromptQuitNoClient(t *testing.T) {
 
 func TestPromptQuitAllClient(t *testing.T) {
 	proc, clients, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000, 0)
+	defer killallNetorcaiSIGKILL()
+
+	proc.inputControl <- "quit"
+	_, err := waitOutputTimeout(regexp.MustCompile(`Shell exit`),
+		proc.outputControl, 1000, false)
+	assert.NoError(t, err, "Cannot read line")
+
+	checkAllKicked(t, clients, regexp.MustCompile(`netorcai abort`), 1000)
+}
+
+func TestPromptQuitAllClientSpecial(t *testing.T) {
+	proc, clients, _, _, _, _ := runNetorcaiAndAllClients(t, []string{"--nb-splayers-max=1"}, 1000, 1)
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "quit"

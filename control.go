@@ -295,18 +295,23 @@ func Cleanup() {
 	log.Warn("Closing listening socket.")
 	globalGS.Listener.Close()
 
-	nbClients := len(globalGS.Players) + len(globalGS.Visus) +
-		len(globalGS.GameLogic)
+	nonGlClients := append([]*PlayerOrVisuClient(nil), globalGS.Players...)
+	nonGlClients = append(nonGlClients, globalGS.SpecialPlayers...)
+	nonGlClients = append(nonGlClients, globalGS.Visus...)
+	nbClients := len(nonGlClients) + len(globalGS.GameLogic)
+
 	if nbClients > 0 {
 		log.Warn("Sending KICK messages to clients")
+
 		kickChan := make(chan int)
-		for _, client := range append(globalGS.Players, globalGS.Visus...) {
+		for _, client := range nonGlClients {
 			go func(c *Client) {
 				Kick(c, "netorcai abort")
 				c.canTerminate <- 1
 				kickChan <- 0
 			}(client.client)
 		}
+
 		for _, client := range globalGS.GameLogic {
 			go func(c *Client) {
 				Kick(c, "netorcai abort")
@@ -320,7 +325,7 @@ func Cleanup() {
 		}
 
 		log.Warn("Closing client sockets")
-		for _, client := range append(globalGS.Players, globalGS.Visus...) {
+		for _, client := range nonGlClients {
 			client.client.Conn.Close()
 		}
 		for _, client := range globalGS.GameLogic {
