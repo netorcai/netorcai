@@ -11,7 +11,7 @@ import (
 func TestHelloGLOnly(t *testing.T) {
 	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
-			"--delay-turns=500", "--debug"}, 1000)
+			"--delay-turns=500", "--debug"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Disconnect all players
@@ -45,7 +45,7 @@ func TestHelloGLOnly(t *testing.T) {
 func TestHelloGLIdleClients(t *testing.T) {
 	proc, _, _, _, _, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
-			"--delay-turns=500", "--debug"}, 1000)
+			"--delay-turns=500", "--debug"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
@@ -65,7 +65,7 @@ func TestHelloGLIdleClients(t *testing.T) {
 func TestHelloGLActiveVisu(t *testing.T) {
 	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
-			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
+			"--delay-turns=500", "--debug", "--json-logs"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
@@ -100,7 +100,7 @@ func TestHelloGLActiveVisu(t *testing.T) {
 func TestHelloGLActivePlayer(t *testing.T) {
 	proc, _, players, visus, _, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
-			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
+			"--delay-turns=500", "--debug", "--json-logs"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client

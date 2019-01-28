@@ -36,7 +36,7 @@ func TestPromptStartNoClient(t *testing.T) {
 }
 
 func TestPromptDoubleStart(t *testing.T) {
-	proc, _, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000)
+	proc, _, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "start"
@@ -65,7 +65,7 @@ func TestPromptQuitNoClient(t *testing.T) {
 }
 
 func TestPromptQuitAllClient(t *testing.T) {
-	proc, clients, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000)
+	proc, clients, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	proc.inputControl <- "quit"

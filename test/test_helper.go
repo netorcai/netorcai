@@ -224,10 +224,10 @@ func runNetorcaiAndClients(t *testing.T, arguments []string,
 }
 
 func runNetorcaiAndAllClients(t *testing.T, arguments []string,
-	timeoutMS int) (
+	timeoutMS int, nbSpecialPlayers int) (
 	proc *NetorcaiProcess, clients, playerClients, specialPlayerClients, visuClients,
 	glClients []*client.Client) {
-	return runNetorcaiAndClients(t, arguments, timeoutMS, 4, 0, 1)
+	return runNetorcaiAndClients(t, arguments, timeoutMS, 4, nbSpecialPlayers, 1)
 }
 
 func checkAllKicked(t *testing.T, clients []*client.Client,
