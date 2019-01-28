@@ -9,7 +9,7 @@ import (
 )
 
 func TestHelloGLOnly(t *testing.T) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
 			"--delay-turns=500", "--debug"}, 1000)
 	defer killallNetorcaiSIGKILL()
@@ -43,7 +43,7 @@ func TestHelloGLOnly(t *testing.T) {
 }
 
 func TestHelloGLIdleClients(t *testing.T) {
-	proc, _, _, _, gl := runNetorcaiAndAllClients(
+	proc, _, _, _, _, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
 			"--delay-turns=500", "--debug"}, 1000)
 	defer killallNetorcaiSIGKILL()
@@ -63,7 +63,7 @@ func TestHelloGLIdleClients(t *testing.T) {
 }
 
 func TestHelloGLActiveVisu(t *testing.T) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
 			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
 	defer killallNetorcaiSIGKILL()
@@ -98,7 +98,7 @@ func TestHelloGLActiveVisu(t *testing.T) {
 }
 
 func TestHelloGLActivePlayer(t *testing.T) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+	proc, _, players, visus, _, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
 			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
 	defer killallNetorcaiSIGKILL()
@@ -152,12 +152,12 @@ func subtestHelloGlActiveClients(t *testing.T,
 	playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc,
 	glKickReasonMatcher, playerKickReasonMatcher,
 	visuKickReasonMatcher *regexp.Regexp) {
-	proc, _, players, visus, gl := runNetorcaiAndClients(
+	proc, _, players, _, visus, gl := runNetorcaiAndClients(
 		t, append([]string{"--delay-first-turn=500",
 			fmt.Sprintf("--nb-turns-max=%v", nbTurnsNetorcai),
 			"--delay-turns=500", "--debug", "--json-logs"},
 			netorcaiAdditionalArgs...),
-		1000, nbPlayers, nbVisus)
+		1000, nbPlayers, 0, nbVisus)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client

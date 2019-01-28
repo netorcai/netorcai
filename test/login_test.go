@@ -480,8 +480,8 @@ func TestLoginMaxNbGameLogicParallel(t *testing.T) {
 
 func subtestLoginGameAlreadyStarted(t *testing.T, loginRole string,
 	shouldConnect bool) {
-	proc, _, _, _, _ := runNetorcaiAndClients(t,
-		[]string{}, 1000, 0, 0)
+	proc, _, _, _, _, _ := runNetorcaiAndClients(t,
+		[]string{}, 1000, 0, 0, 0)
 	defer killallNetorcaiSIGKILL()
 
 	waitOutputTimeout(regexp.MustCompile(`Game logic accepted`),
