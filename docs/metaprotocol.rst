@@ -196,6 +196,7 @@ Example.
        }
      ],
      "nb_players": 4,
+     "nb_special_players": 0,
      "nb_turns_max": 100,
      "milliseconds_before_first_turn": 1000,
      "milliseconds_between_turns": 1000,
@@ -325,6 +326,7 @@ Example.
    {
      "message_type": "DO_INIT",
      "nb_players": 4,
+     "nb_special_players": 0,
      "nb_turns_max": 100
    }
 
