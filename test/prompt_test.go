@@ -189,6 +189,10 @@ func TestPromptNbPlayersMax(t *testing.T) {
 	subtestPromptIntVariablePrintSet(t, "nb-players-max", "4.5", 4, 0, 2, 1025)
 }
 
+func TestPromptNbSpecialPlayersMax(t *testing.T) {
+	subtestPromptIntVariablePrintSet(t, "nb-splayers-max", "4.5", 0, -1, 2, 1025)
+}
+
 func TestPromptNbVisusMax(t *testing.T) {
 	subtestPromptIntVariablePrintSet(t, "nb-visus-max", "1.5", 1, -1, 10, 1025)
 }
