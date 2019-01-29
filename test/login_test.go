@@ -233,7 +233,7 @@ func TestLoginPlayerJapanese(t *testing.T) {
 
 func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	nbConnections, expectedNbLogged int, kickReasonMatcher *regexp.Regexp) {
-	proc := runNetorcaiWaitListening(t, []string{})
+	proc := runNetorcaiWaitListening(t, []string{"--nb-splayers-max=2"})
 	defer killallNetorcaiSIGKILL()
 
 	// Do many player connections sequentially
@@ -295,6 +295,11 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 func TestLoginMaxNbPlayerSequential(t *testing.T) {
 	subtestLoginMaxNbClientSequential(t, "player", 100, 4,
 		regexp.MustCompile(`Maximum number of players reached`))
+}
+
+func TestLoginMaxNbSpecialPlayerSequential(t *testing.T) {
+	subtestLoginMaxNbClientSequential(t, "special player", 100, 2,
+		regexp.MustCompile(`Maximum number of special players reached`))
 }
 
 func TestLoginMaxNbVisuSequential(t *testing.T) {
