@@ -40,7 +40,7 @@ func setupLogging(arguments map[string]interface{}) {
 func initializeGlobalState(arguments map[string]interface{}) (
 	*netorcai.GlobalState, error) {
 	nbPlayersMax, err := netorcai.ReadIntInString(arguments,
-		"--nb-players-max", 64, 1, 1024)
+		"--nb-players-max", 64, 0, 1024)
 	if err != nil {
 		return nil, fmt.Errorf("Invalid arguments: %v", err.Error())
 	}

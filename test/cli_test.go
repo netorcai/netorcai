@@ -174,7 +174,7 @@ func TestCLIArgNbPlayersMaxNotInteger(t *testing.T) {
 }
 
 func TestCLIArgNbPlayersMaxTooSmall(t *testing.T) {
-	args := []string{"--nb-players-max=0"}
+	args := []string{"--nb-players-max=-1"}
 	coverFile, expRetCode := handleCoverage(t, 1)
 
 	proc, err := runNetorcaiCover(coverFile, args)
@@ -200,7 +200,7 @@ func TestCLIArgNbPlayersMaxTooBig(t *testing.T) {
 }
 
 func TestCLIArgNbPlayersMaxSmall(t *testing.T) {
-	args := []string{"--nb-players-max=1"}
+	args := []string{"--nb-players-max=0"}
 	coverFile, _ := handleCoverage(t, 0)
 
 	proc, err := runNetorcaiCover(coverFile, args)
