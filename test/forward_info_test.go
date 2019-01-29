@@ -9,7 +9,7 @@ import (
 )
 
 // Initial game state
-func doInitAckFlattened(nbPlayers, nbTurns int) string {
+func doInitAckFlattened(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{
 	  "message_type": "DO_INIT_ACK",
 	  "initial_game_state": {
@@ -25,7 +25,7 @@ func doInitAckFlattened(nbPlayers, nbTurns int) string {
 	}`
 }
 
-func doInitAckNastyNested(nbPlayers, nbTurns int) string {
+func doInitAckNastyNested(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{
 	  "message_type": "DO_INIT_ACK",
 	  "initial_game_state": {
@@ -104,9 +104,9 @@ func subCheckFlattenedObject(t *testing.T, object map[string]interface{}) {
 }
 
 func checkGameStartsFlattened(t *testing.T,
-	msg map[string]interface{}, nbPlayers, nbTurnsGL int,
+	msg map[string]interface{}, nbPlayers, nbSpecialPlayers, nbTurnsGL int,
 	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) int {
-	playerID := checkGameStarts(t, msg, nbPlayers, nbTurnsGL,
+	playerID := checkGameStarts(t, msg, nbPlayers, nbSpecialPlayers, nbTurnsGL,
 		msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
 	initialGS, err := netorcai.ReadObject(msg, "initial_game_state")
@@ -117,9 +117,9 @@ func checkGameStartsFlattened(t *testing.T,
 }
 
 func checkGameStartsNastyNested(t *testing.T,
-	msg map[string]interface{}, nbPlayers, nbTurnsGL int,
+	msg map[string]interface{}, nbPlayers, nbSpecialPlayers, nbTurnsGL int,
 	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) int {
-	playerID := checkGameStarts(t, msg, nbPlayers, nbTurnsGL,
+	playerID := checkGameStarts(t, msg, nbPlayers, nbSpecialPlayers, nbTurnsGL,
 		msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
 	initialGS, err := netorcai.ReadObject(msg, "initial_game_state")
@@ -153,7 +153,7 @@ func checkGameStartsNastyNested(t *testing.T,
 }
 
 func TestForwardInitialGameStateFlattened(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,
@@ -167,7 +167,7 @@ func TestForwardInitialGameStateFlattened(t *testing.T) {
 }
 
 func TestForwardInitialGameStateNastyNested(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,
@@ -252,8 +252,8 @@ func doTurnAckNastyNested(turn int, actions []interface{}) string {
 }
 
 func checkTurnFlattened(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
-	turn := checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int, isPlayer bool) int {
+	turn := checkTurn(t, msg, expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber, isPlayer)
 
 	gs, err := netorcai.ReadObject(msg, "game_state")
 	assert.NoError(t, err, "Cannot read 'game_state' in msg")
@@ -263,8 +263,8 @@ func checkTurnFlattened(t *testing.T, msg map[string]interface{},
 }
 
 func checkTurnNastyNested(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
-	turn := checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int, isPlayer bool) int {
+	turn := checkTurn(t, msg, expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber, isPlayer)
 
 	gs, err := netorcai.ReadObject(msg, "game_state")
 	assert.NoError(t, err, "Cannot read 'game_state' in msg")
@@ -297,7 +297,7 @@ func checkTurnNastyNested(t *testing.T, msg map[string]interface{},
 }
 
 func TestForwardGameStateFlattened(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,
@@ -311,7 +311,7 @@ func TestForwardGameStateFlattened(t *testing.T) {
 }
 
 func TestForwardGameStateNastyNested(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,
@@ -402,8 +402,8 @@ func turnAckNastyNested(turn, playerID int) string {
 }
 
 func checkDoTurnFlattened(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int) []interface{} {
-	pActions := checkDoTurn(t, msg, expectedNbPlayers, expectedTurnNumber)
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int) []interface{} {
+	pActions := checkDoTurn(t, msg, expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber)
 
 	if expectedTurnNumber >= 0 {
 		assert.Equal(t, expectedNbPlayers, len(pActions),
@@ -442,8 +442,8 @@ func checkDoTurnFlattened(t *testing.T, msg map[string]interface{},
 }
 
 func checkDoTurnNastyNested(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int) []interface{} {
-	pActions := checkDoTurn(t, msg, expectedNbPlayers, expectedTurnNumber)
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int) []interface{} {
+	pActions := checkDoTurn(t, msg, expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber)
 
 	if expectedTurnNumber >= 0 {
 		assert.Equal(t, expectedNbPlayers, len(pActions),
@@ -508,7 +508,7 @@ func checkDoTurnNastyNested(t *testing.T, msg map[string]interface{},
 }
 
 func TestForwardActionsFlattened(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,
@@ -522,7 +522,7 @@ func TestForwardActionsFlattened(t *testing.T) {
 }
 
 func TestForwardActionsNastyNested(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,

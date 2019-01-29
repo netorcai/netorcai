@@ -20,7 +20,7 @@ func turnAckSkipOneTurnOverTwo(turn, playerID int) string {
 }
 
 func checkTurnSkipOneTurnOverTwo(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int, isPlayer bool) int {
 
 	turn, err := netorcai.ReadInt(msg, "turn_number")
 	assert.NoError(t, err, "Cannot read 'turn_number'")
@@ -30,7 +30,7 @@ func checkTurnSkipOneTurnOverTwo(t *testing.T, msg map[string]interface{},
 }
 
 func checkDoTurnSkipOneTurnOverTwo(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int) []interface{} {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int) []interface{} {
 
 	actions, err := netorcai.ReadArray(msg, "player_actions")
 	assert.NoError(t, err, "Cannot read 'player_actions'")
@@ -46,7 +46,7 @@ func checkDoTurnSkipOneTurnOverTwo(t *testing.T, msg map[string]interface{},
 }
 
 func TestSkipOneTurnOverTwo(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 0,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 0,
 		7, 7, 7, 7,
 		1, 0,
 		false, false,
@@ -71,7 +71,7 @@ func turnAckSkipFirstTurn(turn, playerID int) string {
 }
 
 func checkTurnSkipFirstTurn(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int, isPlayer bool) int {
 
 	turn, err := netorcai.ReadInt(msg, "turn_number")
 	assert.NoError(t, err, "Cannot read 'turn_number'")
@@ -80,7 +80,7 @@ func checkTurnSkipFirstTurn(t *testing.T, msg map[string]interface{},
 }
 
 func checkDoTurnSkipFirstTurn(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int) []interface{} {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int) []interface{} {
 
 	actions, err := netorcai.ReadArray(msg, "player_actions")
 	assert.NoError(t, err, "Cannot read 'player_actions'")
@@ -97,7 +97,7 @@ func checkDoTurnSkipFirstTurn(t *testing.T, msg map[string]interface{},
 }
 
 func TestSkipFirstTurn(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 0,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 0,
 		4, 4, 4, 4,
 		0, 0,
 		false, false,
@@ -124,7 +124,7 @@ func turnAckSkipOneTurnMultiClient(turn, playerID int) string {
 }
 
 func checkTurnSkipOneTurnMultiClient(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int, isPlayer bool) int {
 
 	turn, err := netorcai.ReadInt(msg, "turn_number")
 	assert.NoError(t, err, "Cannot read 'turn_number'")
@@ -170,7 +170,7 @@ func (a ByPlayerID) Less(i, j int) bool {
 
 func checkDoTurnSkipOneTurnMultiClient(t *testing.T,
 	msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int) []interface{} {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int) []interface{} {
 
 	actions, err := netorcai.ReadArray(msg, "player_actions")
 	assert.NoError(t, err, "Cannot read 'player_actions'")
@@ -239,7 +239,7 @@ func checkDoTurnSkipOneTurnMultiClient(t *testing.T,
 }
 
 func TestSkipOneTurnMultiClient(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 0,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 0,
 		7, 7, 7, 7,
 		0, 0,
 		false, false,
