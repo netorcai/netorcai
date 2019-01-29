@@ -7,13 +7,14 @@ import (
 )
 
 type PlayerOrVisuClient struct {
-	client     *Client
-	playerID   int
-	isPlayer   bool
-	gameStarts chan MessageGameStarts
-	newTurn    chan MessageTurn
-	gameEnds   chan MessageGameEnds
-	playerInfo *PlayerInformation
+	client          *Client
+	playerID        int
+	isPlayer        bool
+	isSpecialPlayer bool
+	gameStarts      chan MessageGameStarts
+	newTurn         chan MessageTurn
+	gameEnds        chan MessageGameEnds
+	playerInfo      *PlayerInformation
 }
 
 func waitPlayerOrVisuFinition(pvClient *PlayerOrVisuClient) {
@@ -168,24 +169,46 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 			pvClient.playerInfo.IsConnected = false
 		}
 
-		// Locate the player in the array
-		playerIndex := -1
-		for index, player := range gs.Players {
-			if player.client == pvClient.client {
-				playerIndex = index
-				break
+		if pvClient.isSpecialPlayer {
+			// Locate the player in the array
+			playerIndex := -1
+			for index, player := range gs.SpecialPlayers {
+				if player.client == pvClient.client {
+					playerIndex = index
+					break
+				}
 			}
-		}
 
-		if gs.GameState == GAME_RUNNING && gs.Fast {
-			gs.GameLogic[0].playerDisconnected <- 1
-		}
+			if gs.GameState == GAME_RUNNING && gs.Fast {
+				gs.GameLogic[0].playerDisconnected <- 1
+			}
 
-		if playerIndex != -1 {
-			// Remove the player by placing it at the end of the slice,
-			// then reducing the slice length
-			gs.Players[len(gs.Players)-1], gs.Players[playerIndex] = gs.Players[playerIndex], gs.Players[len(gs.Players)-1]
-			gs.Players = gs.Players[:len(gs.Players)-1]
+			if playerIndex != -1 {
+				// Remove the player by placing it at the end of the slice,
+				// then reducing the slice length
+				gs.SpecialPlayers[len(gs.SpecialPlayers)-1], gs.SpecialPlayers[playerIndex] = gs.SpecialPlayers[playerIndex], gs.SpecialPlayers[len(gs.SpecialPlayers)-1]
+				gs.SpecialPlayers = gs.SpecialPlayers[:len(gs.SpecialPlayers)-1]
+			}
+		} else {
+			// Locate the player in the array
+			playerIndex := -1
+			for index, player := range gs.Players {
+				if player.client == pvClient.client {
+					playerIndex = index
+					break
+				}
+			}
+
+			if gs.GameState == GAME_RUNNING && gs.Fast {
+				gs.GameLogic[0].playerDisconnected <- 1
+			}
+
+			if playerIndex != -1 {
+				// Remove the player by placing it at the end of the slice,
+				// then reducing the slice length
+				gs.Players[len(gs.Players)-1], gs.Players[playerIndex] = gs.Players[playerIndex], gs.Players[len(gs.Players)-1]
+				gs.Players = gs.Players[:len(gs.Players)-1]
+			}
 		}
 	} else {
 		// Locate the visu in the array

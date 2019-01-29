@@ -8,8 +8,8 @@ import (
 )
 
 func TestInvalidGlMessageBeforeStart(t *testing.T) {
-	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
-		t, []string{}, 1000)
+	proc, _, playerClients, _, visuClients, glClients := runNetorcaiAndAllClients(
+		t, []string{}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	glClients[0].SendString(`{}`)
@@ -32,8 +32,8 @@ func TestInvalidGlMessageBeforeStart(t *testing.T) {
 }
 
 func TestInvalidPlayerMessageBeforeStart(t *testing.T) {
-	proc, _, playerClients, _, glClients := runNetorcaiAndClients(t,
-		[]string{}, 1000, 1, 0)
+	proc, _, playerClients, _, _, glClients := runNetorcaiAndClients(t,
+		[]string{}, 1000, 1, 0, 0)
 	defer killallNetorcaiSIGKILL()
 
 	playerClients[0].SendString(`{"message_type": "TURN_ACK", ` +
@@ -47,8 +47,8 @@ func TestInvalidPlayerMessageBeforeStart(t *testing.T) {
 }
 
 func TestInvalidVisuMessageBeforeStart(t *testing.T) {
-	proc, _, _, visuClients, glClients := runNetorcaiAndClients(t,
-		[]string{}, 1000, 0, 1)
+	proc, _, _, _, visuClients, glClients := runNetorcaiAndClients(t,
+		[]string{}, 1000, 0, 0, 1)
 	defer killallNetorcaiSIGKILL()
 
 	visuClients[0].SendString(`{"message_type": "TURN_ACK", ` +
@@ -62,8 +62,8 @@ func TestInvalidVisuMessageBeforeStart(t *testing.T) {
 }
 
 func TestInvalidGlNoDoInitAck(t *testing.T) {
-	proc, _, playerClients, visuClients, glClients := runNetorcaiAndAllClients(
-		t, []string{}, 1000)
+	proc, _, playerClients, _, visuClients, glClients := runNetorcaiAndAllClients(
+		t, []string{}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	go func(glClient *client.Client) {

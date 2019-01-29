@@ -9,9 +9,9 @@ import (
 )
 
 func TestHelloGLOnly(t *testing.T) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
-			"--delay-turns=500", "--debug"}, 1000)
+			"--delay-turns=500", "--debug"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Disconnect all players
@@ -29,7 +29,7 @@ func TestHelloGLOnly(t *testing.T) {
 	}
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], 0, 2, 2, DefaultHelloGLCheckDoTurn,
+	go helloGameLogic(t, gl[0], 0, 0, 2, 2, DefaultHelloGLCheckDoTurn,
 		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
 		regexp.MustCompile(`Game is finished`))
 
@@ -43,13 +43,33 @@ func TestHelloGLOnly(t *testing.T) {
 }
 
 func TestHelloGLIdleClients(t *testing.T) {
-	proc, _, _, _, gl := runNetorcaiAndAllClients(
+	proc, _, _, _, _, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
-			"--delay-turns=500", "--debug"}, 1000)
+			"--delay-turns=500", "--debug"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], 4, 2, 2, DefaultHelloGLCheckDoTurn,
+	go helloGameLogic(t, gl[0], 4, 0, 2, 2, DefaultHelloGLCheckDoTurn,
+		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
+		regexp.MustCompile(`Game is finished`))
+
+	// Start the game
+	proc.inputControl <- "start"
+
+	// Wait for game end
+	waitOutputTimeout(regexp.MustCompile(`Game is finished`),
+		proc.outputControl, 5000, false)
+	waitCompletionTimeout(proc.completion, 1000)
+}
+
+func TestHelloGLIdleClientsSpecial(t *testing.T) {
+	proc, _, _, _, _, gl := runNetorcaiAndAllClients(
+		t, []string{"--delay-first-turn=500", "--nb-turns-max=2",
+			"--delay-turns=500", "--debug", "--nb-splayers-max=1"}, 1000, 1)
+	defer killallNetorcaiSIGKILL()
+
+	// Run a game client
+	go helloGameLogic(t, gl[0], 4, 1, 2, 2, DefaultHelloGLCheckDoTurn,
 		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
 		regexp.MustCompile(`Game is finished`))
 
@@ -63,13 +83,13 @@ func TestHelloGLIdleClients(t *testing.T) {
 }
 
 func TestHelloGLActiveVisu(t *testing.T) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
-			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
+			"--delay-turns=500", "--debug", "--json-logs"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], 0, 3, 3, DefaultHelloGLCheckDoTurn,
+	go helloGameLogic(t, gl[0], 0, 0, 3, 3, DefaultHelloGLCheckDoTurn,
 		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
 		regexp.MustCompile(`Game is finished`))
 
@@ -82,7 +102,7 @@ func TestHelloGLActiveVisu(t *testing.T) {
 
 	// Run visu clients
 	for _, visu := range visus {
-		go helloClient(t, visu, 0, 3, 3, 0, 500, 500, false, false, true, true,
+		go helloClient(t, visu, 0, 0, 3, 3, 0, 500, 500, false, false, true, true,
 			DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 			DefaultHelloClientCheckGameEnds,
 			DefaultHelloClientTurnAck, regexp.MustCompile(`Game is finished`))
@@ -98,18 +118,18 @@ func TestHelloGLActiveVisu(t *testing.T) {
 }
 
 func TestHelloGLActivePlayer(t *testing.T) {
-	proc, _, players, visus, gl := runNetorcaiAndAllClients(
+	proc, _, players, _, visus, gl := runNetorcaiAndAllClients(
 		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
-			"--delay-turns=500", "--debug", "--json-logs"}, 1000)
+			"--delay-turns=500", "--debug", "--json-logs"}, 1000, 0)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], 1, 3, 3, DefaultHelloGLCheckDoTurn,
+	go helloGameLogic(t, gl[0], 1, 0, 3, 3, DefaultHelloGLCheckDoTurn,
 		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
 		regexp.MustCompile(`Game is finished`))
 
 	// Run an active player
-	go helloClient(t, players[0], 1, 3, 3, 0, 500, 500, true, false, true, true,
+	go helloClient(t, players[0], 1, 0, 3, 3, 0, 500, 500, true, false, true, true,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds,
 		DefaultHelloClientTurnAck,
@@ -138,49 +158,37 @@ func TestHelloGLActivePlayer(t *testing.T) {
 	waitCompletionTimeout(proc.completion, 1000)
 }
 
-func subtestHelloGlActiveClients(t *testing.T,
-	netorcaiAdditionalArgs []string,
-	nbPlayers, nbVisus int,
-	nbTurnsNetorcai, nbTurnsGL, nbTurnsPlayer, nbTurnsVisu int,
-	nbTurnsToSkipPlayer, nbTurnsToSkipVisu int,
-	allowTurnSkipPlayer, allowTurnSkipVisu bool,
-	checkGameStartsFunc ClientGameStartsCheckFunc,
-	playerCheckTurnFunc, visuCheckTurnFunc ClientTurnCheckFunc,
-	checkGameEndsFunc ClientGameEndsCheckFunc,
-	checkDoTurnFunc GLCheckDoTurnFunc,
-	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc,
-	playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc,
-	glKickReasonMatcher, playerKickReasonMatcher,
-	visuKickReasonMatcher *regexp.Regexp) {
-	proc, _, players, visus, gl := runNetorcaiAndClients(
-		t, append([]string{"--delay-first-turn=500",
-			fmt.Sprintf("--nb-turns-max=%v", nbTurnsNetorcai),
-			"--delay-turns=500", "--debug", "--json-logs"},
-			netorcaiAdditionalArgs...),
-		1000, nbPlayers, nbVisus)
+func TestHelloGLActiveSpecialPlayer(t *testing.T) {
+	proc, _, players, specialPlayers, visus, gl := runNetorcaiAndAllClients(
+		t, []string{"--delay-first-turn=500", "--nb-turns-max=3",
+			"--delay-turns=500", "--debug", "--json-logs",
+			"--nb-splayers-max=1"}, 1000, 1)
 	defer killallNetorcaiSIGKILL()
 
 	// Run a game client
-	go helloGameLogic(t, gl[0], nbPlayers, nbTurnsNetorcai, nbTurnsGL,
-		checkDoTurnFunc, doInitAckFunc, doTurnAckFunc,
-		glKickReasonMatcher)
+	go helloGameLogic(t, gl[0], 0, 1, 3, 3, DefaultHelloGLCheckDoTurn,
+		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
+		regexp.MustCompile(`Game is finished`))
 
-	// Run player clients
+	// Run an active special special
+	go helloClient(t, specialPlayers[0], 0, 1, 3, 3, 0, 500, 500, true, false, true, true,
+		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
+		DefaultHelloClientCheckGameEnds,
+		DefaultHelloClientTurnAck,
+		regexp.MustCompile(`Game is finished`))
+
+	// Disconnect classical players
 	for _, player := range players {
-		go helloClient(t, player, nbPlayers, nbTurnsNetorcai, nbTurnsPlayer,
-			nbTurnsToSkipPlayer, 500, 500, true, allowTurnSkipPlayer,
-			nbTurnsPlayer == nbTurnsNetorcai, nbTurnsGL > 0,
-			checkGameStartsFunc, playerCheckTurnFunc, checkGameEndsFunc,
-			playerTurnAckFunc, playerKickReasonMatcher)
+		player.Disconnect()
+		waitOutputTimeout(regexp.MustCompile(`Remote endpoint closed`),
+			proc.outputControl, 1000, false)
 	}
 
-	// Run visu clients
+	// Disconnect visus
 	for _, visu := range visus {
-		go helloClient(t, visu, nbPlayers, nbTurnsNetorcai, nbTurnsVisu,
-			nbTurnsToSkipVisu, 500, 500, false, allowTurnSkipVisu,
-			nbTurnsVisu == nbTurnsNetorcai, nbTurnsGL > 0,
-			checkGameStartsFunc, visuCheckTurnFunc, checkGameEndsFunc,
-			visuTurnAckFunc, visuKickReasonMatcher)
+		visu.Disconnect()
+		waitOutputTimeout(regexp.MustCompile(`Remote endpoint closed`),
+			proc.outputControl, 1000, false)
 	}
 
 	// Start the game
@@ -192,8 +200,62 @@ func subtestHelloGlActiveClients(t *testing.T,
 	waitCompletionTimeout(proc.completion, 1000)
 }
 
+func subtestHelloGlActiveClients(t *testing.T,
+	netorcaiAdditionalArgs []string,
+	nbPlayers, nbSpecialPlayers, nbVisus int,
+	nbTurnsNetorcai, nbTurnsGL, nbTurnsPlayer, nbTurnsVisu int,
+	nbTurnsToSkipPlayer, nbTurnsToSkipVisu int,
+	allowTurnSkipPlayer, allowTurnSkipVisu bool,
+	checkGameStartsFunc ClientGameStartsCheckFunc,
+	playerCheckTurnFunc, visuCheckTurnFunc ClientTurnCheckFunc,
+	checkGameEndsFunc ClientGameEndsCheckFunc,
+	checkDoTurnFunc GLCheckDoTurnFunc,
+	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc,
+	playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc,
+	glKickReasonMatcher, playerKickReasonMatcher,
+	visuKickReasonMatcher *regexp.Regexp) {
+	proc, _, players, _, visus, gl := runNetorcaiAndClients(
+		t, append([]string{"--delay-first-turn=500",
+			fmt.Sprintf("--nb-turns-max=%v", nbTurnsNetorcai),
+			fmt.Sprintf("--nb-players-max=%v", nbPlayers),
+			fmt.Sprintf("--nb-splayers-max=%v", nbSpecialPlayers),
+			fmt.Sprintf("--nb-visus-max=%v", nbVisus),
+			"--delay-turns=500", "--debug", "--json-logs", "--autostart"},
+			netorcaiAdditionalArgs...),
+		1000, nbPlayers, nbSpecialPlayers, nbVisus)
+	defer killallNetorcaiSIGKILL()
+
+	// Run a game client
+	go helloGameLogic(t, gl[0], nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsGL,
+		checkDoTurnFunc, doInitAckFunc, doTurnAckFunc,
+		glKickReasonMatcher)
+
+	// Run player clients
+	for _, player := range players {
+		go helloClient(t, player, nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsPlayer,
+			nbTurnsToSkipPlayer, 500, 500, true, allowTurnSkipPlayer,
+			nbTurnsPlayer == nbTurnsNetorcai, nbTurnsGL > 0,
+			checkGameStartsFunc, playerCheckTurnFunc, checkGameEndsFunc,
+			playerTurnAckFunc, playerKickReasonMatcher)
+	}
+
+	// Run visu clients
+	for _, visu := range visus {
+		go helloClient(t, visu, nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsVisu,
+			nbTurnsToSkipVisu, 500, 500, false, allowTurnSkipVisu,
+			nbTurnsVisu == nbTurnsNetorcai, nbTurnsGL > 0,
+			checkGameStartsFunc, visuCheckTurnFunc, checkGameEndsFunc,
+			visuTurnAckFunc, visuKickReasonMatcher)
+	}
+
+	// Wait for game end
+	waitOutputTimeout(regexp.MustCompile(`Game is finished`),
+		proc.outputControl, 5000, false)
+	waitCompletionTimeout(proc.completion, 1000)
+}
+
 func TestHelloGLActiveClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,
@@ -207,7 +269,7 @@ func TestHelloGLActiveClients(t *testing.T) {
 }
 
 func TestHelloGLActiveClientsFast(t *testing.T) {
-	subtestHelloGlActiveClients(t, []string{"--fast"}, 4, 1,
+	subtestHelloGlActiveClients(t, []string{"--fast"}, 4, 0, 1,
 		1000, 1000, 1000, 1000,
 		0, 0,
 		false, true,
@@ -220,30 +282,44 @@ func TestHelloGLActiveClientsFast(t *testing.T) {
 		regexp.MustCompile(`Game is finished`))
 }
 
+func TestHelloGLActiveClientsSpecial(t *testing.T) {
+	subtestHelloGlActiveClients(t, nil, 4, 1, 1,
+		3, 3, 3, 3,
+		0, 0,
+		false, false,
+		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn, DefaultHelloClientCheckTurn,
+		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
+		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
+		DefaultHelloClientTurnAck, DefaultHelloClientTurnAck,
+		regexp.MustCompile(`Game is finished`),
+		regexp.MustCompile(`Game is finished`),
+		regexp.MustCompile(`Game is finished`))
+}
+
 // Invalid DO_INIT_ACK
-func doInitAckNoMsgType(nbPlayers, nbTurns int) string {
+func doInitAckNoMsgType(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"initial_game_state":{"all_clients":{}}}`
 }
 
-func doInitAckNoInitialGameState(nbPlayers, nbTurns int) string {
+func doInitAckNoInitialGameState(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"message_type": "DO_INIT_ACK"}`
 }
 
-func doInitAckBadMsgType(nbPlayers, nbTurns int) string {
+func doInitAckBadMsgType(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"message_type": "DO_INIT_ACKz",
 		"initial_game_state":{"all_clients":{}}}`
 }
 
-func doInitAckBadInitialGameStateNotObject(nbPlayers, nbTurns int) string {
+func doInitAckBadInitialGameStateNotObject(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"message_type":"DO_INIT_ACK", "initial_game_state":0}`
 }
 
-func doInitAckBadInitialGameStateNoAllClients(nbPlayers, nbTurns int) string {
+func doInitAckBadInitialGameStateNoAllClients(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"message_type":"DO_INIT_ACK", "initial_game_state":{}}`
 }
 
 func TestInvalidDoInitAckNoMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 0, 1, 1,
 		0, 0,
 		false, false,
@@ -258,7 +334,7 @@ func TestInvalidDoInitAckNoMsgType(t *testing.T) {
 }
 
 func TestInvalidDoInitAckNoInitialGameState(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 0, 1, 1,
 		0, 0,
 		false, false,
@@ -273,7 +349,7 @@ func TestInvalidDoInitAckNoInitialGameState(t *testing.T) {
 }
 
 func TestInvalidDoInitAckBadMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 0, 1, 1,
 		0, 0,
 		false, false,
@@ -287,7 +363,7 @@ func TestInvalidDoInitAckBadMsgType(t *testing.T) {
 }
 
 func TestInvalidDoInitAckBadInitialGameStateNotObject(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 0, 1, 1,
 		0, 0,
 		false, false,
@@ -301,7 +377,7 @@ func TestInvalidDoInitAckBadInitialGameStateNotObject(t *testing.T) {
 }
 
 func TestInvalidDoInitAckBadInitialGameStateNoAllClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 0, 1, 1,
 		0, 0,
 		false, false,
@@ -343,7 +419,7 @@ func doTurnAckBadWinner(turn int, actions []interface{}) string {
 }
 
 func TestInvalidDoTurnAckNoMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 1, 0, 0,
 		0, 0,
 		false, false,
@@ -357,7 +433,7 @@ func TestInvalidDoTurnAckNoMsgType(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckBadMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 1, 0, 0,
 		0, 0,
 		false, false,
@@ -371,7 +447,7 @@ func TestInvalidDoTurnAckBadMsgType(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckNoWinner(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 1, 0, 0,
 		0, 0,
 		false, false,
@@ -385,7 +461,7 @@ func TestInvalidDoTurnAckNoWinner(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckNoGameState(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 1, 0, 0,
 		0, 0,
 		false, false,
@@ -399,7 +475,7 @@ func TestInvalidDoTurnAckNoGameState(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckNoAllClients(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 1, 0, 0,
 		0, 0,
 		false, false,
@@ -413,7 +489,7 @@ func TestInvalidDoTurnAckNoAllClients(t *testing.T) {
 }
 
 func TestInvalidDoTurnAckBadWinner(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 1, 0, 0,
 		0, 0,
 		false, false,
@@ -461,7 +537,7 @@ func turnAckBadActions(turn, playerID int) string {
 }
 
 func TestInvalidTurnAckNoMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -475,7 +551,7 @@ func TestInvalidTurnAckNoMsgType(t *testing.T) {
 }
 
 func TestInvalidTurnAckNoTurnNumber(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -489,7 +565,7 @@ func TestInvalidTurnAckNoTurnNumber(t *testing.T) {
 }
 
 func TestInvalidTurnAckNoActions(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -503,7 +579,7 @@ func TestInvalidTurnAckNoActions(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadMsgType(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -517,7 +593,7 @@ func TestInvalidTurnAckBadMsgType(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadTurnNumberValue(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -531,7 +607,7 @@ func TestInvalidTurnAckBadTurnNumberValue(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadTurnNumberNotInt(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -545,7 +621,7 @@ func TestInvalidTurnAckBadTurnNumberNotInt(t *testing.T) {
 }
 
 func TestInvalidTurnAckBadActions(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 1, 1,
+	subtestHelloGlActiveClients(t, nil, 1, 0, 1,
 		3, 3, 2, 3,
 		0, 0,
 		false, false,
@@ -574,7 +650,7 @@ func checkGameEndsWinner(t *testing.T, msg map[string]interface{}) {
 }
 
 func TestHelloWinner(t *testing.T) {
-	subtestHelloGlActiveClients(t, nil, 4, 1,
+	subtestHelloGlActiveClients(t, nil, 4, 0, 1,
 		3, 3, 3, 3,
 		0, 0,
 		false, false,

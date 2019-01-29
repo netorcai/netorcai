@@ -65,7 +65,7 @@ func RunServer(port int, globalState *GlobalState, onexit,
 			client.writer = bufio.NewWriter(client.Conn)
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
-			client.canTerminate = make(chan int)
+			client.canTerminate = make(chan int, 1)
 
 			go handleClient(client, globalState, gameLogicExit)
 		}

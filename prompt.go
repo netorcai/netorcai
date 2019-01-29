@@ -34,6 +34,7 @@ func executor(line string) {
 	acceptedSetVariables := []string{
 		"nb-turns-max",
 		"nb-players-max",
+		"nb-splayers-max",
 		"nb-visus-max",
 		"delay-first-turn",
 		"delay-turns",
@@ -71,6 +72,9 @@ func executor(line string) {
 			case "nb-players-max":
 				fmt.Printf("%v=%v\n", "nb-players-max",
 					globalGS.NbPlayersMax)
+			case "nb-splayers-max":
+				fmt.Printf("%v=%v\n", "nb-splayers-max",
+					globalGS.NbSpecialPlayersMax)
 			case "nb-visus-max":
 				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.NbVisusMax)
 			case "delay-first-turn":
@@ -83,6 +87,8 @@ func executor(line string) {
 				fmt.Printf("%v=%v\n", "nb-turns-max", globalGS.NbTurnsMax)
 				fmt.Printf("%v=%v\n", "nb-players-max",
 					globalGS.NbPlayersMax)
+				fmt.Printf("%v=%v\n", "nb-splayers-max",
+					globalGS.NbSpecialPlayersMax)
 				fmt.Printf("%v=%v\n", "nb-visus-max", globalGS.NbVisusMax)
 				fmt.Printf("%v=%v\n", "delay-first-turn",
 					globalGS.MillisecondsBeforeFirstTurn)
@@ -129,6 +135,18 @@ func executor(line string) {
 						globalGS.NbPlayersMax = int(intValue)
 					} else {
 						fmt.Printf("Bad VALUE=%v: Not in [1,1024]\n",
+							intValue)
+					}
+				}
+			case "nb-splayers-max":
+				if errInt != nil {
+					fmt.Printf("Bad VALUE=%v. %v\n",
+						matches["value"], errInt.Error())
+				} else {
+					if intValue >= 0 && intValue <= 1024 {
+						globalGS.NbSpecialPlayersMax = int(intValue)
+					} else {
+						fmt.Printf("Bad VALUE=%v: Not in [0,1024]\n",
 							intValue)
 					}
 				}
@@ -199,6 +217,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 	setSuggestions := []prompt.Suggest{
 		{Text: "nb-turns-max", Description: "Maximum number of turns"},
 		{Text: "nb-players-max", Description: "Maximum number of players"},
+		{Text: "nb-splayers-max", Description: "Maximum number of special players"},
 		{Text: "nb-visus-max", Description: "Maximum number of visualizations"},
 		{Text: "delay-first-turn", Description: "Time (ms) before 1st turn"},
 		{Text: "delay-turns", Description: "Time (ms) between turns"},

@@ -10,27 +10,27 @@ import (
 )
 
 type ClientGameStartsCheckFunc func(*testing.T, map[string]interface{}, int,
-	int, float64, float64, bool) int
-type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int,
+	int, int, float64, float64, bool) int
+type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int, int,
 	bool) int
 type ClientGameEndsCheckFunc func(*testing.T, map[string]interface{})
-type GLCheckDoTurnFunc func(*testing.T, map[string]interface{}, int,
-	int) []interface{}
+type GLCheckDoTurnFunc func(*testing.T, map[string]interface{},
+	int, int, int) []interface{}
 type ClientTurnAckFunc func(int, int) string
-type GLDoInitAckFunc func(int, int) string
+type GLDoInitAckFunc func(int, int, int) string
 type GLDoTurnAckFunc func(int, []interface{}) string
 
 func DefaultHelloClientCheckGameStarts(t *testing.T,
-	msg map[string]interface{}, nbPlayers, nbTurnsGL int,
+	msg map[string]interface{}, nbPlayers, nbSpecialPlayers, nbTurnsGL int,
 	msBeforeFirstTurn, msBetweenTurns float64, isPlayer bool) int {
-	playerID := checkGameStarts(t, msg, nbPlayers, nbTurnsGL,
+	playerID := checkGameStarts(t, msg, nbPlayers, nbSpecialPlayers, nbTurnsGL,
 		msBeforeFirstTurn, msBetweenTurns, isPlayer)
 	return playerID
 }
 
 func DefaultHelloClientCheckTurn(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int, isPlayer bool) int {
-	return checkTurn(t, msg, expectedNbPlayers, expectedTurnNumber, isPlayer)
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int, isPlayer bool) int {
+	return checkTurn(t, msg, expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber, isPlayer)
 }
 
 func DefaultHelloClientCheckGameEnds(t *testing.T,
@@ -39,8 +39,8 @@ func DefaultHelloClientCheckGameEnds(t *testing.T,
 }
 
 func DefaultHelloGLCheckDoTurn(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedTurnNumber int) []interface{} {
-	actions := checkDoTurn(t, msg, expectedNbPlayers, expectedTurnNumber)
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber int) []interface{} {
+	actions := checkDoTurn(t, msg, expectedNbPlayers, expectedNbSpecialPlayers, expectedTurnNumber)
 	return actions
 }
 
@@ -50,7 +50,7 @@ func DefaultHelloClientTurnAck(turn, playerID int) string {
 		"actions": []}`, turn)
 }
 
-func DefaultHelloGLDoInitAck(nbPlayers, nbTurns int) string {
+func DefaultHelloGLDoInitAck(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"message_type":"DO_INIT_ACK", "initial_game_state":{"all_clients":{}}}`
 }
 
@@ -61,7 +61,7 @@ func DefaultHelloGlDoTurnAck(turn int, actions []interface{}) string {
 }
 
 func helloGameLogic(t *testing.T, glClient *client.Client,
-	nbPlayers, nbTurnsNetorcai, nbTurns int,
+	nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurns int,
 	checkDoTurnFunc GLCheckDoTurnFunc,
 	doInitAckFunc GLDoInitAckFunc, doTurnAckFunc GLDoTurnAckFunc,
 	kickReasonMatcher *regexp.Regexp) {
@@ -71,7 +71,7 @@ func helloGameLogic(t *testing.T, glClient *client.Client,
 	checkDoInit(t, msg, nbPlayers, nbTurnsNetorcai)
 
 	// Send DO_INIT_ACK
-	data := doInitAckFunc(nbPlayers, nbTurnsNetorcai)
+	data := doInitAckFunc(nbPlayers, nbSpecialPlayers, nbTurnsNetorcai)
 	err = glClient.SendString(data)
 	assert.NoError(t, err, "GLClient could not send DO_INIT_ACK")
 
@@ -80,7 +80,7 @@ func helloGameLogic(t *testing.T, glClient *client.Client,
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_TURN) "+
 			"%v/%v", turn, nbTurns)
-		actions := checkDoTurnFunc(t, msg, nbPlayers, turn-1)
+		actions := checkDoTurnFunc(t, msg, nbPlayers, nbSpecialPlayers, turn-1)
 
 		// Send DO_TURN_ACK
 		data = doTurnAckFunc(turn, actions)
@@ -96,8 +96,9 @@ func helloGameLogic(t *testing.T, glClient *client.Client,
 	glClient.Disconnect()
 }
 
-func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
-	nbTurnsClient, turnsToSkip int, msBeforeFirstTurn, msBetweenTurns float64,
+func helloClient(t *testing.T, client *client.Client,
+	nbPlayers, nbSpecialPlayers, nbTurnsGL, nbTurnsClient, turnsToSkip int,
+	msBeforeFirstTurn, msBetweenTurns float64,
 	isPlayer, allowTurnSkip, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
 	checkGameStartsFunc ClientGameStartsCheckFunc,
 	checkTurnFunc ClientTurnCheckFunc,
@@ -107,7 +108,7 @@ func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
 		// Wait GAME_STARTS
 		msg, err := waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
-		playerID := checkGameStartsFunc(t, msg, nbPlayers, nbTurnsGL,
+		playerID := checkGameStartsFunc(t, msg, nbPlayers, nbSpecialPlayers, nbTurnsGL,
 			msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
 		if !allowTurnSkip {
@@ -116,7 +117,7 @@ func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
 				msg, err := waitReadMessage(client, 1000)
 				assert.NoError(t, err, "Could not read client message (TURN) "+
 					"%v/%v", turn, nbTurnsClient)
-				turnReceived := checkTurnFunc(t, msg, nbPlayers, turn, isPlayer)
+				turnReceived := checkTurnFunc(t, msg, nbPlayers, nbSpecialPlayers, turn, isPlayer)
 
 				// Send TURN_ACK
 				data := turnAckFunc(turnReceived, playerID)
@@ -135,7 +136,7 @@ func helloClient(t *testing.T, client *client.Client, nbPlayers, nbTurnsGL,
 				msg, err := waitReadMessage(client, 1000)
 				assert.NoError(t, err, "Could not read client message (TURN or GAME_ENDS) "+
 					"%v/%v", turn, nbTurnsClient)
-				turn = checkTurnPotentialTurnsSkipped(t, msg, nbPlayers, turn, isPlayer)
+				turn = checkTurnPotentialTurnsSkipped(t, msg, nbPlayers, nbSpecialPlayers, turn, isPlayer)
 
 				messageType, err := netorcai.ReadString(msg, "message_type")
 				if err == nil && messageType == "GAME_ENDS" {

@@ -7,7 +7,21 @@ import (
 )
 
 func TestKickallOnAbortKillSigterm(t *testing.T) {
-	proc, clients, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000)
+	proc, clients, _, _, _, _ := runNetorcaiAndAllClients(t, []string{}, 1000, 0)
+	defer killallNetorcaiSIGKILL()
+
+	killallNetorcai()
+
+	checkAllKicked(t, clients, regexp.MustCompile(`netorcai abort`), 1000)
+
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	_, expRetCode := handleCoverage(t, 1)
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
+}
+
+func TestKickallOnAbortKillSigtermSpecial(t *testing.T) {
+	proc, clients, _, _, _, _ := runNetorcaiAndAllClients(t, []string{"--nb-splayers-max=1"}, 1000, 1)
 	defer killallNetorcaiSIGKILL()
 
 	killallNetorcai()

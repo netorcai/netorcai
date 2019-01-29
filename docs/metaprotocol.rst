@@ -172,6 +172,7 @@ Fields.
   - ``remote_address`` (string): The player network remote address.
   - ``is_connected`` (bool): Whether the player is currently connected to **netorcai**.
 - ``nb_players`` (integral positive number): The number of players of the game.
+- ``nb_special_players`` (integral positive number): The number of special players of the game.
 - ``nb_turns_max`` (integral positive number): The maximum number of turns of the game.
 - ``milliseconds_before_first_turn`` (non-negative number):
   The number of milliseconds before the first game TURN_.
@@ -314,6 +315,7 @@ generate the game initial state.
 Fields.
 
 - ``nb_players`` (integral positive number): The number of players in the game.
+- ``nb_special_players`` (integral positive number): The number of special players in the game.
 - ``nb_turns_max`` (integral positive number): The maximum number of turns of the game.
 
 Example.
