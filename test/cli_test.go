@@ -229,6 +229,78 @@ func TestCLIArgNbPlayersMaxBig(t *testing.T) {
 	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
+/********************
+ * --nb-splayers-max *
+ ********************/
+func TestCLIArgNbSpecialPlayersMaxNotInteger(t *testing.T) {
+	args := []string{"--nb-splayers-max=meh"}
+	coverFile, expRetCode := handleCoverage(t, 1)
+
+	proc, err := runNetorcaiCover(coverFile, args)
+	assert.NoError(t, err, "Cannot start netorcai")
+	defer killallNetorcaiSIGKILL()
+
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
+}
+
+func TestCLIArgNbSpecialPlayersMaxTooSmall(t *testing.T) {
+	args := []string{"--nb-splayers-max=-1"}
+	coverFile, expRetCode := handleCoverage(t, 1)
+
+	proc, err := runNetorcaiCover(coverFile, args)
+	assert.NoError(t, err, "Cannot start netorcai")
+	defer killallNetorcaiSIGKILL()
+
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
+}
+
+func TestCLIArgNbSpecialPlayersMaxTooBig(t *testing.T) {
+	args := []string{"--nb-splayers-max=1025"}
+	coverFile, expRetCode := handleCoverage(t, 1)
+
+	proc, err := runNetorcaiCover(coverFile, args)
+	assert.NoError(t, err, "Cannot start netorcai")
+	defer killallNetorcaiSIGKILL()
+
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
+}
+
+func TestCLIArgNbSpecialPlayersMaxSmall(t *testing.T) {
+	args := []string{"--nb-splayers-max=0"}
+	coverFile, _ := handleCoverage(t, 0)
+
+	proc, err := runNetorcaiCover(coverFile, args)
+	assert.NoError(t, err, "Cannot start netorcai")
+	defer killallNetorcaiSIGKILL()
+
+	_, err = waitListening(proc.outputControl, 1000)
+	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestCLIArgNbSpecialPlayersMaxBig(t *testing.T) {
+	args := []string{"--nb-splayers-max=1024"}
+	coverFile, _ := handleCoverage(t, 0)
+
+	proc, err := runNetorcaiCover(coverFile, args)
+	assert.NoError(t, err, "Cannot start netorcai")
+	defer killallNetorcaiSIGKILL()
+
+	_, err = waitListening(proc.outputControl, 1000)
+	assert.NoError(t, err, "Netorcai is not listening")
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 /**********
  * --port *
  **********/
