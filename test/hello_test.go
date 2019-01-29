@@ -217,7 +217,10 @@ func subtestHelloGlActiveClients(t *testing.T,
 	proc, _, players, _, visus, gl := runNetorcaiAndClients(
 		t, append([]string{"--delay-first-turn=500",
 			fmt.Sprintf("--nb-turns-max=%v", nbTurnsNetorcai),
-			"--delay-turns=500", "--debug", "--json-logs"},
+			fmt.Sprintf("--nb-players-max=%v", nbPlayers),
+			fmt.Sprintf("--nb-splayers-max=%v", nbSpecialPlayers),
+			fmt.Sprintf("--nb-visus-max=%v", nbVisus),
+			"--delay-turns=500", "--debug", "--json-logs", "--autostart"},
 			netorcaiAdditionalArgs...),
 		1000, nbPlayers, nbSpecialPlayers, nbVisus)
 	defer killallNetorcaiSIGKILL()
@@ -244,9 +247,6 @@ func subtestHelloGlActiveClients(t *testing.T,
 			checkGameStartsFunc, visuCheckTurnFunc, checkGameEndsFunc,
 			visuTurnAckFunc, visuKickReasonMatcher)
 	}
-
-	// Start the game
-	proc.inputControl <- "start"
 
 	// Wait for game end
 	waitOutputTimeout(regexp.MustCompile(`Game is finished`),
