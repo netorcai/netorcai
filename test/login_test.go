@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
-	"time"
 )
 
 func TestLoginNotJson(t *testing.T) {
