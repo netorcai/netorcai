@@ -20,6 +20,14 @@ Added
 
 - New CLI command ``--fast``, which allows to start a new turn as soon as
   all players have decided what to do — instead of relying on a timer.
+- Special players can now be connected to netorcai.
+  The game logic knows which bots are *special*, which allows implementing
+  game modes with asymetric game rules.
+  As an example, the ghosts of a bomberman game could be implemented in a
+  special player bot which could have different actions than bombermen.
+
+  - New CLI command ``--nb-splayers-max``, to define the maximum number of special players.
+  - :ref:`proto_DO_INIT` and :ref:`proto_GAME_STARTS` messages now contain a ``nb_special_players`` field.
 
 ........................................................................................................................
 
