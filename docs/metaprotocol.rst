@@ -92,7 +92,7 @@ Example.
      "message_type": "LOGIN",
      "nickname": "strutser",
      "role": "player",
-     "metaprotocol_version": "1.2.0"
+     "metaprotocol_version": "2.0.0"
    }
 
 .. _proto_LOGIN_ACK:
@@ -104,14 +104,18 @@ This message type is sent from **netorcai** to (**clients** or **game logic**).
 
 It tells a client or the game logic that its LOGIN_ has been accepted.
 
-This message has no field.
+Fields.
+
+- ``metaprotocol_version`` (string).
+  The netorcai metaprotocol version used by the netorcai program (see :ref:`changelog`).
 
 Example.
 
 .. code:: json
 
    {
-     "message_type": "LOGIN_ACK"
+     "message_type": "LOGIN_ACK",
+     "metaprotocol_version": "2.0.0"
    }
 
 .. _proto_KICK:
