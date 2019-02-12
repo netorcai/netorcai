@@ -81,6 +81,8 @@ Fields.
 - ``nickname`` (string): The name the clients wants to have.
   Must respect the ``\A\S{1,10}\z`` (in `go regular expression syntax`_).
 - ``role`` (string). Must be ``player``, ``visualization`` or ``game logic``.
+- ``metaprotocol_version`` (string).
+  The netorcai metaprotocol version used by the client (see :ref:`changelog`).
 
 Example.
 
@@ -89,7 +91,8 @@ Example.
    {
      "message_type": "LOGIN",
      "nickname": "strutser",
-     "role": "player"
+     "role": "player",
+     "metaprotocol_version": "1.2.0"
    }
 
 .. _proto_LOGIN_ACK:
