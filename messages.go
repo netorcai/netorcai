@@ -160,7 +160,7 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 
 	if varMap["Major"] != VersionMajor {
 		return readMessage, fmt.Errorf(
-			"Metaprotocol major version mismatch: Client asks for '%s' while netorcai uses '%s'",
+			"Metaprotocol version mismatch. Major version must be identical but client asks for '%s' while netorcai uses '%s'.",
 			readMessage.metaprotocolVersion, Version)
 	}
 
