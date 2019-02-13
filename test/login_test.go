@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/netorcai/netorcai"
 	"github.com/netorcai/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
@@ -195,7 +196,7 @@ func TestLoginPlayerAscii(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	player, err := connectClient(t, "player", "player", 1000)
+	player, err := connectClient(t, "player", "player", netorcai.Version, 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	player.Disconnect()
 
@@ -207,7 +208,7 @@ func TestLoginPlayerArabic(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	player, err := connectClient(t, "player", "لاعب", 1000)
+	player, err := connectClient(t, "player", "لاعب", netorcai.Version, 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	player.Disconnect()
 
@@ -219,7 +220,7 @@ func TestLoginPlayerJapanese(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	player, err := connectClient(t, "player", "プレーヤー", 1000)
+	player, err := connectClient(t, "player", "プレーヤー", netorcai.Version, 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	player.Disconnect()
 
@@ -247,7 +248,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		err := client.Connect("localhost", 4242)
 		assert.NoError(t, err, "Cannot connect")
 
-		err = client.SendLogin(loginRole, "клиент")
+		err = client.SendLogin(loginRole, "клиент", netorcai.Version)
 		assert.NoError(t, err, "Cannot send LOGIN")
 
 		msg, err := waitReadMessage(client, 1000)
@@ -283,7 +284,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	if loginRole != "game logic" {
 		// Connect the expected number of clients
 		for i := 0; i < expectedNbLogged; i++ {
-			_, err := connectClient(t, loginRole, "клиент", 1000)
+			_, err := connectClient(t, loginRole, "клиент", netorcai.Version, 1000)
 			assert.NoError(t, err, "Cannot connect client")
 		}
 	}
@@ -329,7 +330,7 @@ func subtestLoginGameAlreadyStarted(t *testing.T, loginRole string,
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 
-	err = client.SendLogin(loginRole, "client")
+	err = client.SendLogin(loginRole, "client", netorcai.Version)
 	assert.NoError(t, err, "Cannot send LOGIN")
 
 	if shouldConnect {
