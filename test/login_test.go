@@ -188,6 +188,86 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
+func TestLoginNoMetaprotocolVersion(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Field 'metaprotocol_version' is missing"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestLoginBadMetaprotocolVersionNotString(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid", "metaprotocol_version": false}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Non-string value for field 'metaprotocol_version'"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestLoginBadMetaprotocolVersionNotSemver(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid", "metaprotocol_version": "42"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Invalid metaprotocol version: Not MAJOR.MINOR.PATCH"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestLoginBadMetaprotocolVersionDifferentMajor(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid", "metaprotocol_version": "0.1.0"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Metaprotocol version mismatch. Major version must be identical"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 /************
  * LOGIN ok *
  ************/
