@@ -280,7 +280,8 @@ func Kick(client *Client, reason string) {
 
 func sendLoginACK(client *Client) error {
 	msg := MessageLoginAck{
-		MessageType: "LOGIN_ACK",
+		MessageType:         "LOGIN_ACK",
+		MetaprotocolVersion: Version,
 	}
 
 	content, err := json.Marshal(msg)

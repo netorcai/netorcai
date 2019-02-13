@@ -3,15 +3,18 @@ package netorcai
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 type MessageLogin struct {
-	nickname string
-	role     string
+	nickname            string
+	role                string
+	metaprotocolVersion string
 }
 
 type MessageLoginAck struct {
-	MessageType string `json:"message_type"`
+	MessageType         string `json:"message_type"`
+	MetaprotocolVersion string `json:"metaprotocol_version"`
 }
 
 // Quite an immutable PlayerOrVisuClient generated at game start
@@ -130,11 +133,38 @@ func readLoginMessage(data map[string]interface{}) (MessageLogin, error) {
 	case "player", "special player",
 		"visualization",
 		"game logic":
-		return readMessage, nil
 	default:
 		return readMessage, fmt.Errorf("Invalid role '%v'",
 			readMessage.role)
 	}
+
+	// Read metaprotocol version
+	readMessage.metaprotocolVersion, err = ReadString(data, "metaprotocol_version")
+	if err != nil {
+		return readMessage, err
+	}
+
+	// Check metaprotocol version
+	r, _ = regexp.Compile(`\A(?P<Major>\d+)\.(?P<Minor>\d+)\.(?P<Patch>\d+)\z`)
+	match := r.FindStringSubmatch(readMessage.metaprotocolVersion)
+	if match == nil {
+		return readMessage, fmt.Errorf("Invalid metaprotocol version: Not MAJOR.MINOR.PATCH")
+	}
+
+	varMap := make(map[string]int)
+	for i, name := range r.SubexpNames() {
+		if i > 0 && i <= len(match) {
+			varMap[name], _ = strconv.Atoi(match[i])
+		}
+	}
+
+	if varMap["Major"] != VersionMajor {
+		return readMessage, fmt.Errorf(
+			"Metaprotocol major version mismatch: Client asks for '%s' while netorcai uses '%s'",
+			readMessage.metaprotocolVersion, Version)
+	}
+
+	return readMessage, nil
 }
 
 func readTurnAckMessage(data map[string]interface{}, expectedTurnNumber int) (
