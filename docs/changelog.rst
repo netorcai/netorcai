@@ -20,6 +20,9 @@ Unreleased
 Changed (breaks metaprotocol)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- The `CONTENT_SIZE` message header is now 32-bit (was 16-bit).
+  `CONTENT_SIZE` value must be smaller than 1 kio for the first message,
+  and smaller than 16 Mio for other messages.
 - Protocol version handshake added in :ref:`proto_LOGIN` and :ref:`proto_LOGIN_ACK`.
   As a result, old clients will not be able to log in anymore because their metaprotocol version is unknown.
 

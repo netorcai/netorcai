@@ -6,15 +6,16 @@ Network metaprotocol
 This metaprotocol is based on TCP and is *mostly* textual,
 as all messages are composed of two parts.
 
-1. `CONTENT_SIZE`, a 16-bit little-endian unsigned integer corresponding to
-   the size of the message content (therefore excluding the 2 octets used to store CONTENT_SIZE).
+1. `CONTENT_SIZE`, a 32-bit little-endian unsigned integer corresponding to
+   the size of the message content (therefore excluding the 4 octets used to store CONTENT_SIZE).
+   `CONTENT_SIZE` value must be smaller than 1 kio for the first message,
+   and smaller than 16 Mio for other messages.
 2. `CONTENT`, an UTF-8 string of CONTENT_SIZE octets, terminated by an UTF-8
    *Line Feed* character (U+000A).
 
 The content of each message must be a valid JSON_ object.
 Messages are typed (see `message types`_) and clients must follow a specified
 behavior (see `expected client behavior`_).
-
 
 Network entities (endpoints)
 ----------------------------
