@@ -81,11 +81,12 @@ func (c *Client) SendJSON(msg map[string]interface{}) error {
 	}
 }
 
-func (c *Client) SendLogin(role, nickname string) error {
+func (c *Client) SendLogin(role, nickname, metaprotocolVersion string) error {
 	msg := map[string]interface{}{
-		"message_type": "LOGIN",
-		"role":         role,
-		"nickname":     nickname,
+		"message_type":         "LOGIN",
+		"role":                 role,
+		"nickname":             nickname,
+		"metaprotocol_version": metaprotocolVersion,
 	}
 
 	return c.SendJSON(msg)

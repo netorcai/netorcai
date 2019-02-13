@@ -155,13 +155,13 @@ func waitReadMessage(client *client.Client, timeoutMS int) (
 	}
 }
 
-func connectClient(t *testing.T, role, nickname string, timeoutMS int) (
+func connectClient(t *testing.T, role, nickname, metaprotocolVersion string, timeoutMS int) (
 	*client.Client, error) {
 	client := &client.Client{}
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 
-	err = client.SendLogin(role, nickname)
+	err = client.SendLogin(role, nickname, metaprotocolVersion)
 	assert.NoError(t, err, "Cannot send LOGIN")
 
 	msg, err := waitReadMessage(client, 1000)
@@ -178,7 +178,7 @@ func runNetorcaiAndClients(t *testing.T, arguments []string,
 
 	// Players
 	for i := 0; i < nbPlayers; i++ {
-		player, err := connectClient(t, "player", "player", timeoutMS)
+		player, err := connectClient(t, "player", "player", netorcai.Version, timeoutMS)
 		if err != nil {
 			killallNetorcai()
 			assert.NoError(t, err, "Cannot connect client")
@@ -189,7 +189,7 @@ func runNetorcaiAndClients(t *testing.T, arguments []string,
 
 	// Special players
 	for i := 0; i < nbSpecialPlayers; i++ {
-		splayer, err := connectClient(t, "special player", "splayer", timeoutMS)
+		splayer, err := connectClient(t, "special player", "splayer", netorcai.Version, timeoutMS)
 		if err != nil {
 			killallNetorcai()
 			assert.NoError(t, err, "Cannot connect client")
@@ -200,7 +200,7 @@ func runNetorcaiAndClients(t *testing.T, arguments []string,
 
 	// Visus
 	for i := 0; i < nbVisus; i++ {
-		visu, err := connectClient(t, "visualization", "visu", timeoutMS)
+		visu, err := connectClient(t, "visualization", "visu", netorcai.Version, timeoutMS)
 		if err != nil {
 			killallNetorcai()
 			assert.NoError(t, err, "Cannot connect client")
@@ -211,7 +211,7 @@ func runNetorcaiAndClients(t *testing.T, arguments []string,
 
 	// Game Logic
 	for i := 0; i < 1; i++ {
-		gl, err := connectClient(t, "game logic", "game_logic", timeoutMS)
+		gl, err := connectClient(t, "game logic", "game_logic", netorcai.Version, timeoutMS)
 		if err != nil {
 			killallNetorcai()
 			assert.NoError(t, err, "Cannot connect client")

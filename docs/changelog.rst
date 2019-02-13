@@ -1,3 +1,5 @@
+.. _changelog:
+
 Changelog
 =========
 
@@ -14,6 +16,12 @@ Unreleased
 ----------
 
 - `Commits since v1.2.0 <https://github.com/netorcai/netorcai/compare/v1.2.0...master>`_
+
+Changed (breaks metaprotocol)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Protocol version handshake added in :ref:`proto_LOGIN` and :ref:`proto_LOGIN_ACK`.
+  As a result, old clients will not be able to log in anymore because their metaprotocol version is unknown.
 
 Added
 ~~~~~

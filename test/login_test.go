@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/netorcai/netorcai"
 	"github.com/netorcai/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"regexp"
@@ -187,6 +188,86 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 	assert.NoError(t, err, "Netorcai could not be killed gently")
 }
 
+func TestLoginNoMetaprotocolVersion(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Field 'metaprotocol_version' is missing"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestLoginBadMetaprotocolVersionNotString(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid", "metaprotocol_version": false}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Non-string value for field 'metaprotocol_version'"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestLoginBadMetaprotocolVersionNotSemver(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid", "metaprotocol_version": "42"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Invalid metaprotocol version: Not MAJOR.MINOR.PATCH"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
+func TestLoginBadMetaprotocolVersionDifferentMajor(t *testing.T) {
+	proc := runNetorcaiWaitListening(t, []string{})
+	defer killallNetorcaiSIGKILL()
+
+	var client client.Client
+	err := client.Connect("localhost", 4242)
+	assert.NoError(t, err, "Cannot connect")
+	defer client.Disconnect()
+
+	err = client.SendString(`{"message_type":"LOGIN", "role":"player", "nickname":"valid", "metaprotocol_version": "0.1.0"}`)
+	assert.NoError(t, err, "Cannot send message")
+
+	msg, err := waitReadMessage(&client, 1000)
+	assert.NoError(t, err, "Cannot read client message (KICK)")
+	checkKick(t, msg, regexp.MustCompile("Metaprotocol version mismatch. Major version must be identical"))
+
+	err = killNetorcaiGently(proc, 1000)
+	assert.NoError(t, err, "Netorcai could not be killed gently")
+}
+
 /************
  * LOGIN ok *
  ************/
@@ -195,7 +276,7 @@ func TestLoginPlayerAscii(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	player, err := connectClient(t, "player", "player", 1000)
+	player, err := connectClient(t, "player", "player", netorcai.Version, 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	player.Disconnect()
 
@@ -207,7 +288,7 @@ func TestLoginPlayerArabic(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	player, err := connectClient(t, "player", "لاعب", 1000)
+	player, err := connectClient(t, "player", "لاعب", netorcai.Version, 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	player.Disconnect()
 
@@ -219,7 +300,7 @@ func TestLoginPlayerJapanese(t *testing.T) {
 	proc := runNetorcaiWaitListening(t, []string{})
 	defer killallNetorcaiSIGKILL()
 
-	player, err := connectClient(t, "player", "プレーヤー", 1000)
+	player, err := connectClient(t, "player", "プレーヤー", netorcai.Version, 1000)
 	assert.NoError(t, err, "Cannot connect client")
 	player.Disconnect()
 
@@ -247,7 +328,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 		err := client.Connect("localhost", 4242)
 		assert.NoError(t, err, "Cannot connect")
 
-		err = client.SendLogin(loginRole, "клиент")
+		err = client.SendLogin(loginRole, "клиент", netorcai.Version)
 		assert.NoError(t, err, "Cannot send LOGIN")
 
 		msg, err := waitReadMessage(client, 1000)
@@ -283,7 +364,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 	if loginRole != "game logic" {
 		// Connect the expected number of clients
 		for i := 0; i < expectedNbLogged; i++ {
-			_, err := connectClient(t, loginRole, "клиент", 1000)
+			_, err := connectClient(t, loginRole, "клиент", netorcai.Version, 1000)
 			assert.NoError(t, err, "Cannot connect client")
 		}
 	}
@@ -329,7 +410,7 @@ func subtestLoginGameAlreadyStarted(t *testing.T, loginRole string,
 	err := client.Connect("localhost", 4242)
 	assert.NoError(t, err, "Cannot connect")
 
-	err = client.SendLogin(loginRole, "client")
+	err = client.SendLogin(loginRole, "client", netorcai.Version)
 	assert.NoError(t, err, "Cannot send LOGIN")
 
 	if shouldConnect {
