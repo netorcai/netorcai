@@ -38,14 +38,14 @@ func (c *Client) Disconnect() error {
 
 func (c *Client) SendBytes(content []byte) error {
 	contentSize := len(content)
-	if contentSize >= 65535 {
-		return fmt.Errorf("content too big: size does not fit in 16 bits")
+	if contentSize >= 16777215 {
+		return fmt.Errorf("content too big: size does not fit in 24 bits")
 	}
 
 	// Write content size on socket
-	var contentSizeUint16 uint16 = uint16(contentSize) + 1 // +1 for \n
-	contentSizeBuf := make([]byte, 2)
-	binary.LittleEndian.PutUint16(contentSizeBuf, contentSizeUint16)
+	var contentSizeUint32 uint32 = uint32(contentSize) + 1 // +1 for \n
+	contentSizeBuf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(contentSizeBuf, contentSizeUint32)
 	_, err := c.writer.Write(contentSizeBuf)
 	if err != nil {
 		return fmt.Errorf("Remote endpoint closed? Write error: %v", err)
@@ -94,14 +94,14 @@ func (c *Client) SendLogin(role, nickname, metaprotocolVersion string) error {
 
 func (c *Client) ReadMessage() (map[string]interface{}, error) {
 	var msg map[string]interface{}
-	contentSizeBuf := make([]byte, 2)
+	contentSizeBuf := make([]byte, 4)
 	_, err := io.ReadFull(c.reader, contentSizeBuf)
 	if err != nil {
 		return msg, fmt.Errorf("Remote endpoint closed? Read error: %v", err)
 	}
 
 	// Read message content size
-	contentSize := binary.LittleEndian.Uint16(contentSizeBuf)
+	contentSize := binary.LittleEndian.Uint32(contentSizeBuf)
 
 	// Receive message content
 	contentBuf := make([]byte, contentSize)

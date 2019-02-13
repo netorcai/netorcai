@@ -72,63 +72,74 @@ func RunServer(port int, globalState *GlobalState, onexit,
 	}
 }
 
-func readClientMessages(client *Client) {
-	for {
-		var msg ClientMessage
-		// Receive message content size
-		contentSizeBuf := make([]byte, 2)
-		_, err := io.ReadFull(client.reader, contentSizeBuf)
-		if err != nil {
-			msg.err = fmt.Errorf("Remote endpoint closed? Read error: %v", err)
-			client.incomingMessages <- msg
-			return
-		}
-
-		// Read message content size
-		contentSize := binary.LittleEndian.Uint16(contentSizeBuf)
-
-		// Receive message content
-		contentBuf := make([]byte, contentSize)
-		_, err = io.ReadFull(client.reader, contentBuf)
-		if err != nil {
-			msg.err = fmt.Errorf("Remote endpoint closed? Read error: %v", err)
-			client.incomingMessages <- msg
-			return
-		}
-
-		log.WithFields(log.Fields{
-			"remote address": client.Conn.RemoteAddr(),
-			"nickname":       client.nickname,
-			"content size":   contentSize,
-			"content":        string(contentBuf),
-		}).Debug("New message received")
-		// Read message content
-		err = json.Unmarshal(contentBuf, &msg.content)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"err":             err,
-				"message content": string(contentBuf),
-			}).Debug("Non-JSON message received")
-			msg.err = fmt.Errorf("Non-JSON message received")
-			client.incomingMessages <- msg
-			return
-		}
-
+func readClientMessage(client *Client, maximumAllowedSize uint32, errorFormatOnTooBigMessage string) bool {
+	var msg ClientMessage
+	// Receive message content size
+	contentSizeBuf := make([]byte, 4)
+	_, err := io.ReadFull(client.reader, contentSizeBuf)
+	if err != nil {
+		msg.err = fmt.Errorf("Remote endpoint closed? Read error: %v", err)
 		client.incomingMessages <- msg
+		return false
+	}
+
+	// Read message content size
+	contentSize := binary.LittleEndian.Uint32(contentSizeBuf)
+	if contentSize > maximumAllowedSize {
+		msg.err = fmt.Errorf(errorFormatOnTooBigMessage, contentSize)
+		client.incomingMessages <- msg
+		return false
+	}
+
+	// Receive message content
+	contentBuf := make([]byte, contentSize)
+	_, err = io.ReadFull(client.reader, contentBuf)
+	if err != nil {
+		msg.err = fmt.Errorf("Remote endpoint closed? Read error: %v", err)
+		client.incomingMessages <- msg
+		return false
+	}
+
+	log.WithFields(log.Fields{
+		"remote address": client.Conn.RemoteAddr(),
+		"nickname":       client.nickname,
+		"content size":   contentSize,
+		"content":        string(contentBuf),
+	}).Debug("New message received")
+	// Read message content
+	err = json.Unmarshal(contentBuf, &msg.content)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":             err,
+			"message content": string(contentBuf),
+		}).Debug("Non-JSON message received")
+		msg.err = fmt.Errorf("Non-JSON message received")
+		client.incomingMessages <- msg
+		return false
+	}
+
+	client.incomingMessages <- msg
+	return true
+}
+
+func readClientMessages(client *Client) {
+	if readClientMessage(client, 1023, "Received message size of first message is too big: %v does not fit in 10 bits") {
+		for readClientMessage(client, 16777215, "Received message size is too big: %v does not fit in 24 bits") {
+		}
 	}
 }
 
 func sendMessage(client *Client, content []byte) error {
 	// Check content size
 	contentSize := len(content)
-	if contentSize >= 65535 {
-		return fmt.Errorf("content too big: size does not fit in 16 bits")
+	if contentSize >= 16777215 {
+		return fmt.Errorf("content too big: size does not fit in 24 bits")
 	}
 
 	// Write content size on socket
-	var contentSizeUint16 uint16 = uint16(contentSize) + 1 // +1 for \n
-	contentSizeBuf := make([]byte, 2)
-	binary.LittleEndian.PutUint16(contentSizeBuf, contentSizeUint16)
+	var contentSizeUint32 uint32 = uint32(contentSize) + 1 // +1 for \n
+	contentSizeBuf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(contentSizeBuf, contentSizeUint32)
 	_, err := client.writer.Write(contentSizeBuf)
 	if err != nil {
 		return fmt.Errorf("Remote endpoint closed? Write error: %v", err)
