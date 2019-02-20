@@ -1,4 +1,5 @@
 [![Build Status](https://img.shields.io/travis/netorcai/netorcai/master.png)](https://travis-ci.org/netorcai/netorcai)
+[![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/netorcai/netorcai?svg=true)](https://ci.appveyor.com/project/mpoquet/netorcai)
 [![Coverage Status](https://img.shields.io/coveralls/github/netorcai/netorcai/master.png)](https://coveralls.io/github/netorcai/netorcai?branch=master)
 [![Docs Status](https://img.shields.io/readthedocs/netorcai.svg?maxAge=600)](https://netorcai.readthedocs.io/)
 
