@@ -3,6 +3,7 @@ package netorcai
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mpoquet/go-prompt"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"sync"
@@ -29,6 +30,7 @@ type GlobalState struct {
 	Mutex sync.Mutex
 
 	Listener net.Listener
+	prompt   *prompt.Prompt
 
 	GameState int
 
@@ -332,6 +334,11 @@ func Cleanup() {
 		for _, client := range globalGS.GameLogic {
 			client.client.Conn.Close()
 		}
+	}
+
+	if globalGS.prompt != nil {
+		log.Warn("Cleaning prompt state.")
+		globalGS.prompt.TearDown()
 	}
 
 	UnlockGlobalStateMutex(globalGS, "Cleanup", "Main")

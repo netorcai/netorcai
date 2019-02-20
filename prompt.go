@@ -254,13 +254,16 @@ func RunPrompt(gs *GlobalState, onexit chan int, interactive bool) {
 }
 
 func interactivePrompt(onexit chan int) {
-	p := prompt.New(
+	LockGlobalStateMutex(globalGS, "Creating prompt", "Prompt")
+	globalGS.prompt = prompt.New(
 		executor,
 		completer,
 		prompt.OptionPrefix(">>> "),
 		prompt.OptionTitle(""),
 	)
-	p.Run()
+	UnlockGlobalStateMutex(globalGS, "Creating prompt", "Prompt")
+
+	globalGS.prompt.Run()
 	onexit <- 1
 }
 
