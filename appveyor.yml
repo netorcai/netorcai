@@ -1,0 +1,17 @@
+# appveyor.yml
+clone_folder: c:\gopath\src\github.com\netorcai\netorcai
+
+environment:
+  GOPATH: c:\gopath
+
+stack: go 1.11
+
+build_script:
+  - go get ./
+  - go get ./cmd/netorcai
+  - go build ./cmd/netorcai
+
+test_script:
+  - cd ./test
+  - go get github.com/stretchr/testify/assert
+  - go test -v .
