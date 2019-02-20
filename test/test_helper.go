@@ -6,7 +6,6 @@ import (
 	"github.com/netorcai/netorcai/client/go"
 	"github.com/stretchr/testify/assert"
 	"os"
-	"os/exec"
 	"regexp"
 	"testing"
 	"time"
@@ -103,18 +102,6 @@ func waitListening(output chan string, timeoutMS int) (
 	matchingLine string, err error) {
 	re := regexp.MustCompile("Listening incoming connections")
 	return waitOutputTimeout(re, output, timeoutMS, true)
-}
-
-func killallNetorcai() error {
-	cmd := exec.Command("killall")
-	cmd.Args = []string{"killall", "--quiet", "netorcai", "netorcai.cover"}
-	return cmd.Run()
-}
-
-func killallNetorcaiSIGKILL() error {
-	cmd := exec.Command("killall")
-	cmd.Args = []string{"killall", "-KILL", "--quiet", "netorcai", "netorcai.cover"}
-	return cmd.Run()
 }
 
 func handleCoverage(t *testing.T, expRetCode int) (coverFilename string,
