@@ -68,7 +68,7 @@ func helloGameLogic(t *testing.T, glClient *client.Client,
 	// Wait DO_INIT
 	msg, err := waitReadMessage(glClient, 1000)
 	assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
-	checkDoInit(t, msg, nbPlayers, nbTurnsNetorcai)
+	checkDoInit(t, msg, nbPlayers, nbSpecialPlayers, nbTurnsNetorcai)
 
 	// Send DO_INIT_ACK
 	data := doInitAckFunc(nbPlayers, nbSpecialPlayers, nbTurnsNetorcai)

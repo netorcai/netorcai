@@ -298,7 +298,7 @@ func checkLoginAck(t *testing.T, msg map[string]interface{}) {
 }
 
 func checkDoInit(t *testing.T, msg map[string]interface{},
-	expectedNbPlayers, expectedNbTurnsMax int) {
+	expectedNbPlayers, expectedNbSpecialPlayers, expectedNbTurnsMax int) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
 	assert.NoError(t, err, "Cannot read 'message_type' field in "+
 		"received client message (DO_INIT)")
@@ -309,6 +309,11 @@ func checkDoInit(t *testing.T, msg map[string]interface{},
 		assert.NoError(t, err, "Cannot read nb_players")
 		assert.Equal(t, expectedNbPlayers, nbPlayers,
 			"Unexpected value for nb_players in received DO_INIT message")
+
+		nbSpecialPlayers, err := netorcai.ReadInt(msg, "nb_special_players")
+		assert.NoError(t, err, "Cannot read nb_special_players")
+		assert.Equal(t, expectedNbSpecialPlayers, nbSpecialPlayers,
+			"Unexpected value for nb_special_players in received DO_INIT message")
 
 		nbTurnsMax, err := netorcai.ReadInt(msg, "nb_turns_max")
 		assert.NoError(t, err, "Cannot read nb_turns_max")

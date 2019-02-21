@@ -69,7 +69,7 @@ func TestInvalidGlNoDoInitAck(t *testing.T) {
 	go func(glClient *client.Client) {
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
-		checkDoInit(t, msg, 4, 100)
+		checkDoInit(t, msg, 4, 0, 100)
 
 		// Do not send DO_INIT_ACK on purpose
 		msg, err = waitReadMessage(glClient, 4000)
@@ -100,7 +100,7 @@ func TestInvalidGlNoDoInitAckSocketClosed(t *testing.T) {
 	go func(glClient *client.Client) {
 		msg, err := waitReadMessage(glClient, 1000)
 		assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
-		checkDoInit(t, msg, 4, 100)
+		checkDoInit(t, msg, 4, 0, 100)
 
 		glClient.Disconnect()
 	}(glClients[0])
