@@ -215,7 +215,7 @@ func subtestHelloGlActiveClients(t *testing.T,
 	playerTurnAckFunc, visuTurnAckFunc ClientTurnAckFunc,
 	glKickReasonMatcher, playerKickReasonMatcher,
 	visuKickReasonMatcher *regexp.Regexp) {
-	proc, _, players, _, visus, gl := runNetorcaiAndClients(
+	proc, _, players, specialPlayers, visus, gl := runNetorcaiAndClients(
 		t, append([]string{"--delay-first-turn=500",
 			fmt.Sprintf("--nb-turns-max=%v", nbTurnsNetorcai),
 			fmt.Sprintf("--nb-players-max=%v", nbPlayers),
@@ -234,6 +234,16 @@ func subtestHelloGlActiveClients(t *testing.T,
 	// Run player clients
 	for playerID, player := range players {
 		go helloClient(t, player, fmt.Sprintf("Player%v", playerID),
+			nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsPlayer,
+			nbTurnsToSkipPlayer, 500, 500, true, allowTurnSkipPlayer,
+			nbTurnsPlayer == nbTurnsNetorcai, nbTurnsGL > 0,
+			checkGameStartsFunc, playerCheckTurnFunc, checkGameEndsFunc,
+			playerTurnAckFunc, playerKickReasonMatcher)
+	}
+
+	// Run special player clients
+	for splayerID, splayer := range specialPlayers {
+		go helloClient(t, splayer, fmt.Sprintf("SpecialPlayer%v", splayerID),
 			nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsPlayer,
 			nbTurnsToSkipPlayer, 500, 500, true, allowTurnSkipPlayer,
 			nbTurnsPlayer == nbTurnsNetorcai, nbTurnsGL > 0,
