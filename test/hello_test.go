@@ -309,6 +309,20 @@ func TestHelloGLActiveClientsSpecial(t *testing.T) {
 		regexp.MustCompile(`Game is finished`))
 }
 
+func TestHelloGLActiveClientsSpecialFast(t *testing.T) {
+	subtestHelloGlActiveClients(t, []string{"--fast"}, 4, 1, 1,
+		1000, 1000, 1000, 1000,
+		0, 0,
+		false, true,
+		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn, DefaultHelloClientCheckTurn,
+		DefaultHelloClientCheckGameEnds, DefaultHelloGLCheckDoTurn,
+		DefaultHelloGLDoInitAck, DefaultHelloGlDoTurnAck,
+		DefaultHelloClientTurnAck, DefaultHelloClientTurnAck,
+		regexp.MustCompile(`Game is finished`),
+		regexp.MustCompile(`Game is finished`),
+		regexp.MustCompile(`Game is finished`))
+}
+
 // Invalid DO_INIT_ACK
 func doInitAckNoMsgType(nbPlayers, nbSpecialPlayers, nbTurns int) string {
 	return `{"initial_game_state":{"all_clients":{}}}`
