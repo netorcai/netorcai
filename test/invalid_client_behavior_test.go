@@ -119,3 +119,39 @@ func TestInvalidGlNoDoInitAckSocketClosed(t *testing.T) {
 	checkAllKicked(t, playerClients, regexp.MustCompile(`netorcai abort`), 1000)
 	checkAllKicked(t, visuClients, regexp.MustCompile(`netorcai abort`), 1000)
 }
+
+func TestInvalidGlNoDoTurnAckSocketClosed(t *testing.T) {
+	proc, _, playerClients, _, visuClients, glClients := runNetorcaiAndAllClients(
+		t, []string{}, 1000, 0)
+	defer killallNetorcaiSIGKILL()
+
+	go func(glClient *client.Client) {
+		msg, err := waitReadMessage(glClient, 1000)
+		assert.NoError(t, err, "Could not read GLClient message (DO_INIT)")
+		checkDoInit(t, msg, 4, 0, 100)
+
+		doInitAck := DefaultHelloGLDoInitAck(4, 0, 100)
+		err = glClient.SendString(doInitAck)
+		assert.NoError(t, err, "GLClient could not send DO_INIT_ACK")
+
+		msg, err = waitReadMessage(glClient, 2000)
+		assert.NoError(t, err, "Could not read GLClient message (DO_TURN)")
+		checkDoTurn(t, msg, 4, 0, 100)
+
+		glClient.Disconnect()
+	}(glClients[0])
+
+	proc.inputControl <- `start`
+	_, err := waitOutputTimeout(regexp.MustCompile(`Game logic failed`),
+		proc.outputControl, 4000, false)
+	assert.NoError(t, err,
+		"Cannot read `Game logic failed` in netorcai output")
+
+	_, expRetCode := handleCoverage(t, 1)
+	retCode, err := waitCompletionTimeout(proc.completion, 1000)
+	assert.NoError(t, err, "netorcai did not complete")
+	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
+
+	checkAllKicked(t, playerClients, regexp.MustCompile(`netorcai abort`), 1000)
+	checkAllKicked(t, visuClients, regexp.MustCompile(`netorcai abort`), 1000)
+}

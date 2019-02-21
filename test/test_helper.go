@@ -248,10 +248,17 @@ func checkAllKicked(t *testing.T, clients []*client.Client,
 	kickChan := make(chan int, len(clients))
 	for _, cli := range clients {
 		go func(c *client.Client) {
-			msg, err := waitReadMessage(c, timeoutMS)
-			assert.NoError(t, err, "Cannot read client message (KICK)")
-			checkKick(t, msg, "AnyClient", reasonMatcher)
-			kickChan <- 0
+			for {
+				msg, err := waitReadMessage(c, timeoutMS)
+				assert.NoError(t, err, "Cannot read client message (KICK)")
+
+				messageType, err := netorcai.ReadString(msg, "message_type")
+				if messageType == "KICK" {
+					checkKick(t, msg, "AnyClient", reasonMatcher)
+					kickChan <- 0
+					return
+				}
+			}
 		}(cli)
 	}
 
