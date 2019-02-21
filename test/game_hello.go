@@ -90,13 +90,13 @@ func helloGameLogic(t *testing.T, glClient *client.Client,
 
 	msg, err = waitReadMessage(glClient, 1000)
 	assert.NoError(t, err, "Could not read GLClient message (KICK)")
-	checkKick(t, msg, kickReasonMatcher)
+	checkKick(t, msg, "GameLogic", kickReasonMatcher)
 
 	// Close socket
 	glClient.Disconnect()
 }
 
-func helloClient(t *testing.T, client *client.Client,
+func helloClient(t *testing.T, client *client.Client, clientName string,
 	nbPlayers, nbSpecialPlayers, nbTurnsGL, nbTurnsClient, turnsToSkip int,
 	msBeforeFirstTurn, msBetweenTurns float64,
 	isPlayer, allowTurnSkip, shouldTurnAckBeValid, shouldDoInitAckBeValid bool,
@@ -104,10 +104,14 @@ func helloClient(t *testing.T, client *client.Client,
 	checkTurnFunc ClientTurnCheckFunc,
 	checkGameEndsFunc ClientGameEndsCheckFunc,
 	turnAckFunc ClientTurnAckFunc, kickReasonMatcher *regexp.Regexp) {
+
+	// Close socket when leaving this function
+	defer client.Disconnect()
+
 	if shouldDoInitAckBeValid {
 		// Wait GAME_STARTS
 		msg, err := waitReadMessage(client, 1000)
-		assert.NoError(t, err, "Could not read client message (GAME_STARTS)")
+		assert.NoError(t, err, "%v could not read message (GAME_STARTS)", clientName)
 		playerID := checkGameStartsFunc(t, msg, nbPlayers, nbSpecialPlayers, nbTurnsGL,
 			msBeforeFirstTurn, msBetweenTurns, isPlayer)
 
@@ -115,20 +119,20 @@ func helloClient(t *testing.T, client *client.Client,
 			for turn := 0; turn < nbTurnsClient-1; turn += 1 + turnsToSkip {
 				// Wait TURN
 				msg, err := waitReadMessage(client, 1000)
-				assert.NoError(t, err, "Could not read client message (TURN) "+
-					"%v/%v", turn, nbTurnsClient)
+				assert.NoError(t, err, "%v could not read message (TURN) %v/%v",
+					clientName, turn, nbTurnsClient)
 				turnReceived := checkTurnFunc(t, msg, nbPlayers, nbSpecialPlayers, turn, isPlayer)
 
 				// Send TURN_ACK
 				data := turnAckFunc(turnReceived, playerID)
 				err = client.SendString(data)
-				assert.NoError(t, err, "Client cannot send TURN_ACK")
+				assert.NoError(t, err, "%s cannot send TURN_ACK", clientName)
 			}
 
 			if shouldTurnAckBeValid {
 				// Wait GAME_ENDS
 				msg, err = waitReadMessage(client, 1000)
-				assert.NoError(t, err, "Could not read client message (GAME_ENDS)")
+				assert.NoError(t, err, "%v could not read message (GAME_ENDS)", clientName)
 				checkGameEndsFunc(t, msg)
 			}
 		} else {
@@ -148,9 +152,6 @@ func helloClient(t *testing.T, client *client.Client,
 
 	// Wait Kick
 	msg, err := waitReadMessage(client, 2000)
-	assert.NoError(t, err, "Could not read client message (KICK)")
-	checkKick(t, msg, kickReasonMatcher)
-
-	// Close socket
-	client.Disconnect()
+	assert.NoError(t, err, "Could not read %v message (KICK)", clientName)
+	checkKick(t, msg, clientName, kickReasonMatcher)
 }

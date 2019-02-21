@@ -73,7 +73,7 @@ func TestInvalidGlNoDoInitAck(t *testing.T) {
 
 		// Do not send DO_INIT_ACK on purpose
 		msg, err = waitReadMessage(glClient, 4000)
-		checkKick(t, msg, regexp.MustCompile(`Did not receive DO_INIT_ACK after 3 seconds`))
+		checkKick(t, msg, "GameLogic", regexp.MustCompile(`Did not receive DO_INIT_ACK after 3 seconds`))
 	}(glClients[0])
 
 	proc.inputControl <- `start`

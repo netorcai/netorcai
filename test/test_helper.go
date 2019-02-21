@@ -250,7 +250,7 @@ func checkAllKicked(t *testing.T, clients []*client.Client,
 		go func(c *client.Client) {
 			msg, err := waitReadMessage(c, timeoutMS)
 			assert.NoError(t, err, "Cannot read client message (KICK)")
-			checkKick(t, msg, reasonMatcher)
+			checkKick(t, msg, "AnyClient", reasonMatcher)
 			kickChan <- 0
 		}(cli)
 	}
@@ -267,15 +267,15 @@ func checkAllKicked(t *testing.T, clients []*client.Client,
 	close(kickChan)
 }
 
-func checkKick(t *testing.T, msg map[string]interface{},
+func checkKick(t *testing.T, msg map[string]interface{}, clientName string,
 	reasonMatcher *regexp.Regexp) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
 	assert.NoError(t, err,
-		"Cannot read 'message_type' field in received client message (KICK)")
+		"%v cannot read 'message_type' field in received client message (KICK)", clientName)
 	assert.Equal(t, "KICK", messageType, "Unexpected message type")
 
 	kickReason, err := netorcai.ReadString(msg, "kick_reason")
-	assert.NoError(t, err, "Cannot read 'kick_reason' in received client message (KICK)")
+	assert.NoError(t, err, "%v cannot read 'kick_reason' in received client message (KICK)", clientName)
 	assert.Regexp(t, reasonMatcher, kickReason, "Unexpected kick reason")
 }
 

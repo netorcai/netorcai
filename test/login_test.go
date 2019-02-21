@@ -22,7 +22,7 @@ func TestLoginNotJson(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Non-JSON"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Non-JSON"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -42,7 +42,7 @@ func TestLoginNoMessageType(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Field 'message_type' is missing"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Field 'message_type' is missing"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -62,7 +62,7 @@ func TestLoginNoRole(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Field 'role' is missing"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Field 'role' is missing"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -82,7 +82,7 @@ func TestLoginNoNickname(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Field 'nickname' is missing"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Field 'nickname' is missing"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -102,7 +102,7 @@ func TestLoginRoleNotString(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Non-string value for field 'role'"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Non-string value for field 'role'"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -122,7 +122,7 @@ func TestLoginBadRole(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Invalid role"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Invalid role"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -142,7 +142,7 @@ func TestLoginBadNicknameShort(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Invalid nickname"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -162,7 +162,7 @@ func TestLoginBadNicknameLong(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Invalid nickname"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -182,7 +182,7 @@ func TestLoginBadNicknameBadCharacters(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Invalid nickname"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Invalid nickname"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -202,7 +202,7 @@ func TestLoginNoMetaprotocolVersion(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Field 'metaprotocol_version' is missing"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Field 'metaprotocol_version' is missing"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -222,7 +222,7 @@ func TestLoginBadMetaprotocolVersionNotString(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Non-string value for field 'metaprotocol_version'"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Non-string value for field 'metaprotocol_version'"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -242,7 +242,7 @@ func TestLoginBadMetaprotocolVersionNotSemver(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Invalid metaprotocol version: Not MAJOR.MINOR.PATCH"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Invalid metaprotocol version: Not MAJOR.MINOR.PATCH"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -262,7 +262,7 @@ func TestLoginBadMetaprotocolVersionDifferentMajor(t *testing.T) {
 
 	msg, err := waitReadMessage(&client, 1000)
 	assert.NoError(t, err, "Cannot read client message (KICK)")
-	checkKick(t, msg, regexp.MustCompile("Metaprotocol version mismatch. Major version must be identical"))
+	checkKick(t, msg, "InvalidClient", regexp.MustCompile("Metaprotocol version mismatch. Major version must be identical"))
 
 	err = killNetorcaiGently(proc, 1000)
 	assert.NoError(t, err, "Netorcai could not be killed gently")
@@ -338,7 +338,7 @@ func subtestLoginMaxNbClientSequential(t *testing.T, loginRole string,
 			checkLoginAck(t, msg)
 			clients = append(clients, client)
 		} else {
-			checkKick(t, msg, kickReasonMatcher)
+			checkKick(t, msg, loginRole, kickReasonMatcher)
 			err = client.Disconnect()
 			assert.NoError(t, err, "Kicked client could not disconnect")
 		}
@@ -420,7 +420,7 @@ func subtestLoginGameAlreadyStarted(t *testing.T, loginRole string,
 	} else {
 		msg, err := waitReadMessage(client, 1000)
 		assert.NoError(t, err, "Cannot read client message (KICK)")
-		checkKick(t, msg,
+		checkKick(t, msg, loginRole,
 			regexp.MustCompile(`LOGIN denied: Game has been started`))
 	}
 

@@ -101,8 +101,9 @@ func TestHelloGLActiveVisu(t *testing.T) {
 	}
 
 	// Run visu clients
-	for _, visu := range visus {
-		go helloClient(t, visu, 0, 0, 3, 3, 0, 500, 500, false, false, true, true,
+	for visuID, visu := range visus {
+		go helloClient(t, visu, fmt.Sprintf("Visu%v", visuID),
+			0, 0, 3, 3, 0, 500, 500, false, false, true, true,
 			DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 			DefaultHelloClientCheckGameEnds,
 			DefaultHelloClientTurnAck, regexp.MustCompile(`Game is finished`))
@@ -129,7 +130,7 @@ func TestHelloGLActivePlayer(t *testing.T) {
 		regexp.MustCompile(`Game is finished`))
 
 	// Run an active player
-	go helloClient(t, players[0], 1, 0, 3, 3, 0, 500, 500, true, false, true, true,
+	go helloClient(t, players[0], "Player0", 1, 0, 3, 3, 0, 500, 500, true, false, true, true,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds,
 		DefaultHelloClientTurnAck,
@@ -171,7 +172,7 @@ func TestHelloGLActiveSpecialPlayer(t *testing.T) {
 		regexp.MustCompile(`Game is finished`))
 
 	// Run an active special special
-	go helloClient(t, specialPlayers[0], 0, 1, 3, 3, 0, 500, 500, true, false, true, true,
+	go helloClient(t, specialPlayers[0], "SpecialPlayer0", 0, 1, 3, 3, 0, 500, 500, true, false, true, true,
 		DefaultHelloClientCheckGameStarts, DefaultHelloClientCheckTurn,
 		DefaultHelloClientCheckGameEnds,
 		DefaultHelloClientTurnAck,
@@ -231,8 +232,9 @@ func subtestHelloGlActiveClients(t *testing.T,
 		glKickReasonMatcher)
 
 	// Run player clients
-	for _, player := range players {
-		go helloClient(t, player, nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsPlayer,
+	for playerID, player := range players {
+		go helloClient(t, player, fmt.Sprintf("Player%v", playerID),
+			nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsPlayer,
 			nbTurnsToSkipPlayer, 500, 500, true, allowTurnSkipPlayer,
 			nbTurnsPlayer == nbTurnsNetorcai, nbTurnsGL > 0,
 			checkGameStartsFunc, playerCheckTurnFunc, checkGameEndsFunc,
@@ -240,8 +242,9 @@ func subtestHelloGlActiveClients(t *testing.T,
 	}
 
 	// Run visu clients
-	for _, visu := range visus {
-		go helloClient(t, visu, nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsVisu,
+	for visuID, visu := range visus {
+		go helloClient(t, visu, fmt.Sprintf("Visu%v", visuID),
+			nbPlayers, nbSpecialPlayers, nbTurnsNetorcai, nbTurnsVisu,
 			nbTurnsToSkipVisu, 500, 500, false, allowTurnSkipVisu,
 			nbTurnsVisu == nbTurnsNetorcai, nbTurnsGL > 0,
 			checkGameStartsFunc, visuCheckTurnFunc, checkGameEndsFunc,
