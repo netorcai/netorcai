@@ -136,7 +136,7 @@ func helloClient(t *testing.T, client *client.Client, clientName string,
 				checkGameEndsFunc(t, msg)
 			}
 		} else {
-			TurnLoop:
+		TurnLoop:
 			for turn := 0; turn < nbTurnsClient; turn += 1 {
 				msg, err := waitReadMessage(client, 1000)
 				assert.NoError(t, err, "%v could not read message (TURN or GAME_ENDS) %v/%v"+
