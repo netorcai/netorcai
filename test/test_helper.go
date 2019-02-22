@@ -139,19 +139,25 @@ func isTravis() bool {
 
 // Client helpers
 func waitReadMessage(client *client.Client, timeoutMS int) (
-	msg map[string]interface{}, err error) {
-	msgChan := make(chan int)
+	map[string]interface{}, error) {
+
+	type readResult struct {
+		msg map[string]interface{}
+		err error
+	}
+
+	msgChan := make(chan readResult)
 	go func() {
-		msg, err = client.ReadMessage()
-		msgChan <- 0
+		msg, err := client.ReadMessage()
+		msgChan <- readResult{msg, err}
 	}()
 
 	select {
-	case <-msgChan:
+	case r := <-msgChan:
 		close(msgChan)
-		return msg, err
+		return r.msg, r.err
 	case <-time.After(time.Duration(timeoutMS) * time.Millisecond):
-		return msg, fmt.Errorf("Timeout reached")
+		return nil, fmt.Errorf("Timeout reached")
 	}
 }
 
