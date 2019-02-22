@@ -33,18 +33,15 @@ func disconnectingClient(t *testing.T, client *client.Client, clientName string,
 		assert.NoError(t, err, "%v could not read message (TURN) %v/%v",
 			clientName, turn, disconnectionTurn)
 		turnReceived := checkTurn(t, msg, nbPlayers, nbSpecialPlayers, turn, isPlayer)
-		//fmt.Printf("%v received turn=%v\n", clientName, turnReceived)
 
 		// Send TURN_ACK
 		if turn != disconnectionTurn-1 {
 			data := DefaultHelloClientTurnAck(turnReceived, playerID)
 			err = client.SendString(data)
 			assert.NoError(t, err, "%s cannot send TURN_ACK", clientName)
-			//fmt.Printf("%v sent turn=%v\n", clientName, turnReceived)
 		}
 	}
 
-	//fmt.Printf("%v disconnecting\n", clientName)
 	client.Disconnect()
 }
 
@@ -64,19 +61,6 @@ func subtestDisconnectingClients(t *testing.T,
 			netorcaiAdditionalArgs...),
 		1000, nbPlayers, nbSpecialPlayers, nbVisus)
 	defer killallNetorcaiSIGKILL()
-
-	// Print netorcai output
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case msg := <-proc.outputControl:
-	// 			//fmt.Printf("netorcai output: %v\n", msg)
-	// 		case <-proc.completion:
-	// 			//fmt.Printf("netorcai completed\n")
-	// 			return
-	// 		}
-	// 	}
-	// }()
 
 	// Run a game client
 	go helloGameLogic(t, gl[0], nbPlayers, nbSpecialPlayers, nbTurns, nbTurns,
@@ -109,6 +93,14 @@ func subtestDisconnectingClients(t *testing.T,
 
 func TestPlayerDisconnectionDuringGame(t *testing.T) {
 	subtestDisconnectingClients(t, nil, 4, 1, 1,
+		7,
+		ClientDisconnectionWhenTurnIsGreaterThanPlayerID,
+		ClientDisconnectionWhenTurnIsGreaterThanPlayerID,
+		ClientDisconnectionWhenTurnIsGreaterThanPlayerID)
+}
+
+func TestPlayerDisconnectionDuringGameFast(t *testing.T) {
+	subtestDisconnectingClients(t, []string{"--fast"}, 4, 1, 1,
 		7,
 		ClientDisconnectionWhenTurnIsGreaterThanPlayerID,
 		ClientDisconnectionWhenTurnIsGreaterThanPlayerID,
