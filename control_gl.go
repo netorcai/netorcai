@@ -71,7 +71,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	// Generate randomized player identifiers
 	initialNbPlayers := len(players)
 	initialNbSpecialPlayers := len(specialPlayers)
-	nbConnectedPlayers := initialNbPlayers + initialNbSpecialPlayers
+	initialTotalNbPlayers := initialNbPlayers + initialNbSpecialPlayers
 	playerIDs := rand.Perm(len(players))
 	for splayerIndex, splayer := range specialPlayers {
 		splayer.playerID = splayerIndex
@@ -167,17 +167,32 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 		}
 	}
 
-	if !fast {
-		// Wait before really starting the game
-		log.WithFields(log.Fields{
-			"duration (ms)": msBeforeFirstTurn,
-		}).Debug("Sleeping before first turn")
-		time.Sleep(time.Duration(msBeforeFirstTurn) * time.Millisecond)
+	if fast {
+		gameLogicGameControlFast(glClient, onexit,
+			initialTotalNbPlayers, nbTurnsMax,
+			allPlayers, visus, playersInfo)
+	} else {
+		gameLogicGameControlTimers(glClient, onexit,
+			initialTotalNbPlayers, nbTurnsMax,
+			allPlayers, visus, playersInfo,
+			msBeforeFirstTurn, msBetweenTurns)
 	}
+}
+
+func gameLogicGameControlTimers(glClient *GameLogicClient,
+	onexit chan int,
+	initialTotalNbPlayers, nbTurnsMax int,
+	allPlayers, visus []*PlayerOrVisuClient,
+	playersInfo []*PlayerInformation,
+	msBeforeFirstTurn, msBetweenTurns float64) {
+	// Wait before really starting the game
+	log.WithFields(log.Fields{
+		"duration (ms)": msBeforeFirstTurn,
+	}).Debug("Sleeping before first turn")
+	time.Sleep(time.Duration(msBeforeFirstTurn) * time.Millisecond)
 
 	// Order the game logic to compute a TURN (without any action)
 	turnNumber := 0
-	lastTurnNumberBypassSent := -1
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
 	sendDoTurn(glClient, playerActions)
 
@@ -206,124 +221,172 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 				playerActions = append(playerActions, action)
 			}
 
-			log.WithFields(log.Fields{
-				"len(playerActions)": len(playerActions),
-				"nbConnectedPlayers": nbConnectedPlayers,
-			}).Debug("GL received a player action (from player goroutine)")
-
-			if fast {
-				// Trigger a new TURN if all players have played
-				if len(playerActions) >= nbConnectedPlayers && turnNumber > lastTurnNumberBypassSent {
-					lastTurnNumberBypassSent = turnNumber
-					sendDoTurn(glClient, playerActions)
-					playerActions = playerActions[:0]
-				}
-			}
-		case <-glClient.playerDisconnected:
-			nbConnectedPlayers -= 1
-			if fast {
-				// Trigger a new TURN if all players have played
-				if len(playerActions) >= nbConnectedPlayers && turnNumber > lastTurnNumberBypassSent {
-					lastTurnNumberBypassSent = turnNumber
-					sendDoTurn(glClient, playerActions)
-					playerActions = playerActions[:0]
-				}
-			}
 		case msg := <-glClient.client.incomingMessages:
 			// New message received from the game logic
-			if msg.err != nil {
-				Kick(glClient.client, fmt.Sprintf("Cannot read DO_TURN_ACK. %v", msg.err.Error()))
-				onexit <- 1
-				waitGameLogicFinition(glClient)
-				return
-			}
-
-			doTurnAckMsg, err := readDoTurnAckMessage(msg.content,
-				initialNbPlayers+initialNbSpecialPlayers)
+			doTurnAckMsg, err := handleGLDoTurnAckReception(glClient, msg, initialTotalNbPlayers)
 			if err != nil {
-				Kick(glClient.client,
-					fmt.Sprintf("Invalid DO_TURN_ACK message. %v",
-						err.Error()))
 				onexit <- 1
 				waitGameLogicFinition(glClient)
 				return
 			}
-			log.Debug("GL received a new DO_TURN_ACK (from socket)")
 
 			turnNumber = turnNumber + 1
 			if turnNumber < nbTurnsMax {
-				// Forward the TURN to the clients
-				for _, player := range allPlayers {
-					player.newTurn <- MessageTurn{
-						MessageType: "TURN",
-						TurnNumber:  turnNumber - 1,
-						GameState:   doTurnAckMsg.GameState,
-						PlayersInfo: []*PlayerInformation{},
-					}
-				}
-				for _, visu := range visus {
-					visu.newTurn <- MessageTurn{
-						MessageType: "TURN",
-						TurnNumber:  turnNumber - 1,
-						GameState:   doTurnAckMsg.GameState,
-						PlayersInfo: playersInfo,
-					}
-				}
+				handleGlForwardTurnToClients(doTurnAckMsg, turnNumber, allPlayers, visus, playersInfo)
 
-				// Trigger a new TURN if there is no player anymore
-				if fast && nbConnectedPlayers == 0 {
-					lastTurnNumberBypassSent = turnNumber
+				// Trigger a new DO_TURN in some time
+				go func() {
+					log.WithFields(log.Fields{
+						"duration (ms)": msBetweenTurns,
+					}).Debug("Sleeping before next turn")
+					time.Sleep(time.Duration(msBetweenTurns) * time.Millisecond)
+
 					sendDoTurn(glClient, playerActions)
 					playerActions = playerActions[:0]
-				}
-
-				if !fast {
-					// Trigger a new DO_TURN in some time
-					go func() {
-						log.WithFields(log.Fields{
-							"duration (ms)": msBetweenTurns,
-						}).Debug("Sleeping before next turn")
-						time.Sleep(time.Duration(msBetweenTurns) * time.Millisecond)
-
-						sendDoTurn(glClient, playerActions)
-						playerActions = playerActions[:0]
-					}()
-				}
+				}()
 			} else {
-				if doTurnAckMsg.WinnerPlayerID != -1 {
-					log.WithFields(log.Fields{
-						"winner player ID":      doTurnAckMsg.WinnerPlayerID,
-						"winner nickname":       playersInfo[doTurnAckMsg.WinnerPlayerID].Nickname,
-						"winner remote address": playersInfo[doTurnAckMsg.WinnerPlayerID].RemoteAddress,
-					}).Info("Game is finished")
-				} else {
-					log.Info("Game is finished (no winner!)")
-				}
-
-				// Send GAME_ENDS to all clients
-				for _, player := range allPlayers {
-					player.gameEnds <- MessageGameEnds{
-						MessageType:    "GAME_ENDS",
-						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
-						GameState:      doTurnAckMsg.GameState,
-					}
-				}
-				for _, visu := range visus {
-					visu.gameEnds <- MessageGameEnds{
-						MessageType:    "GAME_ENDS",
-						WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
-						GameState:      doTurnAckMsg.GameState,
-					}
-				}
-
-				// Leave the program
-				Kick(glClient.client, "Game is finished")
+				handleGlGameFinished(glClient, doTurnAckMsg, allPlayers, visus, playersInfo)
 				onexit <- 0
 				waitGameLogicFinition(glClient)
 				return
 			}
 		}
 	}
+}
+
+func gameLogicGameControlFast(glClient *GameLogicClient,
+	onexit chan int,
+	initialTotalNbPlayers, nbTurnsMax int,
+	allPlayers, visus []*PlayerOrVisuClient,
+	playersInfo []*PlayerInformation) {
+
+	// Order the game logic to compute a TURN right away (without any action)
+	turnNumber := 0
+	nbConnectedPlayers := initialTotalNbPlayers
+	playerActions := make([]MessageDoTurnPlayerAction, 0)
+	sendDoTurn(glClient, playerActions)
+
+	for {
+		// Wait for GL's DO_TURN_ACK
+		var doTurnAckMsg MessageDoTurnAck
+		var err error
+		select {
+		case <-glClient.client.canTerminate:
+			return
+		case msg := <-glClient.client.incomingMessages:
+			doTurnAckMsg, err = handleGLDoTurnAckReception(glClient, msg, initialTotalNbPlayers)
+			if err != nil {
+				onexit <- 1
+				waitGameLogicFinition(glClient)
+				return
+			}
+		}
+
+		turnNumber = turnNumber + 1
+		if turnNumber >= nbTurnsMax {
+			handleGlGameFinished(glClient, doTurnAckMsg, allPlayers, visus, playersInfo)
+			onexit <- 0
+			waitGameLogicFinition(glClient)
+			return
+		}
+
+		// Forward the new turn to clients
+		handleGlForwardTurnToClients(doTurnAckMsg, turnNumber, allPlayers, visus, playersInfo)
+
+		// Wait TURN_ACK (or socket failure) from all players.
+		nbPlayerAckReceived := 0
+		for nbPlayerAckReceived < nbConnectedPlayers {
+			select {
+			case <-glClient.client.canTerminate:
+				return
+			case action := <-glClient.playerAction:
+				nbPlayerAckReceived++
+				// Append the action into the actions array
+				playerActions = append(playerActions, action)
+			case <-glClient.playerDisconnected:
+				nbConnectedPlayers--
+			}
+		}
+
+		// Send player's actions to game logic.
+		sendDoTurn(glClient, playerActions)
+		playerActions = playerActions[:0]
+	}
+}
+
+func handleGLDoTurnAckReception(glClient *GameLogicClient,
+	msg ClientMessage, initialTotalNbPlayers int) (MessageDoTurnAck, error) {
+
+	if msg.err != nil {
+		Kick(glClient.client, fmt.Sprintf("Cannot read DO_TURN_ACK. %v", msg.err.Error()))
+		return MessageDoTurnAck{}, msg.err
+	}
+
+	doTurnAckMsg, err := readDoTurnAckMessage(msg.content, initialTotalNbPlayers)
+	if err != nil {
+		Kick(glClient.client, fmt.Sprintf("Invalid DO_TURN_ACK message. %v", err.Error()))
+		return MessageDoTurnAck{}, err
+	}
+
+	log.Debug("GL received a new DO_TURN_ACK (from socket)")
+	return doTurnAckMsg, nil
+}
+
+func handleGlForwardTurnToClients(doTurnAckMsg MessageDoTurnAck, turnNumber int,
+	allPlayers, visus []*PlayerOrVisuClient,
+	playersInfo []*PlayerInformation) {
+
+	for _, player := range allPlayers {
+		player.newTurn <- MessageTurn{
+			MessageType: "TURN",
+			TurnNumber:  turnNumber - 1,
+			GameState:   doTurnAckMsg.GameState,
+			PlayersInfo: []*PlayerInformation{},
+		}
+	}
+	for _, visu := range visus {
+		visu.newTurn <- MessageTurn{
+			MessageType: "TURN",
+			TurnNumber:  turnNumber - 1,
+			GameState:   doTurnAckMsg.GameState,
+			PlayersInfo: playersInfo,
+		}
+	}
+}
+
+func handleGlGameFinished(glClient *GameLogicClient,
+	doTurnAckMsg MessageDoTurnAck,
+	allPlayers, visus []*PlayerOrVisuClient,
+	playersInfo []*PlayerInformation) {
+
+	if doTurnAckMsg.WinnerPlayerID != -1 {
+		log.WithFields(log.Fields{
+			"winner player ID":      doTurnAckMsg.WinnerPlayerID,
+			"winner nickname":       playersInfo[doTurnAckMsg.WinnerPlayerID].Nickname,
+			"winner remote address": playersInfo[doTurnAckMsg.WinnerPlayerID].RemoteAddress,
+		}).Info("Game is finished")
+	} else {
+		log.Info("Game is finished (no winner!)")
+	}
+
+	// Send GAME_ENDS to all clients
+	for _, player := range allPlayers {
+		player.gameEnds <- MessageGameEnds{
+			MessageType:    "GAME_ENDS",
+			WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
+			GameState:      doTurnAckMsg.GameState,
+		}
+	}
+	for _, visu := range visus {
+		visu.gameEnds <- MessageGameEnds{
+			MessageType:    "GAME_ENDS",
+			WinnerPlayerID: doTurnAckMsg.WinnerPlayerID,
+			GameState:      doTurnAckMsg.GameState,
+		}
+	}
+
+	// Leave the program
+	Kick(glClient.client, "Game is finished")
 }
 
 func sendDoInit(client *GameLogicClient, nbPlayers, nbSpecialPlayers, nbTurnsMax int) error {
