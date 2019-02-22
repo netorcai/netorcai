@@ -151,7 +151,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					isPlayer:        true,
 					isSpecialPlayer: isSpecial,
 					gameStarts:      make(chan MessageGameStarts),
-					newTurn:         make(chan MessageTurn),
+					newTurn:         make(chan MessageTurn, 100),
 					gameEnds:        make(chan MessageGameEnds),
 					playerInfo:      nil,
 				}
@@ -195,7 +195,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					playerID:   -1,
 					isPlayer:   false,
 					gameStarts: make(chan MessageGameStarts),
-					newTurn:    make(chan MessageTurn),
+					newTurn:    make(chan MessageTurn, 100),
 					gameEnds:   make(chan MessageGameEnds),
 				}
 
