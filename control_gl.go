@@ -177,6 +177,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 	// Order the game logic to compute a TURN (without any action)
 	turnNumber := 0
+	lastTurnNumberBypassSent := -1
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
 	sendDoTurn(glClient, playerActions)
 
@@ -212,7 +213,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 			if fast {
 				// Trigger a new TURN if all players have played
-				if len(playerActions) >= nbConnectedPlayers {
+				if len(playerActions) >= nbConnectedPlayers && turnNumber > lastTurnNumberBypassSent {
+					lastTurnNumberBypassSent = turnNumber
 					sendDoTurn(glClient, playerActions)
 					playerActions = playerActions[:0]
 				}
@@ -221,7 +223,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 			nbConnectedPlayers -= 1
 			if fast {
 				// Trigger a new TURN if all players have played
-				if len(playerActions) >= nbConnectedPlayers {
+				if len(playerActions) >= nbConnectedPlayers && turnNumber > lastTurnNumberBypassSent {
+					lastTurnNumberBypassSent = turnNumber
 					sendDoTurn(glClient, playerActions)
 					playerActions = playerActions[:0]
 				}
@@ -269,6 +272,7 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 
 				// Trigger a new TURN if there is no player anymore
 				if fast && nbConnectedPlayers == 0 {
+					lastTurnNumberBypassSent = turnNumber
 					sendDoTurn(glClient, playerActions)
 					playerActions = playerActions[:0]
 				}
