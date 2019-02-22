@@ -180,7 +180,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 			}
 
 			if gs.GameState == GAME_RUNNING && gs.Fast {
-				gs.GameLogic[0].playerDisconnected <- 1
+				gs.GameLogic[0].playerDisconnected <- pvClient.playerID
 			}
 
 			if playerIndex != -1 {
@@ -200,7 +200,7 @@ func KickLoggedPlayerOrVisu(pvClient *PlayerOrVisuClient,
 			}
 
 			if gs.GameState == GAME_RUNNING && gs.Fast {
-				gs.GameLogic[0].playerDisconnected <- 1
+				gs.GameLogic[0].playerDisconnected <- pvClient.playerID
 			}
 
 			if playerIndex != -1 {

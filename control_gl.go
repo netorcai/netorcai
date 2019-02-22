@@ -254,6 +254,15 @@ func gameLogicGameControlTimers(glClient *GameLogicClient,
 	}
 }
 
+func areAllValuesTrue(playerIDToBoolMap map[int]bool) bool {
+	for _, v := range playerIDToBoolMap {
+		if !v {
+			return false
+		}
+	}
+	return true
+}
+
 func gameLogicGameControlFast(glClient *GameLogicClient,
 	onexit chan int,
 	initialTotalNbPlayers, nbTurnsMax int,
@@ -262,9 +271,13 @@ func gameLogicGameControlFast(glClient *GameLogicClient,
 
 	// Order the game logic to compute a TURN right away (without any action)
 	turnNumber := 0
-	nbConnectedPlayers := initialTotalNbPlayers
 	playerActions := make([]MessageDoTurnPlayerAction, 0)
 	sendDoTurn(glClient, playerActions)
+
+	connectedPlayers := make(map[int]int) // keys are playerID. values are not used
+	for playerID := 0; playerID < initialTotalNbPlayers; playerID++ {
+		connectedPlayers[playerID] = 1
+	}
 
 	for {
 		// Wait for GL's DO_TURN_ACK
@@ -294,17 +307,22 @@ func gameLogicGameControlFast(glClient *GameLogicClient,
 		handleGlForwardTurnToClients(doTurnAckMsg, turnNumber, allPlayers, visus, playersInfo)
 
 		// Wait TURN_ACK (or socket failure) from all players.
-		nbPlayerAckReceived := 0
-		for nbPlayerAckReceived < nbConnectedPlayers {
+		actionReceived := make(map[int]bool)
+		for playerID, _ := range connectedPlayers {
+			actionReceived[playerID] = false
+		}
+		for !areAllValuesTrue(actionReceived) {
 			select {
 			case <-glClient.client.canTerminate:
 				return
 			case action := <-glClient.playerAction:
-				nbPlayerAckReceived++
-				// Append the action into the actions array
-				playerActions = append(playerActions, action)
-			case <-glClient.playerDisconnected:
-				nbConnectedPlayers--
+				actionReceived[action.PlayerID] = true
+				if _, isConnected := connectedPlayers[action.PlayerID]; isConnected {
+					playerActions = append(playerActions, action)
+				}
+			case disconnectedPlayerID := <-glClient.playerDisconnected:
+				actionReceived[disconnectedPlayerID] = true
+				delete(connectedPlayers, disconnectedPlayerID)
 			}
 		}
 
