@@ -31,6 +31,8 @@ Added
 
 - New CLI command ``--fast``, which allows to start a new turn as soon as
   all players have decided what to do — instead of relying on a timer.
+  This assumes that all player clients return in finite time —
+  either by returning a :ref:`proto_TURN_ACK` or by closing their sockets.
 - Special players can now be connected to netorcai.
   The game logic knows which bots are *special*, which allows implementing
   game modes with asymetric game rules.
@@ -43,11 +45,13 @@ Added
 Fixed
 ~~~~~
 
+- Various corner case deadlocks have been fixed and should now be covered by integration tests.
 - Several issues around netorcai's termination have been fixed.
 
   - Kicking clients induced a non-compressible time delay to limit the loss of messages.
     This time delay has been removed **and** the last messages sent by netorcai should **not** be lost anymore.
   - Data races could occur in the sending of the last messages to clients.
+
 
 ........................................................................................................................
 

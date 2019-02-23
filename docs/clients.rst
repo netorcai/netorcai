@@ -12,6 +12,7 @@ Currently, the following libraries have been implemented.
 
 - `netorcai-client-cpp`_
 - `netorcai-client-d`_
+- `netorcai-client-fortran`_
 - `netorcai-client-java`_
 - `netorcai-client-python`_
 
@@ -125,6 +126,7 @@ Here are some commands to install the libraries.
 .. _netorcaipkgs: https://github.com/netorcai/pkgs
 .. _netorcai-client-cpp: https://github.com/netorcai/netorcai-client-cpp
 .. _netorcai-client-d: https://github.com/netorcai/netorcai-client-d
+.. _netorcai-client-fortran: https://github.com/netorcai/netorcai-client-fortran
 .. _netorcai-client-java: https://github.com/netorcai/netorcai-client-java
 .. _netorcai-client-python: https://github.com/netorcai/netorcai-client-python
 .. _Nix: https://nixos.org/nix/

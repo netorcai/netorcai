@@ -8,7 +8,7 @@ netorcai
 
 ![netorcai architecture](./docs/img/archi.png "netorcai architecture")
 
-netorcai is a network orchestrator for artificial intelligence games.
+netorcai (/ˈnet.ɔː.kaɪ/) is a network orchestrator for artificial intelligence games.
 It splits a classical game server process into two processes, allowing to
 develop various games in any language without having to manage all
 network-related issues about the clients.
