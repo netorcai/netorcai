@@ -13,7 +13,7 @@ type ClientGameStartsCheckFunc func(*testing.T, map[string]interface{}, int,
 	int, int, float64, float64, bool) int
 type ClientTurnCheckFunc func(*testing.T, map[string]interface{}, int, int, int,
 	bool) int
-type ClientGameEndsCheckFunc func(*testing.T, map[string]interface{})
+type ClientGameEndsCheckFunc func(*testing.T, map[string]interface{}, string)
 type GLCheckDoTurnFunc func(*testing.T, map[string]interface{},
 	int, int, int) []interface{}
 type ClientTurnAckFunc func(int, int) string
@@ -34,8 +34,8 @@ func DefaultHelloClientCheckTurn(t *testing.T, msg map[string]interface{},
 }
 
 func DefaultHelloClientCheckGameEnds(t *testing.T,
-	msg map[string]interface{}) {
-	checkGameEnds(t, msg)
+	msg map[string]interface{}, clientName string) {
+	checkGameEnds(t, msg, clientName)
 }
 
 func DefaultHelloGLCheckDoTurn(t *testing.T, msg map[string]interface{},
@@ -133,7 +133,7 @@ func helloClient(t *testing.T, client *client.Client, clientName string,
 				// Wait GAME_ENDS
 				msg, err = waitReadMessage(client, 1000)
 				assert.NoError(t, err, "%v could not read message (GAME_ENDS)", clientName)
-				checkGameEndsFunc(t, msg)
+				checkGameEndsFunc(t, msg, clientName)
 			}
 		} else {
 		TurnLoop:

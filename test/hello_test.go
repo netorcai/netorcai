@@ -668,8 +668,8 @@ func doTurnAckWinner(turn int, actions []interface{}) string {
 		"game_state":{"all_clients":{}}}`
 }
 
-func checkGameEndsWinner(t *testing.T, msg map[string]interface{}) {
-	checkGameEnds(t, msg)
+func checkGameEndsWinner(t *testing.T, msg map[string]interface{}, clientName string) {
+	checkGameEnds(t, msg, clientName)
 
 	winner, err := netorcai.ReadInt(msg, "winner_player_id")
 	assert.NoError(t, err, "Cannot read 'winner_player_id'")

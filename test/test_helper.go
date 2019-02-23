@@ -289,7 +289,7 @@ func checkKick(t *testing.T, msg map[string]interface{}, clientName string,
 
 	kickReason, err := netorcai.ReadString(msg, "kick_reason")
 	assert.NoError(t, err, "%v cannot read 'kick_reason' in received client message (KICK)", clientName)
-	assert.Regexp(t, reasonMatcher, kickReason, "Unexpected kick reason")
+	assert.Regexp(t, reasonMatcher, kickReason, "%v got kicked for unexpected reason", clientName)
 }
 
 func checkLoginAck(t *testing.T, msg map[string]interface{}) {
@@ -582,26 +582,25 @@ func checkTurnPotentialTurnsSkipped(t *testing.T, msg map[string]interface{},
 	return expectedMinimalTurnNumber
 }
 
-func checkGameEnds(t *testing.T, msg map[string]interface{}) {
+func checkGameEnds(t *testing.T, msg map[string]interface{}, clientName string) {
 	messageType, err := netorcai.ReadString(msg, "message_type")
-	assert.NoError(t, err, "Cannot read 'message_type' field in "+
-		"received client message (GAME_ENDS)")
+	assert.NoError(t, err,
+		"%v cannot read 'message_type' field in received message (GAME_ENDS)", clientName)
 
 	switch messageType {
 	case "GAME_ENDS":
 		_, err := netorcai.ReadInt(msg, "winner_player_id")
-		assert.NoError(t, err, "Cannot read winner_player_id in GAME_ENDS")
+		assert.NoError(t, err, "%v cannot read winner_player_id in GAME_ENDS", clientName)
 
 		_, err = netorcai.ReadObject(msg, "game_state")
-		assert.NoError(t, err, "Cannot read game_state in GAME_ENDS")
+		assert.NoError(t, err, "%v cannot read game_state in GAME_ENDS", clientName)
 	case "KICK":
 		kickReason, err := netorcai.ReadString(msg, "kick_reason")
-		assert.NoError(t, err, "Cannot read kick_reason")
+		assert.NoError(t, err, "%v cannot read kick_reason", clientName)
 
-		assert.FailNow(t, "Expected GAME_ENDS, got KICK", kickReason)
+		assert.FailNow(t, fmt.Sprintf("%v expected GAME_ENDS, got KICK for reason '%v'", clientName, kickReason))
 	default:
-		assert.FailNowf(t, "Expected GAME_ENDS, got another message type",
-			messageType)
+		assert.FailNow(t, fmt.Sprintf("%v expected GAME_ENDS, got another message type (%v)", clientName, messageType))
 	}
 }
 
