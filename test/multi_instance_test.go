@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
+	"time"
 )
 
 func TestTwoInstancesSamePort(t *testing.T) {
@@ -16,6 +17,12 @@ func TestTwoInstancesSamePort(t *testing.T) {
 
 	_, err = waitListening(proc1.outputControl, 1000)
 	assert.NoError(t, err, "First instance is not listening")
+
+	// Since f10adda, the second instance is also listening on the CI.
+	// I suspect that the CI environment is slow regarding OS information
+	// update (probably several virtualization layers).
+	// This delay is therefore here as a workaround.
+	time.Sleep(time.Duration(100) * time.Millisecond)
 
 	proc2, err := runNetorcaiCover(coverFile, args)
 	assert.NoError(t, err, "Cannot start netorcai")
