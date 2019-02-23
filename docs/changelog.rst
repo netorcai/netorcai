@@ -15,7 +15,15 @@ netorcai adheres to `Semantic Versioning`_ and its public API includes the follo
 Unreleased
 ----------
 
-- `Commits since v1.2.0 <https://github.com/netorcai/netorcai/compare/v1.2.0...master>`_
+- `Commits since v2.0.0 <https://github.com/netorcai/netorcai/compare/v2.0.0...master>`_
+
+........................................................................................................................
+
+v2.0.0
+------
+
+- `Commits since v1.2.0 <https://github.com/netorcai/netorcai/compare/v1.2.0...v2.0.0>`_
+- Release date: 2019-02-24
 
 Changed (breaks metaprotocol)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
