@@ -23,9 +23,6 @@ func waitPlayerOrVisuFinition(pvClient *PlayerOrVisuClient) {
 		case kickReason := <-pvClient.client.canTerminate:
 			Kick(pvClient.client, kickReason)
 			return
-		case <-pvClient.gameStarts:
-		case <-pvClient.gameEnds:
-		case <-pvClient.newTurn:
 		case <-pvClient.client.incomingMessages:
 		}
 	}
