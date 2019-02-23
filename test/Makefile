@@ -12,4 +12,5 @@ cover: setup clean
 
 test: setup clean
 	@unset DO_COVERAGE || true
-	GOCACHE=off go test -v .
+	GOCACHE=off go test -v .. # unit
+	GOCACHE=off go test -v . # integration
