@@ -21,8 +21,8 @@ Changed (breaks metaprotocol)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - The `CONTENT_SIZE` message header is now 32-bit (was 16-bit).
-  `CONTENT_SIZE` value must be smaller than 1 kio for the first message,
-  and smaller than 16 Mio for other messages.
+  `CONTENT_SIZE` value must be smaller than 1 Kio_ for the first message,
+  and smaller than 16 Mio_ for other messages.
 - Protocol version handshake added in :ref:`proto_LOGIN` and :ref:`proto_LOGIN_ACK`.
   As a result, old clients will not be able to log in anymore because their metaprotocol version is unknown.
 
@@ -39,6 +39,15 @@ Added
 
   - New CLI command ``--nb-splayers-max``, to define the maximum number of special players.
   - :ref:`proto_DO_INIT` and :ref:`proto_GAME_STARTS` messages now contain a ``nb_special_players`` field.
+
+Fixed
+~~~~~
+
+- Several issues around netorcai's termination have been fixed.
+
+  - Kicking clients induced a non-compressible time delay to limit the loss of messages.
+    This time delay has been removed **and** the last messages sent by netorcai should **not** be lost anymore.
+  - Data races could occur in the sending of the last messages to clients.
 
 ........................................................................................................................
 
@@ -159,3 +168,5 @@ v0.1.0
 .. _Semantic Versioning: http://semver.org/spec/v2.0.0.html
 .. _netorcai's organization github repository: https://github.com/netorcai
 .. _netorcai's readthedocs: https://netorcai.readthedocs.io
+.. _Kio: https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO
+.. _Mio: https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO
