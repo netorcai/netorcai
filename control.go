@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net"
 	"sync"
-	"time"
 )
 
 // Game state
@@ -27,7 +26,8 @@ const (
 )
 
 type GlobalState struct {
-	Mutex sync.Mutex
+	Mutex     sync.Mutex
+	WaitGroup sync.WaitGroup
 
 	Listener net.Listener
 	prompt   *prompt.Prompt
@@ -101,7 +101,12 @@ func handleClient(client *Client, globalState *GlobalState,
 		"remote address": client.Conn.RemoteAddr(),
 	}).Debug("New connection")
 
+	defer globalState.WaitGroup.Done()
 	defer client.Conn.Close()
+	// This is to send a shutdown on the socket before closing it.
+	// Combined with a SO_LINGER<0 (default for go sockets),
+	// this should avoid loss of data sent by netorcai on client sockets.
+	defer client.Conn.(*net.TCPConn).CloseWrite()
 
 	go readClientMessages(client)
 
@@ -152,7 +157,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					isSpecialPlayer: isSpecial,
 					gameStarts:      make(chan MessageGameStarts),
 					newTurn:         make(chan MessageTurn, 100),
-					gameEnds:        make(chan MessageGameEnds),
+					gameEnds:        make(chan MessageGameEnds, 1),
 					playerInfo:      nil,
 				}
 
@@ -196,7 +201,7 @@ func handleClient(client *Client, globalState *GlobalState,
 					isPlayer:   false,
 					gameStarts: make(chan MessageGameStarts),
 					newTurn:    make(chan MessageTurn, 100),
-					gameEnds:   make(chan MessageGameEnds),
+					gameEnds:   make(chan MessageGameEnds, 1),
 				}
 
 				globalState.Visus = append(globalState.Visus, pvClient)
@@ -276,7 +281,6 @@ func Kick(client *Client, reason string) {
 	content, err := json.Marshal(msg)
 	if err == nil {
 		_ = sendMessage(client, content)
-		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
 }
 
@@ -309,30 +313,20 @@ func Cleanup() {
 		kickChan := make(chan int)
 		for _, client := range nonGlClients {
 			go func(c *Client) {
-				Kick(c, "netorcai abort")
-				c.canTerminate <- 1
+				c.canTerminate <- "netorcai abort"
 				kickChan <- 0
 			}(client.client)
 		}
 
 		for _, client := range globalGS.GameLogic {
 			go func(c *Client) {
-				Kick(c, "netorcai abort")
-				c.canTerminate <- 1
+				c.canTerminate <- "netorcai abort"
 				kickChan <- 0
 			}(client.client)
 		}
 
 		for i := 0; i < nbClients; i++ {
 			<-kickChan
-		}
-
-		log.Warn("Closing client sockets")
-		for _, client := range nonGlClients {
-			client.client.Conn.Close()
-		}
-		for _, client := range globalGS.GameLogic {
-			client.client.Conn.Close()
 		}
 	}
 

@@ -24,7 +24,8 @@ func waitGameLogicFinition(glClient *GameLogicClient) {
 	// (making sure that all other clients have been kicked first).
 	for {
 		select {
-		case <-glClient.client.canTerminate:
+		case kickReason := <-glClient.client.canTerminate:
+			Kick(glClient.client, kickReason)
 			return
 		case <-glClient.playerAction:
 		case <-glClient.playerDisconnected:
@@ -39,18 +40,16 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	select {
 	case <-glClient.start:
 		log.Info("Starting game")
-	case <-glClient.client.canTerminate:
+	case kickReason := <-glClient.client.canTerminate:
+		Kick(glClient.client, kickReason)
 		return
 	case msg := <-glClient.client.incomingMessages:
 		LockGlobalStateMutex(globalState, "GL first message", "GL")
 		if msg.err == nil {
-			Kick(glClient.client, "Received a game logic message but "+
-				"the game has not started")
+			Kick(glClient.client, "Received a game logic message but the game has not started")
 		} else {
-			Kick(glClient.client, fmt.Sprintf("Game logic error. %v",
-				msg.err.Error()))
+			Kick(glClient.client, fmt.Sprintf("Game logic error. %v", msg.err.Error()))
 		}
-		globalState.GameLogic = globalState.GameLogic[:0]
 		UnlockGlobalStateMutex(globalState, "GL first message", "GL")
 		onexit <- 1
 		waitGameLogicFinition(glClient)
@@ -112,7 +111,8 @@ func handleGameLogic(glClient *GameLogicClient, globalState *GlobalState,
 	// Wait for first turn (DO_INIT_ACK)
 	var msg ClientMessage
 	select {
-	case <-glClient.client.canTerminate:
+	case kickReason := <-glClient.client.canTerminate:
+		Kick(glClient.client, kickReason)
 		return
 	case msg = <-glClient.client.incomingMessages:
 		if msg.err != nil {
@@ -198,7 +198,8 @@ func gameLogicGameControlTimers(glClient *GameLogicClient,
 
 	for {
 		select {
-		case <-glClient.client.canTerminate:
+		case kickReason := <-glClient.client.canTerminate:
+			Kick(glClient.client, kickReason)
 			return
 		case action := <-glClient.playerAction:
 			// A client sent its actions.
@@ -284,7 +285,8 @@ func gameLogicGameControlFast(glClient *GameLogicClient,
 		var doTurnAckMsg MessageDoTurnAck
 		var err error
 		select {
-		case <-glClient.client.canTerminate:
+		case kickReason := <-glClient.client.canTerminate:
+			Kick(glClient.client, kickReason)
 			return
 		case msg := <-glClient.client.incomingMessages:
 			doTurnAckMsg, err = handleGLDoTurnAckReception(glClient, msg, initialTotalNbPlayers)
@@ -313,7 +315,8 @@ func gameLogicGameControlFast(glClient *GameLogicClient,
 		}
 		for !areAllValuesTrue(actionReceived) {
 			select {
-			case <-glClient.client.canTerminate:
+			case kickReason := <-glClient.client.canTerminate:
+				Kick(glClient.client, kickReason)
 				return
 			case action := <-glClient.playerAction:
 				actionReceived[action.PlayerID] = true

@@ -18,7 +18,7 @@ type Client struct {
 	reader           *bufio.Reader
 	writer           *bufio.Writer
 	incomingMessages chan ClientMessage
-	canTerminate     chan int
+	canTerminate     chan string
 }
 
 type ClientMessage struct {
@@ -28,6 +28,7 @@ type ClientMessage struct {
 
 func RunServer(port int, globalState *GlobalState, onexit,
 	gameLogicExit chan int) {
+	defer globalState.WaitGroup.Done()
 	// Listen all incoming TCP connections on the specified port
 	listenAddress := ":" + strconv.Itoa(port)
 	globalState.Mutex.Lock()
@@ -65,8 +66,9 @@ func RunServer(port int, globalState *GlobalState, onexit,
 			client.writer = bufio.NewWriter(client.Conn)
 			client.state = CLIENT_UNLOGGED
 			client.incomingMessages = make(chan ClientMessage)
-			client.canTerminate = make(chan int, 1)
+			client.canTerminate = make(chan string, 1)
 
+			globalState.WaitGroup.Add(1)
 			go handleClient(client, globalState, gameLogicExit)
 		}
 	}

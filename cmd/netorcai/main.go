@@ -188,13 +188,15 @@ Options:
 		}).Error("Invalid argument")
 		return 1
 	}
+	defer globalState.WaitGroup.Wait()
 
-	guardExit := make(chan int)
-	serverExit := make(chan int)
-	gameLogicExit := make(chan int)
-	shellExit := make(chan int)
+	guardExit := make(chan int, 1)
+	serverExit := make(chan int, 1)
+	gameLogicExit := make(chan int, 1)
+	shellExit := make(chan int, 1)
 
 	setupGuards(globalState, guardExit)
+	globalState.WaitGroup.Add(1)
 	go netorcai.RunServer(int(port), globalState, serverExit, gameLogicExit)
 
 	interactivePrompt := true
