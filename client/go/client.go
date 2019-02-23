@@ -36,9 +36,9 @@ func (c *Client) Disconnect() error {
 	return c.conn.Close()
 }
 
-func (c *Client) SendBytes(content []byte) error {
+func (c *Client) SendBytes(content []byte, checkSize bool) error {
 	contentSize := len(content)
-	if contentSize >= 16777215 {
+	if checkSize && contentSize >= 16777215 {
 		return fmt.Errorf("content too big: size does not fit in 24 bits")
 	}
 
@@ -69,7 +69,7 @@ func (c *Client) SendBytes(content []byte) error {
 }
 
 func (c *Client) SendString(str string) error {
-	return c.SendBytes([]byte(str))
+	return c.SendBytes([]byte(str), true)
 }
 
 func (c *Client) SendJSON(msg map[string]interface{}) error {
@@ -77,7 +77,7 @@ func (c *Client) SendJSON(msg map[string]interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Cannot marshall JSON message: %v", err)
 	} else {
-		return c.SendBytes(content)
+		return c.SendBytes(content, true)
 	}
 }
 
