@@ -123,12 +123,13 @@ func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
 					assert.NoError(t, err, "Netorcai could not be killed gently")
 				case "Player1":
 					// Disconnect.
-					time.Sleep(time.Duration(100) * time.Millisecond)
+					time.Sleep(time.Duration(500) * time.Millisecond)
 					player.Disconnect()
 					onexit <- 1
 					return
 				case "Player2":
 					// Answer TURN_ACK
+					time.Sleep(time.Duration(500) * time.Millisecond)
 					turnAck := DefaultHelloClientTurnAck(turnReceived, 2)
 					err = player.SendString(turnAck)
 					assert.NoError(t, err, "%v could not send TURN_ACK", clientName)
