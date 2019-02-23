@@ -37,14 +37,15 @@ func TestKickallOnAbortKillSigtermSpecial(t *testing.T) {
 	assert.Equal(t, expRetCode, retCode, "Unexpected netorcai return code")
 }
 
-type GLKillEvent int
+type KillTrigger int
 
 const (
-	OnDoTurnReception GLKillEvent = 0
+	OnDoTurnReception      KillTrigger = 0
+	OnTurnReceptionPlayer0 KillTrigger = 1
 )
 
 func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
-	glKillEvent GLKillEvent,
+	killTrigger KillTrigger,
 	nbTurns int,
 	msBeforeFirstTurn, msBetweenTurns float64) {
 	proc, _, players, _, visus, gls := runNetorcaiAndAllClients(t,
@@ -66,7 +67,7 @@ func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
 	clientFinished := make(chan int, 5)
 	// Game logic
 	for _, glClient := range gls {
-		go func(netorcai *NetorcaiProcess, gl *client.Client, onexit chan int) {
+		go func(gl *client.Client, onexit chan int) {
 			// Read DO_INIT
 			msg, err := waitReadMessage(gl, 1000)
 			assert.NoError(t, err, "GL could not read message (DO_INIT)")
@@ -82,18 +83,23 @@ func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
 			assert.NoError(t, err, "GL could not read message (DO_TURN)")
 			checkDoTurn(t, msg, 4, 0, nbTurns)
 
-			if glKillEvent == OnDoTurnReception {
-				// Instead of answering DO_TURN_ACK, kill netorcai gently.
+			if killTrigger == OnDoTurnReception {
+				// Kill netorcai gently
 				err = killNetorcaiGently(proc, 1000)
 				assert.NoError(t, err, "Netorcai could not be killed gently")
-
-				// Read KICK
-				msg, err = waitReadMessage(gl, 1000)
-				assert.NoError(t, err, "GL could not read message (KICK)")
-				checkKick(t, msg, "GL", regexp.MustCompile(`netorcai abort`))
+			} else {
+				// Answer DO_TURN_ACK
+				doTurnAck := DefaultHelloGlDoTurnAck(0, nil)
+				err = gl.SendString(doTurnAck)
+				assert.NoError(t, err, "GL could not send DO_TURN_ACK")
 			}
+
+			// Read KICK
+			msg, err = waitReadMessage(gl, 1000)
+			assert.NoError(t, err, "GL could not read message (KICK)")
+			checkKick(t, msg, "GL", regexp.MustCompile(`netorcai abort`))
 			onexit <- 1
-		}(proc, glClient, clientFinished)
+		}(glClient, clientFinished)
 	}
 
 	// Players: Expect KICK after GAME_STARTS
@@ -103,6 +109,19 @@ func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
 			msg, err := waitReadMessage(player, 1000)
 			assert.NoError(t, err, "%v could not read message (GAME_STARTS)", clientName)
 			checkGameStarts(t, msg, 4, 0, nbTurns, msBeforeFirstTurn, msBetweenTurns, true)
+
+			if killTrigger == OnTurnReceptionPlayer0 {
+				// Read TURN
+				msg, err = waitReadMessage(player, 1000)
+				assert.NoError(t, err, "%v could not read message (TURN)", clientName)
+				checkTurn(t, msg, 4, 0, 0, true)
+
+				if clientName == "Player0" {
+					// Kill netorcai gently
+					err = killNetorcaiGently(proc, 1000)
+					assert.NoError(t, err, "Netorcai could not be killed gently")
+				}
+			}
 
 			// Read KICK
 			msg, err = waitReadMessage(player, 1000)
@@ -123,7 +142,7 @@ func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
 	go func() {
 		select {
 		case <-stopTimeout:
-		case <-time.After(time.Duration(1000) * time.Millisecond):
+		case <-time.After(time.Duration(3000) * time.Millisecond):
 			timeoutReached <- 0
 		}
 	}()
@@ -138,10 +157,18 @@ func subtestKillDuringGame(t *testing.T, netorcaiArgs []string,
 	}
 }
 
-func TestKillDuringTurn(t *testing.T) {
+func TestKillOnDoTurnReception(t *testing.T) {
 	subtestKillDuringGame(t, nil, OnDoTurnReception, 3, 50, 50)
 }
 
-func TestKillDuringTurnFast(t *testing.T) {
+func TestKillOnDoTurnReceptionFast(t *testing.T) {
 	subtestKillDuringGame(t, []string{"--fast"}, OnDoTurnReception, 3, 50, 50)
+}
+
+func TestKillOnPlayer0TurnReception(t *testing.T) {
+	subtestKillDuringGame(t, nil, OnTurnReceptionPlayer0, 3, 50, 50)
+}
+
+func TestKillOnPlayer0TurnReceptionFast(t *testing.T) {
+	subtestKillDuringGame(t, []string{"--fast"}, OnTurnReceptionPlayer0, 3, 50, 50)
 }
