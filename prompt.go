@@ -13,6 +13,7 @@ import (
 var (
 	globalGS        *GlobalState
 	globalShellExit chan int
+	globalGameLogicExit chan int
 )
 
 func stringInSlice(searchedValue string, slice []string) bool {
@@ -30,6 +31,7 @@ func executor(line string) {
 	rQuit, _ := regexp.Compile(`\Aquit\z`)
 	rPrint, _ := regexp.Compile(`\Aprint\s+(?P<variable>\S+)\z`)
 	rSet, _ := regexp.Compile(`\Aset\s+(?P<variable>\S+)(?P<sep>\s|=)(?P<value>\S+)\z`)
+	rCall, _ := regexp.Compile(`\Acall\s+(?P<url>\S+)\z`)
 
 	acceptedSetVariables := []string{
 		"nb-turns-max",
@@ -192,6 +194,15 @@ func executor(line string) {
 				matches["variable"],
 				strings.Join(acceptedSetVariables, " "))
 		}
+	} else if rCall.MatchString(line){
+		m := rCall.FindStringSubmatch(line)
+		names := rCall.SubexpNames()
+		matches := map[string]string{}
+		for index, matchedString := range m {
+			matches[names[index]] = matchedString
+		}
+		url := matches["url"]
+		go callAgent(url, globalGS, globalGameLogicExit)
 	} else {
 		if strings.HasPrefix(line, "start") {
 			fmt.Println("expected syntax: start")
@@ -202,6 +213,8 @@ func executor(line string) {
 		} else if strings.HasPrefix(line, "set") {
 			fmt.Println("expected syntax: set VARIABLE=VALUE\n" +
 				"   (alt syntax): set VARIABLE VALUE")
+		}  else if strings.HasPrefix(line, "call") {
+			fmt.Println("expected syntax: set NICK@URL\n")
 		}
 	}
 }
@@ -209,8 +222,9 @@ func executor(line string) {
 func completer(d prompt.Document) []prompt.Suggest {
 	commandsSugestions := []prompt.Suggest{
 		{Text: "start", Description: "Start the game"},
-		{Text: "print", Description: "Print value of variable"},
-		{Text: "set", Description: "Set value of variable"},
+		{Text: "print VARIABLE", Description: "Print value of variable"},
+		{Text: "set VARIABLE=VALUE", Description: "Set value of variable"},
+		{Text: "call SERVER:PORT", Description: "Call an agent to join the game"},
 		{Text: "quit", Description: "Quit netorcai"},
 	}
 
@@ -241,9 +255,10 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 }
 
-func RunPrompt(gs *GlobalState, onexit chan int, interactive bool) {
+func RunPrompt(gs *GlobalState, onexit chan int, gameLogicExit chan int, interactive bool) {
 	globalGS = gs
 	globalShellExit = onexit
+	globalGameLogicExit = gameLogicExit
 
 	if interactive {
 		interactivePrompt(onexit)
