@@ -163,3 +163,22 @@ func sendMessage(client *Client, content []byte) error {
 	client.writer.Flush()
 	return nil
 }
+
+func callAgent(url string, globalState *GlobalState, gameLogicExit chan int) {
+
+	conn, err := net.Dial("tcp", url)
+	if err != nil {
+		fmt.Printf("error connecting to %s\n", url)
+		return
+	}
+	agent := &Client{}
+	agent.Conn = conn
+	agent.reader = bufio.NewReader(conn)
+	agent.writer = bufio.NewWriter(conn)
+	agent.state = CLIENT_UNLOGGED
+	agent.incomingMessages = make(chan ClientMessage)
+	agent.canTerminate = make(chan string, 1)
+
+	globalState.WaitGroup.Add(1)
+	go handleClient(agent, globalState, gameLogicExit)
+}

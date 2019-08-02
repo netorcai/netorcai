@@ -206,7 +206,7 @@ Options:
 		interactivePrompt = terminal.IsTerminal(int(os.Stdout.Fd()))
 	}
 
-	go netorcai.RunPrompt(globalState, shellExit, interactivePrompt)
+	go netorcai.RunPrompt(globalState, shellExit, gameLogicExit, interactivePrompt)
 
 	select {
 	case serverExitCode := <-serverExit:
