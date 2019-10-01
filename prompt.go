@@ -214,7 +214,7 @@ func executor(line string) {
 			fmt.Println("expected syntax: set VARIABLE=VALUE\n" +
 				"   (alt syntax): set VARIABLE VALUE")
 		}  else if strings.HasPrefix(line, "call") {
-			fmt.Println("expected syntax: set NICK@URL\n")
+			fmt.Println("expected syntax: set NICK@URL")
 		}
 	}
 }
